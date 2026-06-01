@@ -27,7 +27,7 @@ export const purchaseProduct = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const { data: orderId, error } = await supabase.rpc("purchase_product", {
       p_product_id: data.productId,
-      p_game_user_id: data.gameUserId ?? null,
+      p_game_user_id: data.gameUserId,
     });
     if (error) throw new Error(error.message);
 
