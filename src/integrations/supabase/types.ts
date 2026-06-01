@@ -218,6 +218,10 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
+      purchase_product: {
+        Args: { p_game_user_id?: string; p_product_id: string }
+        Returns: string
+      }
     }
     Enums: {
       app_role: "admin" | "super_admin" | "user"
