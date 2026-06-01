@@ -15,14 +15,14 @@ export const Route = createFileRoute("/")({
   component: Home,
 });
 
-const categories = [
+const categories: { to: "/games" | "/apps" | "/packages" | "/categories" | "/payments" | "/offers"; label: string; icon: typeof Gamepad2; active?: boolean }[] = [
   { to: "/games", label: "شحن ألعاب", icon: Gamepad2, active: true },
   { to: "/apps", label: "شحن تطبيقات", icon: Smartphone },
   { to: "/packages", label: "باقات مميزة", icon: Gem },
   { to: "/categories", label: "أقسام أخرى", icon: LayoutGrid },
   { to: "/payments", label: "طرق الدفع", icon: CreditCard },
   { to: "/offers", label: "العروض", icon: Tag },
-] as const;
+];
 
 const features = [
   { icon: Headphones, title: "دعم فني متواصل", desc: "خدمة عملاء على مدار الساعة" },

@@ -1,5 +1,6 @@
-import { Link, Outlet, useRouterState } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 import { Home, ShoppingBag, Bell, Receipt, Search, Menu, Plus } from "lucide-react";
+import type { ReactNode } from "react";
 import logo from "@/assets/logo.jpeg.asset.json";
 import { useState } from "react";
 
@@ -11,7 +12,7 @@ const nav = [
   { to: "/search", label: "بحث", icon: Search },
 ] as const;
 
-export function AppLayout() {
+export function AppLayout({ children }: { children: ReactNode }) {
   const path = useRouterState({ select: (s) => s.location.pathname });
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -57,7 +58,7 @@ export function AppLayout() {
       </header>
 
       <main className="mx-auto max-w-6xl px-4 py-5">
-        <Outlet />
+        {children}
       </main>
 
       {/* Bottom nav */}
