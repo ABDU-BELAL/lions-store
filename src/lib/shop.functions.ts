@@ -17,7 +17,7 @@ export const listShopProducts = createServerFn({ method: "GET" }).handler(async 
 
 const purchaseSchema = z.object({
   productId: z.string().uuid(),
-  gameUserId: z.string().trim().min(1).max(120).optional().nullable(),
+  gameUserId: z.string().trim().min(1).max(120).optional(),
 });
 
 export const purchaseProduct = createServerFn({ method: "POST" })
