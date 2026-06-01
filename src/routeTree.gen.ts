@@ -10,15 +10,19 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TransactionsRouteImport } from './routes/transactions'
+import { Route as TopupRouteImport } from './routes/topup'
 import { Route as StoreRouteImport } from './routes/store'
+import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as PaymentsRouteImport } from './routes/payments'
 import { Route as PackagesRouteImport } from './routes/packages'
 import { Route as OffersRouteImport } from './routes/offers'
 import { Route as NotificationsRouteImport } from './routes/notifications'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as GamesRouteImport } from './routes/games'
 import { Route as CategoriesRouteImport } from './routes/categories'
 import { Route as AppsRouteImport } from './routes/apps'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 
@@ -27,9 +31,19 @@ const TransactionsRoute = TransactionsRouteImport.update({
   path: '/transactions',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TopupRoute = TopupRouteImport.update({
+  id: '/topup',
+  path: '/topup',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const StoreRoute = StoreRouteImport.update({
   id: '/store',
   path: '/store',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SearchRoute = SearchRouteImport.update({
@@ -57,6 +71,11 @@ const NotificationsRoute = NotificationsRouteImport.update({
   path: '/notifications',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GamesRoute = GamesRouteImport.update({
   id: '/games',
   path: '/games',
@@ -70,6 +89,11 @@ const CategoriesRoute = CategoriesRouteImport.update({
 const AppsRoute = AppsRouteImport.update({
   id: '/apps',
   path: '/apps',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AboutRoute = AboutRouteImport.update({
@@ -86,44 +110,56 @@ const IndexRoute = IndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/admin': typeof AdminRoute
   '/apps': typeof AppsRoute
   '/categories': typeof CategoriesRoute
   '/games': typeof GamesRoute
+  '/login': typeof LoginRoute
   '/notifications': typeof NotificationsRoute
   '/offers': typeof OffersRoute
   '/packages': typeof PackagesRoute
   '/payments': typeof PaymentsRoute
   '/search': typeof SearchRoute
+  '/signup': typeof SignupRoute
   '/store': typeof StoreRoute
+  '/topup': typeof TopupRoute
   '/transactions': typeof TransactionsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/admin': typeof AdminRoute
   '/apps': typeof AppsRoute
   '/categories': typeof CategoriesRoute
   '/games': typeof GamesRoute
+  '/login': typeof LoginRoute
   '/notifications': typeof NotificationsRoute
   '/offers': typeof OffersRoute
   '/packages': typeof PackagesRoute
   '/payments': typeof PaymentsRoute
   '/search': typeof SearchRoute
+  '/signup': typeof SignupRoute
   '/store': typeof StoreRoute
+  '/topup': typeof TopupRoute
   '/transactions': typeof TransactionsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/admin': typeof AdminRoute
   '/apps': typeof AppsRoute
   '/categories': typeof CategoriesRoute
   '/games': typeof GamesRoute
+  '/login': typeof LoginRoute
   '/notifications': typeof NotificationsRoute
   '/offers': typeof OffersRoute
   '/packages': typeof PackagesRoute
   '/payments': typeof PaymentsRoute
   '/search': typeof SearchRoute
+  '/signup': typeof SignupRoute
   '/store': typeof StoreRoute
+  '/topup': typeof TopupRoute
   '/transactions': typeof TransactionsRoute
 }
 export interface FileRouteTypes {
@@ -131,58 +167,74 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/about'
+    | '/admin'
     | '/apps'
     | '/categories'
     | '/games'
+    | '/login'
     | '/notifications'
     | '/offers'
     | '/packages'
     | '/payments'
     | '/search'
+    | '/signup'
     | '/store'
+    | '/topup'
     | '/transactions'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/about'
+    | '/admin'
     | '/apps'
     | '/categories'
     | '/games'
+    | '/login'
     | '/notifications'
     | '/offers'
     | '/packages'
     | '/payments'
     | '/search'
+    | '/signup'
     | '/store'
+    | '/topup'
     | '/transactions'
   id:
     | '__root__'
     | '/'
     | '/about'
+    | '/admin'
     | '/apps'
     | '/categories'
     | '/games'
+    | '/login'
     | '/notifications'
     | '/offers'
     | '/packages'
     | '/payments'
     | '/search'
+    | '/signup'
     | '/store'
+    | '/topup'
     | '/transactions'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
+  AdminRoute: typeof AdminRoute
   AppsRoute: typeof AppsRoute
   CategoriesRoute: typeof CategoriesRoute
   GamesRoute: typeof GamesRoute
+  LoginRoute: typeof LoginRoute
   NotificationsRoute: typeof NotificationsRoute
   OffersRoute: typeof OffersRoute
   PackagesRoute: typeof PackagesRoute
   PaymentsRoute: typeof PaymentsRoute
   SearchRoute: typeof SearchRoute
+  SignupRoute: typeof SignupRoute
   StoreRoute: typeof StoreRoute
+  TopupRoute: typeof TopupRoute
   TransactionsRoute: typeof TransactionsRoute
 }
 
@@ -195,11 +247,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TransactionsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/topup': {
+      id: '/topup'
+      path: '/topup'
+      fullPath: '/topup'
+      preLoaderRoute: typeof TopupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/store': {
       id: '/store'
       path: '/store'
       fullPath: '/store'
       preLoaderRoute: typeof StoreRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/search': {
@@ -237,6 +303,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NotificationsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/games': {
       id: '/games'
       path: '/games'
@@ -256,6 +329,13 @@ declare module '@tanstack/react-router' {
       path: '/apps'
       fullPath: '/apps'
       preLoaderRoute: typeof AppsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/about': {
@@ -278,15 +358,19 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
+  AdminRoute: AdminRoute,
   AppsRoute: AppsRoute,
   CategoriesRoute: CategoriesRoute,
   GamesRoute: GamesRoute,
+  LoginRoute: LoginRoute,
   NotificationsRoute: NotificationsRoute,
   OffersRoute: OffersRoute,
   PackagesRoute: PackagesRoute,
   PaymentsRoute: PaymentsRoute,
   SearchRoute: SearchRoute,
+  SignupRoute: SignupRoute,
   StoreRoute: StoreRoute,
+  TopupRoute: TopupRoute,
   TransactionsRoute: TransactionsRoute,
 }
 export const routeTree = rootRouteImport
