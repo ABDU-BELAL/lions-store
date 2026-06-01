@@ -13,6 +13,7 @@ import { Route as TransactionsRouteImport } from './routes/transactions'
 import { Route as TopupRouteImport } from './routes/topup'
 import { Route as StoreRouteImport } from './routes/store'
 import { Route as SignupRouteImport } from './routes/signup'
+import { Route as ShopRouteImport } from './routes/shop'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as PaymentsRouteImport } from './routes/payments'
 import { Route as PackagesRouteImport } from './routes/packages'
@@ -44,6 +45,11 @@ const StoreRoute = StoreRouteImport.update({
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ShopRoute = ShopRouteImport.update({
+  id: '/shop',
+  path: '/shop',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SearchRoute = SearchRouteImport.update({
@@ -120,6 +126,7 @@ export interface FileRoutesByFullPath {
   '/packages': typeof PackagesRoute
   '/payments': typeof PaymentsRoute
   '/search': typeof SearchRoute
+  '/shop': typeof ShopRoute
   '/signup': typeof SignupRoute
   '/store': typeof StoreRoute
   '/topup': typeof TopupRoute
@@ -138,6 +145,7 @@ export interface FileRoutesByTo {
   '/packages': typeof PackagesRoute
   '/payments': typeof PaymentsRoute
   '/search': typeof SearchRoute
+  '/shop': typeof ShopRoute
   '/signup': typeof SignupRoute
   '/store': typeof StoreRoute
   '/topup': typeof TopupRoute
@@ -157,6 +165,7 @@ export interface FileRoutesById {
   '/packages': typeof PackagesRoute
   '/payments': typeof PaymentsRoute
   '/search': typeof SearchRoute
+  '/shop': typeof ShopRoute
   '/signup': typeof SignupRoute
   '/store': typeof StoreRoute
   '/topup': typeof TopupRoute
@@ -177,6 +186,7 @@ export interface FileRouteTypes {
     | '/packages'
     | '/payments'
     | '/search'
+    | '/shop'
     | '/signup'
     | '/store'
     | '/topup'
@@ -195,6 +205,7 @@ export interface FileRouteTypes {
     | '/packages'
     | '/payments'
     | '/search'
+    | '/shop'
     | '/signup'
     | '/store'
     | '/topup'
@@ -213,6 +224,7 @@ export interface FileRouteTypes {
     | '/packages'
     | '/payments'
     | '/search'
+    | '/shop'
     | '/signup'
     | '/store'
     | '/topup'
@@ -232,6 +244,7 @@ export interface RootRouteChildren {
   PackagesRoute: typeof PackagesRoute
   PaymentsRoute: typeof PaymentsRoute
   SearchRoute: typeof SearchRoute
+  ShopRoute: typeof ShopRoute
   SignupRoute: typeof SignupRoute
   StoreRoute: typeof StoreRoute
   TopupRoute: typeof TopupRoute
@@ -266,6 +279,13 @@ declare module '@tanstack/react-router' {
       path: '/signup'
       fullPath: '/signup'
       preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/shop': {
+      id: '/shop'
+      path: '/shop'
+      fullPath: '/shop'
+      preLoaderRoute: typeof ShopRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/search': {
@@ -368,6 +388,7 @@ const rootRouteChildren: RootRouteChildren = {
   PackagesRoute: PackagesRoute,
   PaymentsRoute: PaymentsRoute,
   SearchRoute: SearchRoute,
+  ShopRoute: ShopRoute,
   SignupRoute: SignupRoute,
   StoreRoute: StoreRoute,
   TopupRoute: TopupRoute,
@@ -376,13 +397,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

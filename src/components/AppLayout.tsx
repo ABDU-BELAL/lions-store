@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 const nav = [
   { to: "/", label: "الرئيسية", icon: Home },
-  { to: "/store", label: "المتجر", icon: ShoppingBag },
+  { to: "/shop", label: "المتجر", icon: ShoppingBag },
   { to: "/topup", label: "شحن", icon: Wallet },
   { to: "/transactions", label: "المعاملات", icon: Receipt },
   { to: "/search", label: "بحث", icon: Search },
