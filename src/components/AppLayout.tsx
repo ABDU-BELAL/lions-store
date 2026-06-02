@@ -8,6 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getMyAccount } from "@/lib/account.functions";
 import { supabase } from "@/integrations/supabase/client";
+import { ParticlesBackground } from "@/components/ParticlesBackground";
 
 const nav = [
   { to: "/", label: "الرئيسية", icon: Home },
