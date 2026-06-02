@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AppLayout } from "@/components/AppLayout";
-import { CreditCard, Wallet, Banknote, Smartphone, Building2, Bitcoin } from "lucide-react";
+import { Phone, Building2, Banknote, Bitcoin } from "lucide-react";
 
 export const Route = createFileRoute("/payments")({
   head: () => ({ meta: [{ title: "طرق الدفع — Lion Store" }] }),
@@ -8,12 +8,10 @@ export const Route = createFileRoute("/payments")({
 });
 
 const methods = [
-  { icon: CreditCard, name: "بطاقة فيزا / ماستركارد", desc: "دفع آمن ومشفر" },
-  { icon: Smartphone, name: "فودافون كاش", desc: "تحويل فوري" },
-  { icon: Wallet, name: "إنستا باي", desc: "محفظة رقمية" },
-  { icon: Building2, name: "تحويل بنكي", desc: "جميع البنوك المصرية" },
-  { icon: Banknote, name: "كاش عند الاستلام", desc: "في مناطق محددة" },
-  { icon: Bitcoin, name: "العملات الرقمية", desc: "USDT / BTC" },
+  { icon: Phone, name: "فودافون كاش", desc: "تحويل فوري على 01027923110" },
+  { icon: Building2, name: "إنستا باي", desc: "lionstore@instapay" },
+  { icon: Banknote, name: "فوري", desc: "كود التاجر متاح في صفحة الشحن" },
+  { icon: Bitcoin, name: "Binance (USDT)", desc: "شبكة TRC20" },
 ];
 
 function Payments() {
@@ -24,7 +22,7 @@ function Payments() {
         <p className="mt-3 text-muted-foreground">ادفع بالطريقة التي تناسبك — جميع المعاملات آمنة ومشفرة</p>
       </div>
 
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid sm:grid-cols-2 gap-4">
         {methods.map((m) => (
           <div key={m.name} className="flex items-center gap-4 p-5 rounded-2xl bg-card/70 border border-border hover:border-gold/50 transition">
             <div className="grid place-items-center size-14 rounded-xl bg-gold-gradient text-primary-foreground shrink-0">
