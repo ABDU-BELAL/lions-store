@@ -8,6 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getMyAccount } from "@/lib/account.functions";
 import { supabase } from "@/integrations/supabase/client";
+import { ParticlesBackground } from "@/components/ParticlesBackground";
 
 const nav = [
   { to: "/", label: "الرئيسية", icon: Home },
@@ -29,6 +30,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
   return (
     <div dir="rtl" className="min-h-screen pb-24">
+      <ParticlesBackground />
       {/* Header */}
       <header className="sticky top-0 z-40 backdrop-blur-xl bg-background/80 border-b border-border">
         <div className="mx-auto max-w-6xl px-4 py-3 flex items-center gap-3">
