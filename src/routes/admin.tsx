@@ -9,16 +9,17 @@ import {
   adminListProducts, adminUpsertProduct, adminDeleteProduct,
   listAdmins, grantAdmin, revokeAdmin, claimSuperAdmin,
 } from "@/lib/admin.functions";
+import { adminListBanners, adminUpsertBanner, adminDeleteBanner, adminUploadBannerImage } from "@/lib/banners.functions";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Users, Wallet, ShoppingBag, Package, CheckCircle2, XCircle, Trash2, Plus, Crown, Shield } from "lucide-react";
+import { Users, Wallet, ShoppingBag, Package, CheckCircle2, XCircle, Trash2, Plus, Crown, Shield, Image as ImageIcon, Upload } from "lucide-react";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({ meta: [{ title: "لوحة الأدمن — Lion Store" }] }),
   component: AdminPage,
 });
 
-type Tab = "stats" | "topups" | "products" | "admins";
+type Tab = "stats" | "topups" | "products" | "banners" | "admins";
 
 function AdminPage() {
   const { user, loading } = useAuth();
@@ -47,6 +48,7 @@ function AdminPage() {
           { id: "stats", label: "الإحصائيات" },
           { id: "topups", label: "طلبات الشحن" },
           { id: "products", label: "المنتجات" },
+          { id: "banners", label: "السلايدر" },
           { id: "admins", label: "الأدمنز" },
         ] as { id: Tab; label: string }[]).map((t) => (
           <button key={t.id} onClick={() => setTab(t.id)}
@@ -59,6 +61,7 @@ function AdminPage() {
       {tab === "stats" && <StatsTab />}
       {tab === "topups" && <TopupsTab />}
       {tab === "products" && <ProductsTab />}
+      {tab === "banners" && <BannersTab />}
       {tab === "admins" && <AdminsTab isSuper={!!account.data.isSuperAdmin} />}
     </AppLayout>
   );
@@ -238,6 +241,111 @@ function ProductsTab() {
             <div className="flex gap-2">
               <button type="button" onClick={() => setEditing(null)} className="flex-1 rounded-xl bg-secondary py-2 font-bold">إلغاء</button>
               <button disabled={save.isPending} className="flex-1 rounded-xl bg-gold-gradient text-primary-foreground font-extrabold py-2">حفظ</button>
+            </div>
+          </form>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function BannersTab() {
+  const list = useServerFn(adminListBanners);
+  const upsert = useServerFn(adminUpsertBanner);
+  const del = useServerFn(adminDeleteBanner);
+  const upload = useServerFn(adminUploadBannerImage);
+  const qc = useQueryClient();
+  const { data } = useQuery({ queryKey: ["admin-banners"], queryFn: () => list() });
+  const [editing, setEditing] = useState<null | { id?: string; image_url: string; link_url: string; title: string; is_active: boolean; sort_order: number }>(null);
+  const [uploading, setUploading] = useState(false);
+
+  const blank = () => ({ image_url: "", link_url: "", title: "", is_active: true, sort_order: 0 });
+
+  const save = useMutation({
+    mutationFn: () => upsert({ data: { id: editing?.id, data: {
+      image_url: editing!.image_url,
+      link_url: editing!.link_url || null,
+      title: editing!.title || null,
+      is_active: editing!.is_active,
+      sort_order: editing!.sort_order,
+    } } }),
+    onSuccess: () => { toast.success("تم الحفظ"); setEditing(null); qc.invalidateQueries({ queryKey: ["admin-banners"] }); qc.invalidateQueries({ queryKey: ["banners-active"] }); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const remove = useMutation({
+    mutationFn: (v: { id: string; storagePath?: string }) => del({ data: v }),
+    onSuccess: () => { toast.success("تم الحذف"); qc.invalidateQueries({ queryKey: ["admin-banners"] }); qc.invalidateQueries({ queryKey: ["banners-active"] }); },
+  });
+
+  const handleFile = async (file: File) => {
+    if (!editing) return;
+    if (file.size > 5 * 1024 * 1024) { toast.error("الصورة أكبر من 5MB"); return; }
+    setUploading(true);
+    try {
+      const buf = await file.arrayBuffer();
+      let bin = ""; const bytes = new Uint8Array(buf);
+      for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+      const base64 = btoa(bin);
+      const { path } = await upload({ data: { filename: file.name, contentType: file.type || "image/jpeg", base64 } });
+      setEditing({ ...editing, image_url: path });
+      toast.success("تم رفع الصورة");
+    } catch (e) { toast.error((e as Error).message); }
+    finally { setUploading(false); }
+  };
+
+  return (
+    <div>
+      <button onClick={() => setEditing(blank())} className="mb-4 rounded-full bg-gold-gradient text-primary-foreground font-bold px-4 py-2 text-sm flex items-center gap-2"><Plus className="size-4" /> إضافة بانر جديد</button>
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        {(data ?? []).map((b) => (
+          <div key={b.id} className="rounded-2xl bg-card/70 border border-border p-3">
+            <img src={b.image_url} alt={b.title ?? ""} className="aspect-[16/6] w-full object-cover rounded-xl mb-2" />
+            <p className="font-extrabold">{b.title || "—"}</p>
+            <p className="text-xs text-muted-foreground truncate">{b.link_url || "بدون رابط"}</p>
+            <p className="text-xs text-muted-foreground">ترتيب: {b.sort_order} • {b.is_active ? "مفعّل" : "متوقف"}</p>
+            <div className="mt-3 flex gap-2">
+              <button onClick={() => setEditing({ id: b.id, image_url: b.image_url.startsWith("http") ? "" : b.image_url, link_url: b.link_url ?? "", title: b.title ?? "", is_active: b.is_active, sort_order: b.sort_order })} className="flex-1 rounded-lg bg-secondary py-1.5 text-sm font-bold">تعديل</button>
+              <button onClick={() => confirm("متأكد؟") && remove.mutate({ id: b.id })} className="rounded-lg bg-destructive text-white px-3 py-1.5 text-sm font-bold"><Trash2 className="size-4" /></button>
+            </div>
+          </div>
+        ))}
+        {(data ?? []).length === 0 && <p className="col-span-full text-center py-8 text-muted-foreground">لا يوجد بانرات. أضف أول واحد!</p>}
+      </div>
+
+      {editing && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm grid place-items-center p-4" onClick={() => setEditing(null)}>
+          <form onClick={(e) => e.stopPropagation()} onSubmit={(e) => { e.preventDefault(); if (!editing.image_url) { toast.error("ارفع صورة أولاً"); return; } save.mutate(); }} className="w-full max-w-lg bg-card border-gold rounded-2xl p-5 space-y-3 max-h-[90vh] overflow-y-auto">
+            <h3 className="text-xl font-extrabold text-gold-gradient flex items-center gap-2"><ImageIcon className="size-5" /> {editing.id ? "تعديل بانر" : "بانر جديد"}</h3>
+
+            <label className="block">
+              <div className="rounded-xl border-2 border-dashed border-gold/40 bg-secondary/50 p-4 text-center cursor-pointer hover:border-gold transition">
+                <Upload className="mx-auto size-6 text-gold mb-1" />
+                <p className="text-sm font-bold">{uploading ? "جاري الرفع..." : "اختر صورة (حتى 5MB)"}</p>
+                <p className="text-xs text-muted-foreground mt-1">نسبة مفضلة 16:6</p>
+              </div>
+              <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])} />
+            </label>
+
+            {editing.image_url && (
+              <div className="rounded-xl overflow-hidden border border-border p-2">
+                {editing.image_url.startsWith("http") ? (
+                  <img src={editing.image_url} alt="" className="w-full aspect-[16/6] object-cover bg-black rounded-lg" />
+                ) : (
+                  <p className="text-xs text-emerald-400 font-bold">✓ تم رفع الصورة — اضغط حفظ للتفعيل</p>
+                )}
+              </div>
+            )}
+
+            <input placeholder="العنوان (اختياري)" value={editing.title} onChange={(e) => setEditing({ ...editing, title: e.target.value })} className="w-full rounded-xl bg-secondary px-3 py-2" />
+            <input placeholder="الرابط عند الضغط (اختياري)" value={editing.link_url} onChange={(e) => setEditing({ ...editing, link_url: e.target.value })} className="w-full rounded-xl bg-secondary px-3 py-2" />
+            <div className="flex items-center gap-4 text-sm">
+              <label className="flex items-center gap-2"><input type="checkbox" checked={editing.is_active} onChange={(e) => setEditing({ ...editing, is_active: e.target.checked })} /> مفعّل</label>
+              <input type="number" placeholder="الترتيب" value={editing.sort_order} onChange={(e) => setEditing({ ...editing, sort_order: Number(e.target.value) })} className="ml-auto w-24 rounded-xl bg-secondary px-3 py-2" />
+            </div>
+            <div className="flex gap-2">
+              <button type="button" onClick={() => setEditing(null)} className="flex-1 rounded-xl bg-secondary py-2 font-bold">إلغاء</button>
+              <button disabled={save.isPending || uploading} className="flex-1 rounded-xl bg-gold-gradient text-primary-foreground font-extrabold py-2 disabled:opacity-50">حفظ</button>
             </div>
           </form>
         </div>

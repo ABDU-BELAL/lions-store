@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppLayout } from "@/components/AppLayout";
 import { ProductCard } from "@/components/ProductCard";
+import { BannerSlideshow } from "@/components/BannerSlideshow";
 import { games, apps, offers } from "@/lib/products";
 import logo from "@/assets/logo.jpeg.asset.json";
 import { Gamepad2, Smartphone, Gem, LayoutGrid, CreditCard, Tag, Phone, Headphones, Zap, ShieldCheck, BadgePercent } from "lucide-react";
@@ -61,8 +62,12 @@ function Home() {
         </div>
       </section>
 
+      {/* Slideshow banners (managed in admin) */}
+      <BannerSlideshow />
+
       {/* Categories */}
       <section className="mt-6 grid grid-cols-3 md:grid-cols-6 gap-3">
+
         {categories.map((c) => (
           <Link key={c.to} to={c.to} className={`group flex flex-col items-center justify-center gap-2 rounded-2xl border ${c.active ? "border-gold/60 bg-gradient-to-b from-gold/20 to-card" : "border-border bg-card/60"} p-4 hover:border-gold/60 transition`}>
             <div className={`grid place-items-center size-10 rounded-xl ${c.active ? "bg-gold-gradient text-primary-foreground" : "bg-secondary/80 text-gold"}`}>
