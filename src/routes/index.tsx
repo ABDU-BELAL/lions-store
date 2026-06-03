@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppLayout } from "@/components/AppLayout";
 import { ProductCard } from "@/components/ProductCard";
+import { BannerSlideshow } from "@/components/BannerSlideshow";
 import { games, apps, offers } from "@/lib/products";
 import logo from "@/assets/logo.jpeg.asset.json";
 import { Gamepad2, Smartphone, Gem, LayoutGrid, CreditCard, Tag, Phone, Headphones, Zap, ShieldCheck, BadgePercent } from "lucide-react";
