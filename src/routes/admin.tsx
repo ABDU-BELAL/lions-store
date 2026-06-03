@@ -9,9 +9,10 @@ import {
   adminListProducts, adminUpsertProduct, adminDeleteProduct,
   listAdmins, grantAdmin, revokeAdmin, claimSuperAdmin,
 } from "@/lib/admin.functions";
+import { adminListBanners, adminUpsertBanner, adminDeleteBanner, adminUploadBannerImage } from "@/lib/banners.functions";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Users, Wallet, ShoppingBag, Package, CheckCircle2, XCircle, Trash2, Plus, Crown, Shield } from "lucide-react";
+import { Users, Wallet, ShoppingBag, Package, CheckCircle2, XCircle, Trash2, Plus, Crown, Shield, Image as ImageIcon, Upload } from "lucide-react";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({ meta: [{ title: "لوحة الأدمن — Lion Store" }] }),
