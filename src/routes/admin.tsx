@@ -328,9 +328,12 @@ function BannersTab() {
             </label>
 
             {editing.image_url && (
-              <div className="rounded-xl overflow-hidden border border-border">
-                <img src={editing.image_url.startsWith("http") ? editing.image_url : `(تم الرفع: ${editing.image_url})`} alt="" className="w-full aspect-[16/6] object-cover bg-black" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
-                <p className="text-xs p-2 text-muted-foreground truncate">{editing.image_url}</p>
+              <div className="rounded-xl overflow-hidden border border-border p-2">
+                {editing.image_url.startsWith("http") ? (
+                  <img src={editing.image_url} alt="" className="w-full aspect-[16/6] object-cover bg-black rounded-lg" />
+                ) : (
+                  <p className="text-xs text-emerald-400 font-bold">✓ تم رفع الصورة — اضغط حفظ للتفعيل</p>
+                )}
               </div>
             )}
 
