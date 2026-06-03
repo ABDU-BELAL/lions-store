@@ -61,6 +61,7 @@ function AdminPage() {
       {tab === "stats" && <StatsTab />}
       {tab === "topups" && <TopupsTab />}
       {tab === "products" && <ProductsTab />}
+      {tab === "banners" && <BannersTab />}
       {tab === "admins" && <AdminsTab isSuper={!!account.data.isSuperAdmin} />}
     </AppLayout>
   );
