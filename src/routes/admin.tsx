@@ -34,7 +34,7 @@ function AdminPage() {
 
   if (!loading && !user) throw redirect({ to: "/login" });
 
-  if (loading || account.isLoading || account.isFetching) return <AppLayout><p className="text-center py-12 text-muted-foreground">جاري تحميل الصلاحيات...</p></AppLayout>;
+  if (loading || account.isLoading) return <AppLayout><p className="text-center py-12 text-muted-foreground">جاري تحميل الصلاحيات...</p></AppLayout>;
 
   if (!account.data?.isAdmin) return <NoAccess hasUser={!!user} />;
 
