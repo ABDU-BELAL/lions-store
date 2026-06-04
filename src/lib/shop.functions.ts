@@ -24,8 +24,9 @@ export const purchaseProduct = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => purchaseSchema.parse(input))
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
-    const { data: orderId, error } = await supabase.rpc("purchase_product", {
+    const { userId } = context;
+    const { data: orderId, error } = await supabaseAdmin.rpc("process_purchase", {
+      p_user_id: userId,
       p_product_id: data.productId,
       p_game_user_id: data.gameUserId,
     });
