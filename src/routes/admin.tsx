@@ -24,12 +24,17 @@ type Tab = "stats" | "topups" | "products" | "banners" | "admins";
 function AdminPage() {
   const { user, loading } = useAuth();
   const getAccount = useServerFn(getMyAccount);
-  const account = useQuery({ queryKey: ["account"], queryFn: () => getAccount(), enabled: !!user });
+  const account = useQuery({
+    queryKey: ["account", user?.id],
+    queryFn: () => getAccount(),
+    enabled: !!user,
+    refetchOnMount: "always",
+  });
   const [tab, setTab] = useState<Tab>("stats");
 
   if (!loading && !user) throw redirect({ to: "/login" });
 
-  if (account.isLoading) return <AppLayout><p className="text-center py-12 text-muted-foreground">جاري التحميل...</p></AppLayout>;
+  if (loading || account.isLoading || account.isFetching) return <AppLayout><p className="text-center py-12 text-muted-foreground">جاري تحميل الصلاحيات...</p></AppLayout>;
 
   if (!account.data?.isAdmin) return <NoAccess hasUser={!!user} />;
 
