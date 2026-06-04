@@ -251,6 +251,14 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
+      process_purchase: {
+        Args: {
+          p_game_user_id?: string
+          p_product_id: string
+          p_user_id: string
+        }
+        Returns: string
+      }
       purchase_product: {
         Args: { p_game_user_id?: string; p_product_id: string }
         Returns: string

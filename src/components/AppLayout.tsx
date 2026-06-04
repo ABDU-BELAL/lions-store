@@ -23,7 +23,12 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const { user } = useAuth();
   const getAccount = useServerFn(getMyAccount);
-  const account = useQuery({ queryKey: ["account"], queryFn: () => getAccount(), enabled: !!user });
+  const account = useQuery({
+    queryKey: ["account", user?.id],
+    queryFn: () => getAccount(),
+    enabled: !!user,
+    refetchOnMount: "always",
+  });
 
   const balance = Number(account.data?.balance ?? 0);
   const isAdmin = account.data?.isAdmin ?? false;
