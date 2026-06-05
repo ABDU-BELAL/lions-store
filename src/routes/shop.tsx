@@ -1,17 +1,21 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { AppLayout } from "@/components/AppLayout";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { listShopProducts, purchaseProduct, listMyOrders } from "@/lib/shop.functions";
 import { getMyAccount } from "@/lib/account.functions";
 import { useAuth } from "@/hooks/useAuth";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import proframe from "@/assets/proframe.png.asset.json";
-import { Wallet, X, ShoppingBag, Clock, CheckCircle2, XCircle } from "lucide-react";
+import { Wallet, X, ShoppingBag, Clock, CheckCircle2, XCircle, Search as SearchIcon } from "lucide-react";
+import { z } from "zod";
+
+const shopSearch = z.object({ q: z.string().optional().catch("") });
 
 export const Route = createFileRoute("/shop")({
   head: () => ({ meta: [{ title: "المتجر — Lion Store" }] }),
+  validateSearch: shopSearch,
   component: ShopPage,
 });
 
