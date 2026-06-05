@@ -88,7 +88,7 @@ function Home() {
 
       <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
         {[...games.slice(0, 4), ...apps.slice(0, 4)].map((p) => (
-          <ProductCard key={p.id} title={p.title} image={p.image} />
+          <ProductCard key={p.id} title={p.title} image={p.image} to="/shop" search={{ q: p.title }} />
         ))}
       </div>
 
@@ -96,7 +96,7 @@ function Home() {
       <div className="mt-8">
         <h2 className="text-xl font-extrabold text-gold-gradient flex items-center gap-2"><Tag className="size-5 text-gold" /> أبرز العروض</h2>
         <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
-          {offers.map((o) => <ProductCard key={o.id} title={o.title} image={o.image} badge={o.badge} />)}
+          {offers.map((o) => <ProductCard key={o.id} title={o.title} image={o.image} badge={o.badge} to="/shop" search={{ q: o.title }} />)}
         </div>
       </div>
 
