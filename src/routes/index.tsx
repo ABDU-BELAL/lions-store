@@ -47,9 +47,9 @@ function Home() {
             </p>
             <div className="mt-5 flex flex-wrap gap-3">
               <Link to="/games" className="rounded-full bg-gold-gradient text-primary-foreground font-extrabold px-6 py-2.5 shadow-gold">تسوق الآن</Link>
-              <a href="tel:+201027923110" className="flex items-center gap-2 rounded-full border-gold bg-card/60 px-4 py-2.5 text-sm font-bold">
+              <a href="tel:+201027923110" className="flex items-center gap-2 rounded-full border-gold bg-card/60 px-4 py-2.5 text-sm font-bold" dir="ltr">
                 <Phone className="size-4 text-gold" />
-                +20 102 792 3110
+                <span>+20 102 792 3110</span>
               </a>
             </div>
           </div>
