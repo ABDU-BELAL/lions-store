@@ -30,6 +30,8 @@ const statusMap = {
 
 function ShopPage() {
   const { user } = useAuth();
+  const { q = "" } = Route.useSearch();
+  const navigate = useNavigate({ from: "/shop" });
   const qc = useQueryClient();
   const listFn = useServerFn(listShopProducts);
   const accountFn = useServerFn(getMyAccount);
@@ -63,7 +65,16 @@ function ShopPage() {
   });
 
   const balance = Number(account.data?.balance ?? 0);
-  const list = products.data ?? [];
+  const allList = products.data ?? [];
+  const list = useMemo(() => {
+    const query = q.trim().toLowerCase();
+    if (!query) return allList;
+    return allList.filter((p) =>
+      p.title.toLowerCase().includes(query) ||
+      (p.description ?? "").toLowerCase().includes(query) ||
+      (p.category ?? "").toLowerCase().includes(query),
+    );
+  }, [allList, q]);
 
   return (
     <AppLayout>
