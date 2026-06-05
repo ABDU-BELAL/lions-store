@@ -20,7 +20,9 @@ const nav = [
 
 export function AppLayout({ children }: { children: ReactNode }) {
   const path = useRouterState({ select: (s) => s.location.pathname });
+  const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [headerQ, setHeaderQ] = useState("");
   const { user } = useAuth();
   const getAccount = useServerFn(getMyAccount);
   const account = useQuery({
