@@ -46,13 +46,21 @@ export function AppLayout({ children }: { children: ReactNode }) {
             <span className="hidden sm:block text-gold-gradient font-extrabold text-lg tracking-wide">LION STORE</span>
           </Link>
 
-          <div className="flex-1 relative">
+          <form
+            className="flex-1 relative"
+            onSubmit={(e) => {
+              e.preventDefault();
+              navigate({ to: "/search", search: { q: headerQ.trim() || undefined } });
+            }}
+          >
             <Search className="absolute right-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <input
+              value={headerQ}
+              onChange={(e) => setHeaderQ(e.target.value)}
               placeholder="ابحث عن اللعبة أو التطبيق"
               className="w-full rounded-full bg-secondary/60 border border-border pr-10 pl-4 py-2.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-gold/50"
             />
-          </div>
+          </form>
 
           {user ? (
             <Link to="/topup" className="hidden md:flex items-center gap-2 rounded-full border-gold bg-gradient-to-l from-gold-deep/30 to-gold/10 px-3 py-2 text-sm font-bold">
