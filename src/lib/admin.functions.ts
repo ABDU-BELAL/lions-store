@@ -15,6 +15,14 @@ async function assertAdmin(userId: string): Promise<{ role: "admin" | "super_adm
   return { role: isSuper ? "super_admin" : "admin" };
 }
 
+// Server-side verification used by route guards; throws if not an admin
+export const verifyAdminAccess = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { role } = await assertAdmin(context.userId);
+    return { role, isSuperAdmin: role === "super_admin" };
+  });
+
 // -------- Dashboard stats --------
 export const getAdminStats = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])

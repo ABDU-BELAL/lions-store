@@ -16,9 +16,9 @@ export const Route = createFileRoute("/")({
   component: Home,
 });
 
-const categories: { to: "/games" | "/apps" | "/packages" | "/categories" | "/payments" | "/offers"; label: string; icon: typeof Gamepad2; active?: boolean }[] = [
-  { to: "/games", label: "شحن ألعاب", icon: Gamepad2, active: true },
-  { to: "/apps", label: "شحن تطبيقات", icon: Smartphone },
+const categories: { to: "/shop" | "/games" | "/apps" | "/packages" | "/categories" | "/payments" | "/offers"; label: string; icon: typeof Gamepad2; active?: boolean; search?: Record<string, string> }[] = [
+  { to: "/shop", label: "شحن ألعاب", icon: Gamepad2, active: true, search: { q: "games" } },
+  { to: "/shop", label: "شحن تطبيقات", icon: Smartphone, search: { q: "apps" } },
   { to: "/packages", label: "باقات مميزة", icon: Gem },
   { to: "/categories", label: "أقسام أخرى", icon: LayoutGrid },
   { to: "/payments", label: "طرق الدفع", icon: CreditCard },
@@ -47,9 +47,9 @@ function Home() {
             </p>
             <div className="mt-5 flex flex-wrap gap-3">
               <Link to="/games" className="rounded-full bg-gold-gradient text-primary-foreground font-extrabold px-6 py-2.5 shadow-gold">تسوق الآن</Link>
-              <a href="tel:+201027923110" className="flex items-center gap-2 rounded-full border-gold bg-card/60 px-4 py-2.5 text-sm font-bold">
+              <a href="tel:+201027923110" className="flex items-center gap-2 rounded-full border-gold bg-card/60 px-4 py-2.5 text-sm font-bold" dir="ltr">
                 <Phone className="size-4 text-gold" />
-                +20 102 792 3110
+                <span>+20 102 792 3110</span>
               </a>
             </div>
           </div>
@@ -69,7 +69,7 @@ function Home() {
       <section className="mt-6 grid grid-cols-3 md:grid-cols-6 gap-3">
 
         {categories.map((c) => (
-          <Link key={c.to} to={c.to} className={`group flex flex-col items-center justify-center gap-2 rounded-2xl border ${c.active ? "border-gold/60 bg-gradient-to-b from-gold/20 to-card" : "border-border bg-card/60"} p-4 hover:border-gold/60 transition`}>
+          <Link key={c.label} to={c.to} search={c.search as never} className={`group flex flex-col items-center justify-center gap-2 rounded-2xl border ${c.active ? "border-gold/60 bg-gradient-to-b from-gold/20 to-card" : "border-border bg-card/60"} p-4 hover:border-gold/60 transition`}>
             <div className={`grid place-items-center size-10 rounded-xl ${c.active ? "bg-gold-gradient text-primary-foreground" : "bg-secondary/80 text-gold"}`}>
               <c.icon className="size-5" />
             </div>
@@ -83,12 +83,12 @@ function Home() {
         <h2 className="text-xl md:text-2xl font-extrabold text-gold-gradient flex items-center gap-2">
           <Gamepad2 className="size-5 text-gold" /> الألعاب والتطبيقات
         </h2>
-        <Link to="/games" className="text-sm text-gold hover:underline">عرض الكل</Link>
+        <Link to="/shop" className="text-sm text-gold hover:underline">عرض الكل</Link>
       </div>
 
       <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
         {[...games.slice(0, 4), ...apps.slice(0, 4)].map((p) => (
-          <ProductCard key={p.id} title={p.title} image={p.image} />
+          <ProductCard key={p.id} title={p.title} image={p.image} to="/shop" search={{ q: p.title }} />
         ))}
       </div>
 
@@ -96,7 +96,7 @@ function Home() {
       <div className="mt-8">
         <h2 className="text-xl font-extrabold text-gold-gradient flex items-center gap-2"><Tag className="size-5 text-gold" /> أبرز العروض</h2>
         <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
-          {offers.map((o) => <ProductCard key={o.id} title={o.title} image={o.image} badge={o.badge} />)}
+          {offers.map((o) => <ProductCard key={o.id} title={o.title} image={o.image} badge={o.badge} to="/shop" search={{ q: o.title }} />)}
         </div>
       </div>
 

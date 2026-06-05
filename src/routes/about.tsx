@@ -31,7 +31,7 @@ function About() {
             <div className="grid place-items-center size-12 rounded-xl bg-gold-gradient text-primary-foreground"><c.icon className="size-6" /></div>
             <div className="text-right">
               <p className="text-xs text-muted-foreground">{c.label}</p>
-              <p className="font-extrabold">{c.value}</p>
+              <p className="font-extrabold" dir="auto">{c.value}</p>
             </div>
           </a>
         ))}

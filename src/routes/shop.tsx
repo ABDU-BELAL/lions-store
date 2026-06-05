@@ -1,17 +1,21 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { AppLayout } from "@/components/AppLayout";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { listShopProducts, purchaseProduct, listMyOrders } from "@/lib/shop.functions";
 import { getMyAccount } from "@/lib/account.functions";
 import { useAuth } from "@/hooks/useAuth";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import proframe from "@/assets/proframe.png.asset.json";
-import { Wallet, X, ShoppingBag, Clock, CheckCircle2, XCircle } from "lucide-react";
+import { Wallet, X, ShoppingBag, Clock, CheckCircle2, XCircle, Search as SearchIcon } from "lucide-react";
+import { z } from "zod";
+
+const shopSearch = z.object({ q: z.string().optional().catch("") });
 
 export const Route = createFileRoute("/shop")({
   head: () => ({ meta: [{ title: "المتجر — Lion Store" }] }),
+  validateSearch: shopSearch,
   component: ShopPage,
 });
 
@@ -26,6 +30,8 @@ const statusMap = {
 
 function ShopPage() {
   const { user } = useAuth();
+  const { q = "" } = Route.useSearch();
+  const navigate = useNavigate({ from: "/shop" });
   const qc = useQueryClient();
   const listFn = useServerFn(listShopProducts);
   const accountFn = useServerFn(getMyAccount);
@@ -59,7 +65,16 @@ function ShopPage() {
   });
 
   const balance = Number(account.data?.balance ?? 0);
-  const list = products.data ?? [];
+  const allList = products.data ?? [];
+  const list = useMemo(() => {
+    const query = q.trim().toLowerCase();
+    if (!query) return allList;
+    return allList.filter((p) =>
+      p.title.toLowerCase().includes(query) ||
+      (p.description ?? "").toLowerCase().includes(query) ||
+      (p.category ?? "").toLowerCase().includes(query),
+    );
+  }, [allList, q]);
 
   return (
     <AppLayout>
@@ -79,11 +94,21 @@ function ShopPage() {
         )}
       </div>
 
+      <div className="mt-5 relative">
+        <SearchIcon className="absolute right-4 top-1/2 -translate-y-1/2 size-5 text-gold" />
+        <input
+          value={q}
+          onChange={(e) => navigate({ search: { q: e.target.value || undefined }, replace: true })}
+          placeholder="ابحث داخل المتجر..."
+          className="w-full rounded-full bg-secondary/60 border border-border pr-12 pl-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50"
+        />
+      </div>
+
       {products.isLoading && <p className="mt-8 text-center text-muted-foreground">جاري التحميل...</p>}
       {!products.isLoading && list.length === 0 && (
         <div className="mt-10 text-center text-muted-foreground">
           <ShoppingBag className="mx-auto size-12 mb-3 opacity-50" />
-          <p>لا توجد منتجات حاليًا. الأدمن لسه مضاف منتجات.</p>
+          <p>{q ? "لا توجد نتائج لبحثك" : "لا توجد منتجات حاليًا. الأدمن لسه مضاف منتجات."}</p>
         </div>
       )}
 

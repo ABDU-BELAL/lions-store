@@ -1,30 +1,67 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { AppLayout } from "@/components/AppLayout";
 import { ProductCard } from "@/components/ProductCard";
-import { games, apps } from "@/lib/products";
+import { useServerFn } from "@tanstack/react-start";
+import { useQuery } from "@tanstack/react-query";
+import { listShopProducts } from "@/lib/shop.functions";
 import { Search as SearchIcon } from "lucide-react";
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
+import { z } from "zod";
+
+const searchSchema = z.object({ q: z.string().optional().catch("") });
 
 export const Route = createFileRoute("/search")({
   head: () => ({ meta: [{ title: "بحث — Lion Store" }] }),
+  validateSearch: searchSchema,
   component: SearchPage,
 });
 
 function SearchPage() {
-  const [q, setQ] = useState("");
-  const all = useMemo(() => [...games, ...apps], []);
-  const results = q ? all.filter((p) => p.title.includes(q)) : all;
+  const { q = "" } = Route.useSearch();
+  const navigate = useNavigate({ from: "/search" });
+  const listFn = useServerFn(listShopProducts);
+  const products = useQuery({ queryKey: ["shop-products"], queryFn: () => listFn() });
+
+  const list = products.data ?? [];
+  const results = useMemo(() => {
+    const query = q.trim().toLowerCase();
+    if (!query) return list;
+    return list.filter((p) =>
+      p.title.toLowerCase().includes(query) ||
+      (p.description ?? "").toLowerCase().includes(query) ||
+      (p.category ?? "").toLowerCase().includes(query),
+    );
+  }, [list, q]);
 
   return (
     <AppLayout>
       <h1 className="text-3xl font-black text-gold-gradient mb-5">بحث</h1>
       <div className="relative">
         <SearchIcon className="absolute right-4 top-1/2 -translate-y-1/2 size-5 text-gold" />
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="ابحث عن لعبة أو تطبيق..." className="w-full rounded-full bg-secondary/60 border-gold pr-12 pl-4 py-3.5 text-base focus:outline-none focus:ring-2 focus:ring-gold/50" autoFocus />
+        <input
+          value={q}
+          onChange={(e) => navigate({ search: { q: e.target.value || undefined }, replace: true })}
+          placeholder="ابحث عن لعبة أو تطبيق..."
+          className="w-full rounded-full bg-secondary/60 border-gold pr-12 pl-4 py-3.5 text-base focus:outline-none focus:ring-2 focus:ring-gold/50"
+          autoFocus
+        />
       </div>
+
+      {products.isLoading && <p className="mt-8 text-center text-muted-foreground">جاري التحميل...</p>}
+
       <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-        {results.map((p) => <ProductCard key={p.id} title={p.title} image={p.image} />)}
-        {results.length === 0 && <p className="col-span-full text-center text-muted-foreground py-12">لا توجد نتائج</p>}
+        {results.map((p) => (
+          <ProductCard
+            key={p.id}
+            title={p.title}
+            image={p.image_url || "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=400&q=80"}
+            to="/shop"
+            search={{ q: p.title }}
+          />
+        ))}
+        {!products.isLoading && results.length === 0 && (
+          <p className="col-span-full text-center text-muted-foreground py-12">لا توجد نتائج</p>
+        )}
       </div>
     </AppLayout>
   );
