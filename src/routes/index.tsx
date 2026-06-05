@@ -83,7 +83,7 @@ function Home() {
         <h2 className="text-xl md:text-2xl font-extrabold text-gold-gradient flex items-center gap-2">
           <Gamepad2 className="size-5 text-gold" /> الألعاب والتطبيقات
         </h2>
-        <Link to="/games" className="text-sm text-gold hover:underline">عرض الكل</Link>
+        <Link to="/shop" className="text-sm text-gold hover:underline">عرض الكل</Link>
       </div>
 
       <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
