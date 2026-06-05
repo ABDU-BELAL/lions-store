@@ -94,11 +94,21 @@ function ShopPage() {
         )}
       </div>
 
+      <div className="mt-5 relative">
+        <SearchIcon className="absolute right-4 top-1/2 -translate-y-1/2 size-5 text-gold" />
+        <input
+          value={q}
+          onChange={(e) => navigate({ search: { q: e.target.value || undefined }, replace: true })}
+          placeholder="ابحث داخل المتجر..."
+          className="w-full rounded-full bg-secondary/60 border border-border pr-12 pl-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50"
+        />
+      </div>
+
       {products.isLoading && <p className="mt-8 text-center text-muted-foreground">جاري التحميل...</p>}
       {!products.isLoading && list.length === 0 && (
         <div className="mt-10 text-center text-muted-foreground">
           <ShoppingBag className="mx-auto size-12 mb-3 opacity-50" />
-          <p>لا توجد منتجات حاليًا. الأدمن لسه مضاف منتجات.</p>
+          <p>{q ? "لا توجد نتائج لبحثك" : "لا توجد منتجات حاليًا. الأدمن لسه مضاف منتجات."}</p>
         </div>
       )}
 
