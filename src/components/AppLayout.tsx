@@ -118,6 +118,16 @@ export function AppLayout({ children }: { children: ReactNode }) {
         {children}
       </main>
 
+      <footer className="mx-auto max-w-6xl px-4 pb-28 pt-6 text-center text-xs text-muted-foreground flex flex-wrap gap-x-4 gap-y-2 items-center justify-center">
+        <Link to="/privacy" className="hover:text-gold">سياسة الخصوصية</Link>
+        <span className="opacity-30">•</span>
+        <Link to="/terms" className="hover:text-gold">شروط الاستخدام</Link>
+        <span className="opacity-30">•</span>
+        <Link to="/payments" className="hover:text-gold">طرق الدفع</Link>
+        <span className="opacity-30">•</span>
+        <Link to="/about" className="hover:text-gold">من نحن</Link>
+      </footer>
+
       {/* Bottom nav */}
       <nav className="fixed bottom-0 inset-x-0 z-40 backdrop-blur-xl bg-background/90 border-t border-border">
         <div className="mx-auto max-w-6xl px-2 grid grid-cols-5">
