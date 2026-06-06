@@ -18,7 +18,6 @@ import { Route as ShopRouteImport } from './routes/shop'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PaymentsRouteImport } from './routes/payments'
-import { Route as PackagesRouteImport } from './routes/packages'
 import { Route as OffersRouteImport } from './routes/offers'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as LoginRouteImport } from './routes/login'
@@ -72,11 +71,6 @@ const PrivacyRoute = PrivacyRouteImport.update({
 const PaymentsRoute = PaymentsRouteImport.update({
   id: '/payments',
   path: '/payments',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PackagesRoute = PackagesRouteImport.update({
-  id: '/packages',
-  path: '/packages',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OffersRoute = OffersRouteImport.update({
@@ -135,7 +129,6 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/notifications': typeof NotificationsRoute
   '/offers': typeof OffersRoute
-  '/packages': typeof PackagesRoute
   '/payments': typeof PaymentsRoute
   '/privacy': typeof PrivacyRoute
   '/search': typeof SearchRoute
@@ -156,7 +149,6 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/notifications': typeof NotificationsRoute
   '/offers': typeof OffersRoute
-  '/packages': typeof PackagesRoute
   '/payments': typeof PaymentsRoute
   '/privacy': typeof PrivacyRoute
   '/search': typeof SearchRoute
@@ -178,7 +170,6 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/notifications': typeof NotificationsRoute
   '/offers': typeof OffersRoute
-  '/packages': typeof PackagesRoute
   '/payments': typeof PaymentsRoute
   '/privacy': typeof PrivacyRoute
   '/search': typeof SearchRoute
@@ -201,7 +192,6 @@ export interface FileRouteTypes {
     | '/login'
     | '/notifications'
     | '/offers'
-    | '/packages'
     | '/payments'
     | '/privacy'
     | '/search'
@@ -222,7 +212,6 @@ export interface FileRouteTypes {
     | '/login'
     | '/notifications'
     | '/offers'
-    | '/packages'
     | '/payments'
     | '/privacy'
     | '/search'
@@ -243,7 +232,6 @@ export interface FileRouteTypes {
     | '/login'
     | '/notifications'
     | '/offers'
-    | '/packages'
     | '/payments'
     | '/privacy'
     | '/search'
@@ -265,7 +253,6 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   NotificationsRoute: typeof NotificationsRoute
   OffersRoute: typeof OffersRoute
-  PackagesRoute: typeof PackagesRoute
   PaymentsRoute: typeof PaymentsRoute
   PrivacyRoute: typeof PrivacyRoute
   SearchRoute: typeof SearchRoute
@@ -340,13 +327,6 @@ declare module '@tanstack/react-router' {
       path: '/payments'
       fullPath: '/payments'
       preLoaderRoute: typeof PaymentsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/packages': {
-      id: '/packages'
-      path: '/packages'
-      fullPath: '/packages'
-      preLoaderRoute: typeof PackagesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/offers': {
@@ -425,7 +405,6 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   NotificationsRoute: NotificationsRoute,
   OffersRoute: OffersRoute,
-  PackagesRoute: PackagesRoute,
   PaymentsRoute: PaymentsRoute,
   PrivacyRoute: PrivacyRoute,
   SearchRoute: SearchRoute,
@@ -439,3 +418,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
