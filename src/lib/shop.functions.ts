@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { notifyTelegram } from "@/lib/telegram.server";
+import { notifyTelegram, escapeTelegramHtml } from "@/lib/telegram.server";
 
 export const listShopProducts = createServerFn({ method: "GET" }).handler(async () => {
   const { data, error } = await supabaseAdmin
@@ -46,11 +46,11 @@ export const purchaseProduct = createServerFn({ method: "POST" })
         .maybeSingle();
       await notifyTelegram(
         `🛒 <b>طلب جديد</b>\n` +
-          `👤 ${prof?.full_name || prof?.email || userId}\n` +
-          `📱 ${prof?.phone || "-"}\n` +
-          `🎮 ${prod?.title}\n` +
-          `💰 EG ${Number(prod?.price ?? 0).toLocaleString()}\n` +
-          (data.gameUserId ? `🆔 ${data.gameUserId}\n` : "") +
+          `👤 ${escapeTelegramHtml(prof?.full_name || prof?.email || userId)}\n` +
+          `📱 ${escapeTelegramHtml(prof?.phone || "-")}\n` +
+          `🎮 ${escapeTelegramHtml(prod?.title)}\n` +
+          `💰 EG ${escapeTelegramHtml(Number(prod?.price ?? 0).toLocaleString())}\n` +
+          (data.gameUserId ? `🆔 ${escapeTelegramHtml(data.gameUserId)}\n` : "") +
           `#order_${String(orderId).slice(0, 8)}`,
       );
     } catch (e) {

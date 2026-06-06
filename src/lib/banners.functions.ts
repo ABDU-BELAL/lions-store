@@ -52,7 +52,11 @@ const upsertSchema = z.object({
   id: z.string().uuid().optional(),
   data: z.object({
     image_url: z.string().trim().min(1).max(1000),
-    link_url: z.string().trim().max(1000).optional().nullable(),
+    link_url: z
+      .string().trim().max(1000)
+      .refine((v) => !v || /^https?:\/\//i.test(v), { message: "Only http/https URLs allowed" })
+      .optional()
+      .nullable(),
     title: z.string().trim().max(120).optional().nullable(),
     is_active: z.boolean().optional(),
     sort_order: z.number().int().optional(),
