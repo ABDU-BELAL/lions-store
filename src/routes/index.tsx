@@ -4,7 +4,7 @@ import { ProductCard } from "@/components/ProductCard";
 import { BannerSlideshow } from "@/components/BannerSlideshow";
 import { games, apps, offers } from "@/lib/products";
 import logo from "@/assets/logo.jpeg.asset.json";
-import { Gamepad2, Smartphone, Gem, LayoutGrid, CreditCard, Tag, Phone, Headphones, Zap, ShieldCheck, BadgePercent } from "lucide-react";
+import { Gamepad2, Smartphone, LayoutGrid, CreditCard, Tag, Phone, Headphones, Zap, ShieldCheck, BadgePercent } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
