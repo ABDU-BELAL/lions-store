@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { notifyTelegram } from "./telegram.server";
+import { notifyTelegram, escapeTelegramHtml } from "./telegram.server";
 
 const createSchema = z.object({
   amount: z.number().positive().max(1_000_000),
@@ -34,10 +34,10 @@ export const createTopupRequest = createServerFn({ method: "POST" })
     const { data: profile } = await supabase.from("profiles").select("full_name, phone").eq("id", userId).maybeSingle();
     notifyTelegram(
       `🔔 <b>طلب شحن جديد</b>\n` +
-      `👤 ${profile?.full_name || "بدون اسم"} (${profile?.phone || "—"})\n` +
-      `💰 المبلغ: <b>${data.amount} EGP</b>\n` +
-      `💳 الطريقة: ${data.method}\n` +
-      `🔖 المرجع: ${data.reference}`,
+      `👤 ${escapeTelegramHtml(profile?.full_name || "بدون اسم")} (${escapeTelegramHtml(profile?.phone || "—")})\n` +
+      `💰 المبلغ: <b>${escapeTelegramHtml(data.amount)} EGP</b>\n` +
+      `💳 الطريقة: ${escapeTelegramHtml(data.method)}\n` +
+      `🔖 المرجع: ${escapeTelegramHtml(data.reference)}`,
     ).catch(() => {});
 
     return { ok: true, id: row.id };

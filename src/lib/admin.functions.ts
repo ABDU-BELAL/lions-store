@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { notifyTelegram } from "./telegram.server";
+import { notifyTelegram, escapeTelegramHtml } from "./telegram.server";
 
 async function assertAdmin(userId: string): Promise<{ role: "admin" | "super_admin" }> {
   const { data } = await supabaseAdmin
@@ -79,15 +79,9 @@ export const decideTopup = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId);
 
-    const { data: req, error: e1 } = await supabaseAdmin
-      .from("topup_requests")
-      .select("id, user_id, amount, status")
-      .eq("id", data.id)
-      .single();
-    if (e1 || !req) throw new Error("الطلب غير موجود");
-    if (req.status !== "pending") throw new Error("الطلب تمت معالجته مسبقًا");
-
-    const { error: e2 } = await supabaseAdmin
+    // Atomic claim: only succeeds if the row is still pending. Prevents
+    // two concurrent admin approvals from double-crediting the wallet.
+    const { data: claimed, error: claimError } = await supabaseAdmin
       .from("topup_requests")
       .update({
         status: data.decision,
@@ -95,23 +89,27 @@ export const decideTopup = createServerFn({ method: "POST" })
         processed_by: context.userId,
         processed_at: new Date().toISOString(),
       })
-      .eq("id", data.id);
-    if (e2) throw new Error(e2.message);
+      .eq("id", data.id)
+      .eq("status", "pending")
+      .select("id, user_id, amount")
+      .maybeSingle();
+    if (claimError) throw new Error(claimError.message);
+    if (!claimed) throw new Error("الطلب غير موجود أو تمت معالجته مسبقًا");
 
     if (data.decision === "approved") {
       // increment wallet
-      const { data: wallet } = await supabaseAdmin.from("wallets").select("balance").eq("user_id", req.user_id).maybeSingle();
-      const newBalance = Number(wallet?.balance ?? 0) + Number(req.amount);
+      const { data: wallet } = await supabaseAdmin.from("wallets").select("balance").eq("user_id", claimed.user_id).maybeSingle();
+      const newBalance = Number(wallet?.balance ?? 0) + Number(claimed.amount);
       const { error: e3 } = await supabaseAdmin
         .from("wallets")
-        .upsert({ user_id: req.user_id, balance: newBalance }, { onConflict: "user_id" });
+        .upsert({ user_id: claimed.user_id, balance: newBalance }, { onConflict: "user_id" });
       if (e3) throw new Error(e3.message);
     }
 
     notifyTelegram(
       data.decision === "approved"
-        ? `✅ تم قبول طلب شحن بقيمة ${req.amount} EGP`
-        : `❌ تم رفض طلب شحن بقيمة ${req.amount} EGP`,
+        ? `✅ تم قبول طلب شحن بقيمة ${escapeTelegramHtml(claimed.amount)} EGP`
+        : `❌ تم رفض طلب شحن بقيمة ${escapeTelegramHtml(claimed.amount)} EGP`,
     ).catch(() => {});
 
     return { ok: true };
