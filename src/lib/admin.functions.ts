@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { notifyTelegram } from "./telegram.server";
+import { notifyTelegram, escapeTelegramHtml } from "./telegram.server";
 
 async function assertAdmin(userId: string): Promise<{ role: "admin" | "super_admin" }> {
   const { data } = await supabaseAdmin
