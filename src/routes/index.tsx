@@ -16,10 +16,9 @@ export const Route = createFileRoute("/")({
   component: Home,
 });
 
-const categories: { to: "/shop" | "/games" | "/apps" | "/packages" | "/categories" | "/payments" | "/offers"; label: string; icon: typeof Gamepad2; active?: boolean; search?: Record<string, string> }[] = [
+const categories: { to: "/shop" | "/games" | "/apps" | "/categories" | "/payments" | "/offers"; label: string; icon: typeof Gamepad2; active?: boolean; search?: Record<string, string> }[] = [
   { to: "/shop", label: "شحن ألعاب", icon: Gamepad2, active: true, search: { q: "games" } },
   { to: "/shop", label: "شحن تطبيقات", icon: Smartphone, search: { q: "apps" } },
-  { to: "/packages", label: "باقات مميزة", icon: Gem },
   { to: "/categories", label: "أقسام أخرى", icon: LayoutGrid },
   { to: "/payments", label: "طرق الدفع", icon: CreditCard },
   { to: "/offers", label: "العروض", icon: Tag },
