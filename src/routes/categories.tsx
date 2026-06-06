@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppLayout } from "@/components/AppLayout";
-import { Gamepad2, Smartphone, Gem, Tag, CreditCard, Crown, Headphones, Trophy } from "lucide-react";
+import { Gamepad2, Smartphone, Tag, CreditCard, Headphones, Trophy } from "lucide-react";
 
 export const Route = createFileRoute("/categories")({
   head: () => ({ meta: [{ title: "الأقسام — Lion Store" }] }),
@@ -10,10 +10,8 @@ export const Route = createFileRoute("/categories")({
 const cats = [
   { to: "/games", label: "شحن الألعاب", icon: Gamepad2 },
   { to: "/apps", label: "شحن التطبيقات", icon: Smartphone },
-  { to: "/packages", label: "الباقات", icon: Gem },
   { to: "/offers", label: "العروض", icon: Tag },
   { to: "/payments", label: "طرق الدفع", icon: CreditCard },
-  { to: "/packages", label: "كبار الشخصيات", icon: Crown },
   { to: "/about", label: "الدعم الفني", icon: Headphones },
   { to: "/offers", label: "بطولات", icon: Trophy },
 ] as const;

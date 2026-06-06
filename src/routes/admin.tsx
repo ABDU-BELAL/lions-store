@@ -245,7 +245,6 @@ function ProductsTab() {
               <select value={editing.category} onChange={(e) => setEditing({ ...editing, category: e.target.value })} className="rounded-xl bg-secondary px-3 py-2">
                 <option value="games">ألعاب</option>
                 <option value="apps">تطبيقات</option>
-                <option value="packages">باقات</option>
                 <option value="other">أخرى</option>
               </select>
               <input type="number" required min={0} placeholder="السعر" value={editing.price} onChange={(e) => setEditing({ ...editing, price: Number(e.target.value) })} className="rounded-xl bg-secondary px-3 py-2" />
