@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AppLayout } from "@/components/AppLayout";
-import { Phone, Building2, Banknote, Bitcoin } from "lucide-react";
+import { Phone, Building2, Bitcoin } from "lucide-react";
 
 export const Route = createFileRoute("/payments")({
   head: () => ({ meta: [{ title: "طرق الدفع — Lion Store" }] }),
@@ -8,10 +8,10 @@ export const Route = createFileRoute("/payments")({
 });
 
 const methods = [
-  { icon: Phone, name: "فودافون كاش", desc: "تحويل فوري على 01027923110" },
-  { icon: Building2, name: "إنستا باي", desc: "lionstore@instapay" },
-  { icon: Banknote, name: "فوري", desc: "كود التاجر متاح في صفحة الشحن" },
-  { icon: Bitcoin, name: "Binance (USDT)", desc: "شبكة TRC20" },
+  { icon: Phone, name: "فودافون كاش", desc: "01040483540" },
+  { icon: Building2, name: "إنستا باي", desc: "islam20304050@instapay" },
+  { icon: Building2, name: "إنستا باي (رقم)", desc: "01040483540" },
+  { icon: Bitcoin, name: "USDT (TRC20)", desc: "TS3NudYfcXA3cUBqZmMUFPpidZRdFG86PD" },
 ];
 
 function Payments() {
@@ -24,13 +24,13 @@ function Payments() {
 
       <div className="grid sm:grid-cols-2 gap-4">
         {methods.map((m) => (
-          <div key={m.name} className="flex items-center gap-4 p-5 rounded-2xl bg-card/70 border border-border hover:border-gold/50 transition">
+          <div key={m.name + m.desc} className="flex items-center gap-4 p-5 rounded-2xl bg-card/70 border border-border hover:border-gold/50 transition">
             <div className="grid place-items-center size-14 rounded-xl bg-gold-gradient text-primary-foreground shrink-0">
               <m.icon className="size-7" />
             </div>
-            <div>
+            <div className="min-w-0">
               <h3 className="font-extrabold">{m.name}</h3>
-              <p className="text-sm text-muted-foreground">{m.desc}</p>
+              <p dir="ltr" className="text-sm text-muted-foreground text-right break-all">{m.desc}</p>
             </div>
           </div>
         ))}
