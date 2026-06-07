@@ -15,6 +15,7 @@ import {
   adminListCollections, adminUpsertCollection, adminDeleteCollection,
   adminUploadProductImage, getHomeSettings, adminUpdateHomeSettings,
 } from "@/lib/collections.functions";
+import { getPaymentMethods, adminUpdatePaymentMethods } from "@/lib/topup.functions";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Users, Wallet, ShoppingBag, Package, CheckCircle2, XCircle, Trash2, Plus, Crown, Shield, Image as ImageIcon, Upload, Settings as SettingsIcon, Layers } from "lucide-react";
@@ -35,7 +36,7 @@ export const Route = createFileRoute("/admin")({
   component: AdminPage,
 });
 
-type Tab = "stats" | "topups" | "orders" | "products" | "collections" | "banners" | "settings" | "admins";
+type Tab = "stats" | "topups" | "orders" | "products" | "collections" | "banners" | "settings" | "payments" | "admins";
 
 function AdminPage() {
   const { user, loading } = useAuth();
@@ -73,6 +74,7 @@ function AdminPage() {
           { id: "products", label: "المنتجات" },
           { id: "banners", label: "السلايدر" },
           { id: "settings", label: "الصفحة الرئيسية" },
+          ...(account.data.isSuperAdmin ? [{ id: "payments" as Tab, label: "وسائل الدفع" }] : []),
           { id: "admins", label: "الأدمنز" },
         ] as { id: Tab; label: string }[]).map((t) => (
           <button key={t.id} onClick={() => setTab(t.id)}
@@ -89,6 +91,7 @@ function AdminPage() {
       {tab === "products" && <ProductsTab />}
       {tab === "banners" && <BannersTab />}
       {tab === "settings" && <SettingsTab />}
+      {tab === "payments" && account.data.isSuperAdmin && <PaymentMethodsTab />}
       {tab === "admins" && <AdminsTab isSuper={!!account.data.isSuperAdmin} />}
     </AppLayout>
   );
@@ -709,6 +712,55 @@ function AdminsTab({ isSuper }: { isSuper: boolean }) {
           </div>
         ))}
         {(data ?? []).length === 0 && <p className="text-center py-8 text-muted-foreground">لا يوجد أدمنز</p>}
+      </div>
+    </div>
+  );
+}
+
+function PaymentMethodsTab() {
+  const getFn = useServerFn(getPaymentMethods);
+  const updateFn = useServerFn(adminUpdatePaymentMethods);
+  const qc = useQueryClient();
+  const { data } = useQuery({ queryKey: ["payment-methods-admin"], queryFn: () => getFn() });
+  const [local, setLocal] = useState<null | { vodafone_cash: string; instapay_account: string; instapay_link: string; binance: string }>(null);
+  const state = local ?? data ?? { vodafone_cash: "", instapay_account: "", instapay_link: "", binance: "" };
+  const save = useMutation({
+    mutationFn: () => updateFn({ data: state }),
+    onSuccess: () => {
+      toast.success("تم حفظ وسائل الدفع");
+      qc.invalidateQueries({ queryKey: ["payment-methods"] });
+      qc.invalidateQueries({ queryKey: ["payment-methods-admin"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const set = (k: keyof typeof state, v: string) => setLocal({ ...state, [k]: v });
+
+  return (
+    <div className="max-w-lg">
+      <div className="rounded-2xl bg-card/70 border border-border p-5 space-y-4">
+        <h3 className="text-lg font-extrabold text-gold-gradient flex items-center gap-2"><Wallet className="size-5" /> وسائل الدفع وأرقام الشحن</h3>
+        <p className="text-xs text-muted-foreground">هذه البيانات تظهر للمستخدمين في صفحة شحن الرصيد. (السوبر أدمن فقط)</p>
+
+        <div>
+          <label className="text-xs font-bold mb-1 block">رقم فودافون كاش</label>
+          <input dir="ltr" value={state.vodafone_cash} onChange={(e) => set("vodafone_cash", e.target.value)} placeholder="01xxxxxxxxx" className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3 text-right" />
+        </div>
+        <div>
+          <label className="text-xs font-bold mb-1 block">حساب إنستا باي</label>
+          <input dir="ltr" value={state.instapay_account} onChange={(e) => set("instapay_account", e.target.value)} placeholder="name@instapay" className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3 text-right" />
+        </div>
+        <div>
+          <label className="text-xs font-bold mb-1 block">رابط إنستا باي (اختياري)</label>
+          <input dir="ltr" value={state.instapay_link} onChange={(e) => set("instapay_link", e.target.value)} placeholder="https://ipn.eg/..." className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3 text-right" />
+        </div>
+        <div>
+          <label className="text-xs font-bold mb-1 block">عنوان Binance / USDT (TRC20)</label>
+          <input dir="ltr" value={state.binance} onChange={(e) => set("binance", e.target.value)} placeholder="Txxxxxxxxxxxxxxxxxxxxx" className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3 text-right" />
+        </div>
+
+        <button disabled={save.isPending} onClick={() => save.mutate()} className="w-full rounded-xl bg-gold-gradient text-primary-foreground font-extrabold py-2 disabled:opacity-50">
+          {save.isPending ? "..." : "حفظ"}
+        </button>
       </div>
     </div>
   );

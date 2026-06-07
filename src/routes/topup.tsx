@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getMyAccount } from "@/lib/account.functions";
-import { createTopupRequest, listMyTopups } from "@/lib/topup.functions";
+import { createTopupRequest, listMyTopups, getPaymentMethods } from "@/lib/topup.functions";
 import { useEffect, useState } from "react";
 import { Wallet, Phone, Building2, Bitcoin, Clock, CheckCircle2, XCircle, Copy, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
@@ -23,11 +23,11 @@ export const Route = createFileRoute("/topup")({
   component: TopupPage,
 });
 
-const methods = [
-  { id: "vodafone_cash", label: "فودافون كاش", icon: Phone, account: "01040483540", color: "bg-red-600" },
-  { id: "instapay", label: "إنستا باي", account: "islam20304050@instapay", link: "https://ipn.eg/S/islam20304050/instapay/7sbSIb", icon: Building2, color: "bg-purple-600" },
-  { id: "binance", label: "USDT (TRC20)", account: "TS3NudYfcXA3cUBqZmMUFPpidZRdFG86PD", icon: Bitcoin, color: "bg-yellow-500" },
-] as const;
+const methodMeta = [
+  { id: "vodafone_cash" as const, label: "فودافون كاش", icon: Phone, color: "bg-red-600" },
+  { id: "instapay" as const, label: "إنستا باي", icon: Building2, color: "bg-purple-600" },
+  { id: "binance" as const, label: "USDT (TRC20)", icon: Bitcoin, color: "bg-yellow-500" },
+];
 
 const statusMap = {
   pending: { label: "قيد المراجعة", icon: Clock, color: "text-gold" },
@@ -42,6 +42,7 @@ function TopupPage() {
   const getAccount = useServerFn(getMyAccount);
   const createTopup = useServerFn(createTopupRequest);
   const myTopups = useServerFn(listMyTopups);
+  const fetchPaymentMethods = useServerFn(getPaymentMethods);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -51,8 +52,9 @@ function TopupPage() {
 
   const account = useQuery({ queryKey: ["account", user?.id], queryFn: () => getAccount(), enabled: !!user });
   const topups = useQuery({ queryKey: ["my-topups"], queryFn: () => myTopups(), enabled: !!user });
+  const paymentMethods = useQuery({ queryKey: ["payment-methods"], queryFn: () => fetchPaymentMethods() });
 
-  const [method, setMethod] = useState<typeof methods[number]["id"]>("vodafone_cash");
+  const [method, setMethod] = useState<typeof methodMeta[number]["id"]>("vodafone_cash");
   const [amount, setAmount] = useState<number>(100);
   const [reference, setReference] = useState("");
   const [note, setNote] = useState("");
@@ -76,9 +78,18 @@ function TopupPage() {
     );
   }
 
-  const active = methods.find((m) => m.id === method)!;
+  const pm = paymentMethods.data;
+  const accountFor = (id: typeof method): string => {
+    if (!pm) return "";
+    if (id === "vodafone_cash") return pm.vodafone_cash;
+    if (id === "instapay") return pm.instapay_account;
+    return pm.binance;
+  };
+  const active = methodMeta.find((m) => m.id === method)!;
+  const activeAccount = accountFor(method);
+  const activeLink = method === "instapay" ? pm?.instapay_link : "";
   const copyAccount = () => {
-    navigator.clipboard.writeText(active.account);
+    navigator.clipboard.writeText(activeAccount);
     toast.success("تم نسخ البيانات");
   };
 
@@ -96,7 +107,7 @@ function TopupPage() {
       <p className="text-muted-foreground text-sm mt-1">اختار طريقة الدفع، حوّل المبلغ، وارفع لنا رقم العملية. هنراجع الطلب يدويًا وننزّل الرصيد على محفظتك.</p>
 
       <div className="mt-5 grid grid-cols-3 gap-3">
-        {methods.map((m) => (
+        {methodMeta.map((m) => (
           <button key={m.id} onClick={() => setMethod(m.id)} className={`p-4 rounded-2xl border text-right transition ${method === m.id ? "border-gold/70 bg-gradient-to-b from-gold/20 to-card shadow-gold" : "border-border bg-card/70 hover:border-gold/40"}`}>
             <div className={`grid place-items-center size-10 rounded-xl ${m.color} text-white mb-2`}><m.icon className="size-5" /></div>
             <p className="font-extrabold text-sm">{m.label}</p>
@@ -107,18 +118,19 @@ function TopupPage() {
       <div className="mt-4 rounded-2xl border border-gold/40 bg-card/70 p-4">
         <p className="text-sm">حوّل المبلغ على <span className="font-extrabold text-gold-gradient">{active.label}</span>:</p>
         <div className="mt-2 flex items-center gap-2 flex-wrap">
-          <p dir="ltr" className="flex-1 min-w-0 text-base sm:text-lg font-black text-gold-gradient text-right break-all">{active.account}</p>
+          <p dir="ltr" className="flex-1 min-w-0 text-base sm:text-lg font-black text-gold-gradient text-right break-all">{activeAccount || "..."}</p>
           <button type="button" onClick={copyAccount} className="shrink-0 rounded-lg bg-secondary/70 border border-border px-3 py-1.5 text-xs font-bold flex items-center gap-1 hover:border-gold/40">
             <Copy className="size-3.5" /> نسخ
           </button>
-          {"link" in active && active.link && (
-            <a href={active.link} target="_blank" rel="noopener noreferrer" className="shrink-0 rounded-lg bg-gold-gradient text-primary-foreground px-3 py-1.5 text-xs font-bold flex items-center gap-1">
+          {activeLink && (
+            <a href={activeLink} target="_blank" rel="noopener noreferrer" className="shrink-0 rounded-lg bg-gold-gradient text-primary-foreground px-3 py-1.5 text-xs font-bold flex items-center gap-1">
               <ExternalLink className="size-3.5" /> فتح الرابط
             </a>
           )}
         </div>
         <p className="text-xs text-muted-foreground mt-2">بعد التحويل، اكتب رقم العملية تحت وابعت الطلب.</p>
       </div>
+
 
       <form
         onSubmit={(e) => { e.preventDefault(); mutation.mutate({ amount, method, reference, note: note || undefined }); }}

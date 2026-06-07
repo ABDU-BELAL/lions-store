@@ -1,8 +1,52 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { notifyTelegram, escapeTelegramHtml } from "./telegram.server";
 import { enforceRateLimit } from "./rate-limit.server";
+
+// -------- Payment methods (super admin editable) --------
+export type PaymentMethods = {
+  vodafone_cash: string;
+  instapay_account: string;
+  instapay_link: string;
+  binance: string;
+};
+
+const DEFAULT_PAYMENT_METHODS: PaymentMethods = {
+  vodafone_cash: "01040483540",
+  instapay_account: "islam20304050@instapay",
+  instapay_link: "https://ipn.eg/S/islam20304050/instapay/7sbSIb",
+  binance: "TS3NudYfcXA3cUBqZmMUFPpidZRdFG86PD",
+};
+
+export const getPaymentMethods = createServerFn({ method: "GET" }).handler(async () => {
+  const { data } = await supabaseAdmin.from("site_settings").select("value").eq("key", "payment_methods").maybeSingle();
+  return { ...DEFAULT_PAYMENT_METHODS, ...((data?.value ?? {}) as Partial<PaymentMethods>) } as PaymentMethods;
+});
+
+const paymentMethodsSchema = z.object({
+  vodafone_cash: z.string().trim().max(200),
+  instapay_account: z.string().trim().max(200),
+  instapay_link: z.string().trim().max(500),
+  binance: z.string().trim().max(200),
+});
+
+export const adminUpdatePaymentMethods = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => paymentMethodsSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: roles } = await supabaseAdmin
+      .from("user_roles").select("role").eq("user_id", context.userId).eq("role", "super_admin");
+    if (!roles || roles.length === 0) throw new Error("Forbidden: super admin only");
+    const { error } = await supabaseAdmin
+      .from("site_settings")
+      .upsert({ key: "payment_methods", value: data }, { onConflict: "key" });
+    if (error) { console.error("[db]", error); throw new Error("حدث خطأ، حاول مرة أخرى"); }
+    return { ok: true };
+  });
+
+
 
 const createSchema = z.object({
   amount: z.number().positive().max(1_000_000),
