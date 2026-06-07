@@ -125,6 +125,7 @@ const productSchema = z.object({
   is_active: z.boolean().optional(),
   is_offer: z.boolean().optional(),
   sort_order: z.number().int().optional(),
+  collection_id: z.string().uuid().nullable().optional(),
 });
 
 export const adminListProducts = createServerFn({ method: "GET" })
