@@ -28,12 +28,15 @@ export const getProductById = createServerFn({ method: "GET" })
   });
 
 export const Route = createFileRoute("/product/$id")({
-  head: ({ loaderData }) => ({
-    meta: [
-      { title: loaderData?.title ? `${loaderData.title} — Lion Store` : "منتج — Lion Store" },
-      { name: "description", content: loaderData?.description ?? "" },
-    ],
-  }),
+  head: ({ loaderData }) => {
+    const d = loaderData as { title?: string; description?: string | null } | undefined;
+    return {
+      meta: [
+        { title: d?.title ? `${d.title} — Lion Store` : "منتج — Lion Store" },
+        { name: "description", content: d?.description ?? "" },
+      ],
+    };
+  },
   loader: async ({ params }) => {
     const product = await getProductById({ data: { id: params.id } });
     if (!product) throw notFound();
