@@ -114,47 +114,44 @@ function ShopPage() {
 
       <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
         {list.map((p) => (
-          <button
-            key={p.id}
-            onClick={() => {
-              if (!user) {
-                toast.error("سجّل دخول أولًا");
-                return;
-              }
-              setSelected(p);
-            }}
-            className="group relative text-right rounded-2xl overflow-hidden bg-dark-gradient shadow-card border border-gold/20 transition-transform hover:-translate-y-1 hover:shadow-gold"
-          >
+          <div key={p.id} className="group relative rounded-2xl overflow-hidden bg-dark-gradient shadow-card border border-gold/20 transition-transform hover:-translate-y-1 hover:shadow-gold">
             {p.is_offer && (
               <span className="absolute top-2 right-2 z-20 text-[10px] font-extrabold bg-destructive text-destructive-foreground rounded-full px-2 py-1">عرض</span>
             )}
-            <div className="relative aspect-square p-6 flex items-center justify-center">
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_oklch(0.7_0.18_75/_18%),_transparent_65%)]" />
-              <div className="relative w-full h-full grid place-items-center">
-                {p.image_url ? (
-                  <img src={p.image_url} alt={p.title} className="absolute inset-[18%] w-[64%] h-[64%] object-cover rounded-2xl z-10" />
-                ) : (
-                  <div className="absolute inset-[18%] w-[64%] h-[64%] grid place-items-center rounded-2xl bg-secondary z-10 text-3xl">🎮</div>
-                )}
-                <img src={proframe.url} alt="" aria-hidden className="relative w-full h-full object-contain drop-shadow-[0_0_20px_oklch(0.7_0.18_75/_40%)]" />
+            <button
+              type="button"
+              onClick={() => {
+                if (!user) { toast.error("سجّل دخول أولًا"); return; }
+                setSelected(p);
+              }}
+              className="block w-full text-right"
+            >
+              <div className="relative aspect-square p-6 flex items-center justify-center">
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_oklch(0.7_0.18_75/_18%),_transparent_65%)]" />
+                <div className="relative w-full h-full grid place-items-center">
+                  {p.image_url ? (
+                    <img src={p.image_url} alt={p.title} className="absolute inset-[18%] w-[64%] h-[64%] object-cover rounded-2xl z-10" />
+                  ) : (
+                    <div className="absolute inset-[18%] w-[64%] h-[64%] grid place-items-center rounded-2xl bg-secondary z-10 text-3xl">🎮</div>
+                  )}
+                  <img src={proframe.url} alt="" aria-hidden className="relative w-full h-full object-contain drop-shadow-[0_0_20px_oklch(0.7_0.18_75/_40%)]" />
+                </div>
               </div>
-            </div>
-            <div className="px-4 pb-4 pt-1 text-center">
-              <h3 className="text-sm font-extrabold text-gold-gradient line-clamp-1">{p.title}</h3>
-              <p className="mt-1 text-lg font-black text-gold">EG {Number(p.price).toLocaleString()}</p>
-              <Link
-                to="/product/$id"
-                params={{ id: p.id }}
-                onClick={(e) => e.stopPropagation()}
-                className="mt-2 inline-block text-[11px] text-muted-foreground hover:text-gold underline"
-              >
+              <div className="px-4 pt-1 text-center">
+                <h3 className="text-sm font-extrabold text-gold-gradient line-clamp-1">{p.title}</h3>
+                <p className="mt-1 text-lg font-black text-gold">EG {Number(p.price).toLocaleString()}</p>
+              </div>
+            </button>
+            <div className="px-4 pb-4 pt-2 text-center">
+              <Link to="/product/$id" params={{ id: p.id }} className="text-[11px] text-muted-foreground hover:text-gold underline">
                 التفاصيل
               </Link>
             </div>
             <div className="absolute inset-x-0 top-0 h-1 bg-gold-gradient opacity-80" />
-          </button>
+          </div>
         ))}
       </div>
+
 
       {/* History */}
       {user && (orders.data ?? []).length > 0 && (
