@@ -3,7 +3,16 @@ import { AppLayout } from "@/components/AppLayout";
 import { Phone, Building2, Bitcoin } from "lucide-react";
 
 export const Route = createFileRoute("/payments")({
-  head: () => ({ meta: [{ title: "طرق الدفع — Lion Store" }] }),
+  head: () => ({
+    meta: [
+      { title: "طرق الدفع — Lion Store" },
+      { name: "description", content: "ادفع في ليون ستور بفودافون كاش، إنستا باي، أو USDT (TRC20). كل المعاملات آمنة ومشفرة وسريعة التنفيذ." },
+      { property: "og:title", content: "طرق الدفع المتاحة — Lion Store" },
+      { property: "og:description", content: "فودافون كاش، إنستا باي، USDT — ادفع بالطريقة التي تناسبك." },
+      { property: "og:url", content: "https://lions-stores.com/payments" },
+    ],
+    links: [{ rel: "canonical", href: "https://lions-stores.com/payments" }],
+  }),
   component: Payments,
 });
 

@@ -11,7 +11,16 @@ import { z } from "zod";
 const searchSchema = z.object({ q: z.string().optional().catch("") });
 
 export const Route = createFileRoute("/search")({
-  head: () => ({ meta: [{ title: "بحث — Lion Store" }] }),
+  head: () => ({
+    meta: [
+      { title: "بحث — Lion Store" },
+      { name: "description", content: "ابحث عن لعبتك أو تطبيقك المفضل في متجر ليون ستور واطلب الشحن خلال ثواني بأفضل الأسعار." },
+      { property: "og:title", content: "بحث المنتجات — Lion Store" },
+      { property: "og:description", content: "ابحث عن أي لعبة أو تطبيق متاح للشحن." },
+      { property: "og:url", content: "https://lions-stores.com/search" },
+    ],
+    links: [{ rel: "canonical", href: "https://lions-stores.com/search" }],
+  }),
   validateSearch: searchSchema,
   component: SearchPage,
 });

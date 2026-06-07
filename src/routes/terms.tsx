@@ -2,10 +2,16 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AppLayout } from "@/components/AppLayout";
 
 export const Route = createFileRoute("/terms")({
-  head: () => ({ meta: [
-    { title: "شروط الاستخدام — Lion Store" },
-    { name: "description", content: "شروط وأحكام استخدام منصة Lion Store." },
-  ] }),
+  head: () => ({
+    meta: [
+      { title: "شروط الاستخدام — Lion Store" },
+      { name: "description", content: "شروط وأحكام استخدام منصة ليون ستور: الحسابات، المشتريات، التسليم، والاسترجاع." },
+      { property: "og:title", content: "شروط الاستخدام — Lion Store" },
+      { property: "og:description", content: "اطّلع على شروط استخدام منصة ليون ستور." },
+      { property: "og:url", content: "https://lions-stores.com/terms" },
+    ],
+    links: [{ rel: "canonical", href: "https://lions-stores.com/terms" }],
+  }),
   component: Terms,
 });
 

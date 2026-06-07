@@ -11,7 +11,15 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/topup")({
   ssr: false,
-  head: () => ({ meta: [{ title: "شحن الرصيد — Lion Store" }] }),
+  head: () => ({
+    meta: [
+      { title: "شحن الرصيد — Lion Store" },
+      { name: "description", content: "اشحن رصيد محفظتك في ليون ستور لاستخدامه في شراء أي منتج من المتجر. طرق دفع متعددة وآمنة." },
+      { property: "og:url", content: "https://lions-stores.com/topup" },
+      { name: "robots", content: "noindex" },
+    ],
+    links: [{ rel: "canonical", href: "https://lions-stores.com/topup" }],
+  }),
   beforeLoad: async () => {
     const { supabase } = await import("@/integrations/supabase/client");
     const { data } = await supabase.auth.getSession();
