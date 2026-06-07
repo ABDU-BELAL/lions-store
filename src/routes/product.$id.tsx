@@ -18,7 +18,7 @@ export const getProductById = createServerFn({ method: "GET" })
   .handler(async ({ data }) => {
     const { data: product, error } = await supabaseAdmin
       .from("products")
-      .select("id, title, description, category, price, image_url, is_offer, collection_id")
+      .select("id, title, description, category, price, image_url, is_offer, collection_id, quantity_enabled, unit_size, unit_label, min_quantity, max_quantity")
       .eq("id", data.id)
       .eq("is_active", true)
       .maybeSingle();
@@ -26,6 +26,7 @@ export const getProductById = createServerFn({ method: "GET" })
     if (!product) return null;
     return { ...product, image_url: await signBucketPath("products", product.image_url) };
   });
+
 
 export const Route = createFileRoute("/product/$id")({
   head: ({ loaderData }) => {
@@ -61,9 +62,18 @@ function ProductPage() {
 
   const account = useQuery({ queryKey: ["account"], queryFn: () => accountFn(), enabled: !!user });
   const [gameId, setGameId] = useState("");
+  const qtyEnabled = !!(product as any).quantity_enabled;
+  const unitSize = Number((product as any).unit_size ?? 1) || 1;
+  const unitLabel = (product as any).unit_label ?? "";
+  const minQty = (product as any).min_quantity != null ? Number((product as any).min_quantity) : null;
+  const maxQty = (product as any).max_quantity != null ? Number((product as any).max_quantity) : null;
+  const [quantity, setQuantity] = useState<string>(qtyEnabled ? String(minQty ?? unitSize) : "");
+  const qtyNum = Number(quantity) || 0;
+  const totalPrice = qtyEnabled ? Math.round((qtyNum / unitSize) * Number(product.price) * 100) / 100 : Number(product.price);
+  const qtyValid = !qtyEnabled || (qtyNum > 0 && (minQty == null || qtyNum >= minQty) && (maxQty == null || qtyNum <= maxQty));
 
   const mutation = useMutation({
-    mutationFn: (vars: { productId: string; gameUserId?: string }) => purchaseFn({ data: vars }),
+    mutationFn: (vars: { productId: string; gameUserId?: string; quantity?: number }) => purchaseFn({ data: vars }),
     onSuccess: () => {
       toast.success("تم إرسال الطلب!");
       qc.invalidateQueries({ queryKey: ["account"] });
@@ -77,6 +87,7 @@ function ProductPage() {
         e.message,
       ),
   });
+
 
   const balance = Number(account.data?.balance ?? 0);
 
