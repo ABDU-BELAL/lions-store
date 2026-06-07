@@ -19,11 +19,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const qc = useQueryClient();
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, s) => {
       setSession(s);
       setLoading(false);
-      router.invalidate();
-      qc.invalidateQueries();
+      if (event === "SIGNED_OUT") {
+        qc.cancelQueries();
+        qc.clear();
+        router.invalidate();
+        return;
+      }
+      if (event === "SIGNED_IN" || event === "USER_UPDATED") {
+        router.invalidate();
+        qc.invalidateQueries();
+      }
     });
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
