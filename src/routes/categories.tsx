@@ -30,15 +30,9 @@ function Categories() {
 
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
         {collections.map((c) => (
-          <Link key={c.id} to="/collection/$slug" params={{ slug: c.slug }} className="group rounded-2xl bg-card/70 border border-border hover:border-gold/60 hover:shadow-gold transition overflow-hidden text-center">
-            <div className="aspect-square bg-secondary/50 grid place-items-center">
-              {c.image_url ? (
-                <img src={c.image_url} alt={c.title} className="w-full h-full object-cover" />
-              ) : (
-                <Tag className="size-12 text-gold opacity-60" />
-              )}
-            </div>
-            <p className="font-extrabold text-sm p-3">{c.title}</p>
+          <Link key={c.id} to="/collection/$slug" params={{ slug: c.slug }} className="group rounded-2xl overflow-hidden bg-dark-gradient border border-gold/30 hover:border-gold/70 hover:shadow-gold transition text-center">
+            <FramedImage src={c.image_url} alt={c.title} />
+            <p className="font-extrabold text-sm p-3 text-gold-gradient">{c.title}</p>
           </Link>
         ))}
 
