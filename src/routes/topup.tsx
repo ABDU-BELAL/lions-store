@@ -23,11 +23,11 @@ export const Route = createFileRoute("/topup")({
   component: TopupPage,
 });
 
-const methods = [
-  { id: "vodafone_cash", label: "فودافون كاش", icon: Phone, account: "01040483540", color: "bg-red-600" },
-  { id: "instapay", label: "إنستا باي", account: "islam20304050@instapay", link: "https://ipn.eg/S/islam20304050/instapay/7sbSIb", icon: Building2, color: "bg-purple-600" },
-  { id: "binance", label: "USDT (TRC20)", account: "TS3NudYfcXA3cUBqZmMUFPpidZRdFG86PD", icon: Bitcoin, color: "bg-yellow-500" },
-] as const;
+const methodMeta = [
+  { id: "vodafone_cash" as const, label: "فودافون كاش", icon: Phone, color: "bg-red-600" },
+  { id: "instapay" as const, label: "إنستا باي", icon: Building2, color: "bg-purple-600" },
+  { id: "binance" as const, label: "USDT (TRC20)", icon: Bitcoin, color: "bg-yellow-500" },
+];
 
 const statusMap = {
   pending: { label: "قيد المراجعة", icon: Clock, color: "text-gold" },
