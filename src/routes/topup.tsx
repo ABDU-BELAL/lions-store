@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getMyAccount } from "@/lib/account.functions";
-import { createTopupRequest, listMyTopups } from "@/lib/topup.functions";
+import { createTopupRequest, listMyTopups, getPaymentMethods } from "@/lib/topup.functions";
 import { useEffect, useState } from "react";
 import { Wallet, Phone, Building2, Bitcoin, Clock, CheckCircle2, XCircle, Copy, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
