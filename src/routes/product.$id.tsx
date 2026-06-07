@@ -1,0 +1,146 @@
+import { createFileRoute, Link, useNavigate, notFound } from "@tanstack/react-router";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useServerFn, createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
+import { AppLayout } from "@/components/AppLayout";
+import { FramedImage } from "@/components/FramedImage";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { signBucketPath } from "@/lib/storage.server";
+import { purchaseProduct } from "@/lib/shop.functions";
+import { getMyAccount } from "@/lib/account.functions";
+import { useAuth } from "@/hooks/useAuth";
+import { useState } from "react";
+import { toast } from "sonner";
+import { Wallet, ArrowRight } from "lucide-react";
+
+export const getProductById = createServerFn({ method: "GET" })
+  .inputValidator((i) => z.object({ id: z.string().uuid() }).parse(i))
+  .handler(async ({ data }) => {
+    const { data: product, error } = await supabaseAdmin
+      .from("products")
+      .select("id, title, description, category, price, image_url, is_offer, collection_id")
+      .eq("id", data.id)
+      .eq("is_active", true)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!product) return null;
+    return { ...product, image_url: await signBucketPath("products", product.image_url) };
+  });
+
+export const Route = createFileRoute("/product/$id")({
+  head: ({ loaderData }) => ({
+    meta: [
+      { title: loaderData?.title ? `${loaderData.title} — Lion Store` : "منتج — Lion Store" },
+      { name: "description", content: loaderData?.description ?? "" },
+    ],
+  }),
+  loader: async ({ params }) => {
+    const product = await getProductById({ data: { id: params.id } });
+    if (!product) throw notFound();
+    return product;
+  },
+  errorComponent: ({ error }) => (
+    <AppLayout><p className="text-center py-12 text-destructive">{error.message}</p></AppLayout>
+  ),
+  notFoundComponent: () => (
+    <AppLayout><p className="text-center py-12 text-muted-foreground">المنتج غير موجود</p></AppLayout>
+  ),
+  component: ProductPage,
+});
+
+function ProductPage() {
+  const product = Route.useLoaderData();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const qc = useQueryClient();
+  const accountFn = useServerFn(getMyAccount);
+  const purchaseFn = useServerFn(purchaseProduct);
+
+  const account = useQuery({ queryKey: ["account"], queryFn: () => accountFn(), enabled: !!user });
+  const [gameId, setGameId] = useState("");
+
+  const mutation = useMutation({
+    mutationFn: (vars: { productId: string; gameUserId?: string }) => purchaseFn({ data: vars }),
+    onSuccess: () => {
+      toast.success("تم إرسال الطلب!");
+      qc.invalidateQueries({ queryKey: ["account"] });
+      qc.invalidateQueries({ queryKey: ["my-orders"] });
+      navigate({ to: "/transactions" });
+    },
+    onError: (e: Error) =>
+      toast.error(
+        e.message.includes("Insufficient") ? "رصيدك غير كافٍ." :
+        e.message.includes("Rate") || e.message.includes("تجاوز") ? e.message :
+        e.message,
+      ),
+  });
+
+  const balance = Number(account.data?.balance ?? 0);
+
+  return (
+    <AppLayout>
+      <Link to="/shop" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-gold mb-4">
+        <ArrowRight className="size-4" /> العودة للمتجر
+      </Link>
+
+      <div className="grid md:grid-cols-2 gap-8 items-start">
+        <div className="rounded-3xl bg-dark-gradient border-gold p-6 shadow-card">
+          <FramedImage src={product.image_url} alt={product.title} />
+        </div>
+
+        <div className="rounded-3xl bg-card/70 border border-border p-6 shadow-card">
+          {product.is_offer && (
+            <span className="inline-block text-[11px] font-extrabold bg-destructive text-destructive-foreground rounded-full px-3 py-1 mb-3">
+              عرض خاص
+            </span>
+          )}
+          <h1 className="text-3xl font-black text-gold-gradient">{product.title}</h1>
+          <p className="mt-2 text-sm text-muted-foreground">{product.category}</p>
+
+          <p className="mt-6 text-4xl font-black text-gold">EG {Number(product.price).toLocaleString()}</p>
+
+          {product.description && (
+            <p className="mt-4 text-sm leading-relaxed whitespace-pre-line text-foreground/90">{product.description}</p>
+          )}
+
+          {user && (
+            <div className="mt-6 flex items-center justify-between text-sm rounded-xl bg-secondary/40 p-3">
+              <span className="text-muted-foreground flex items-center gap-1"><Wallet className="size-4" />رصيدك</span>
+              <span className="font-extrabold text-gold-gradient">EG {balance.toLocaleString()}</span>
+            </div>
+          )}
+
+          {product.category === "games" && user && (
+            <div className="mt-4">
+              <label className="text-xs font-bold mb-1 block">ID اللاعب (اختياري)</label>
+              <input
+                value={gameId}
+                onChange={(e) => setGameId(e.target.value)}
+                placeholder="123456789"
+                className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3"
+              />
+            </div>
+          )}
+
+          {!user ? (
+            <Link to="/login" className="mt-6 w-full block text-center rounded-xl bg-gold-gradient text-primary-foreground font-extrabold py-3 shadow-gold">
+              سجّل دخول للشراء
+            </Link>
+          ) : balance < Number(product.price) ? (
+            <Link to="/topup" className="mt-6 w-full block text-center rounded-xl bg-gold-gradient text-primary-foreground font-extrabold py-3 shadow-gold">
+              اشحن رصيدك أولًا
+            </Link>
+          ) : (
+            <button
+              disabled={mutation.isPending}
+              onClick={() => mutation.mutate({ productId: product.id, gameUserId: gameId.trim() || undefined })}
+              className="mt-6 w-full rounded-xl bg-gold-gradient text-primary-foreground font-extrabold py-3 shadow-gold disabled:opacity-50"
+            >
+              {mutation.isPending ? "..." : "أكد الشراء"}
+            </button>
+          )}
+        </div>
+      </div>
+    </AppLayout>
+  );
+}
