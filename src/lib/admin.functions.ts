@@ -97,22 +97,19 @@ export const decideTopup = createServerFn({ method: "POST" })
     if (!claimed) throw new Error("الطلب غير موجود أو تمت معالجته مسبقًا");
 
     if (data.decision === "approved") {
-      // increment wallet
-      const { data: wallet } = await supabaseAdmin.from("wallets").select("balance").eq("user_id", claimed.user_id).maybeSingle();
-      const newBalance = Number(wallet?.balance ?? 0) + Number(claimed.amount);
-      const { error: e3 } = await supabaseAdmin
-        .from("wallets")
-        .upsert({ user_id: claimed.user_id, balance: newBalance }, { onConflict: "user_id" });
-      if (e3) throw new Error(e3.message);
-      await supabaseAdmin.from("wallet_transactions").insert({
-        user_id: claimed.user_id,
-        type: "deposit",
-        amount: Number(claimed.amount),
-        balance_after: newBalance,
-        description: "شحن رصيد",
-        ref_table: "topup_requests",
-        ref_id: claimed.id,
+      // Atomic credit via SECURITY DEFINER function that locks the wallet row.
+      const { error: e3 } = await supabaseAdmin.rpc("credit_wallet", {
+        p_user_id: claimed.user_id,
+        p_amount: Number(claimed.amount),
+        p_type: "deposit",
+        p_description: "شحن رصيد",
+        p_ref_table: "topup_requests",
+        p_ref_id: claimed.id,
       });
+      if (e3) {
+        console.error("[decideTopup] credit_wallet", e3);
+        throw new Error("تعذر إضافة الرصيد");
+      }
     }
 
     notifyTelegram(
