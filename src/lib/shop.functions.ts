@@ -9,7 +9,7 @@ import { enforceRateLimit } from "@/lib/rate-limit.server";
 export const listShopProducts = createServerFn({ method: "GET" }).handler(async () => {
   const { data, error } = await supabaseAdmin
     .from("products")
-    .select("id, title, description, category, price, image_url, is_offer, sort_order, collection_id")
+    .select("id, title, description, category, price, image_url, is_offer, sort_order, collection_id, quantity_enabled, unit_size, unit_label, min_quantity, max_quantity")
     .eq("is_active", true)
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: false });
@@ -20,7 +20,9 @@ export const listShopProducts = createServerFn({ method: "GET" }).handler(async 
 const purchaseSchema = z.object({
   productId: z.string().uuid(),
   gameUserId: z.string().trim().min(1).max(120).optional(),
+  quantity: z.number().positive().max(1_000_000_000).optional(),
 });
+
 
 export const purchaseProduct = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -33,8 +35,10 @@ export const purchaseProduct = createServerFn({ method: "POST" })
       p_user_id: userId,
       p_product_id: data.productId,
       p_game_user_id: data.gameUserId,
+      p_quantity: data.quantity ?? null,
     });
     if (error) { console.error("[db]", error); throw new Error("حدث خطأ، حاول مرة أخرى"); };
+
 
     // Fire-and-forget notification
     try {

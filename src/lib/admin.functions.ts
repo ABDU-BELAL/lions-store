@@ -132,7 +132,13 @@ const productSchema = z.object({
   is_offer: z.boolean().optional(),
   sort_order: z.number().int().optional(),
   collection_id: z.string().uuid().nullable().optional(),
+  quantity_enabled: z.boolean().optional(),
+  unit_size: z.number().positive().max(1_000_000).optional(),
+  unit_label: z.string().trim().max(40).nullable().optional(),
+  min_quantity: z.number().positive().max(1_000_000_000).nullable().optional(),
+  max_quantity: z.number().positive().max(1_000_000_000).nullable().optional(),
 });
+
 
 export const adminListProducts = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])

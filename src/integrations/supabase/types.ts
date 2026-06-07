@@ -91,6 +91,7 @@ export type Database = {
           id: string
           product_id: string | null
           product_title: string
+          quantity: number | null
           status: string
           user_id: string
         }
@@ -101,6 +102,7 @@ export type Database = {
           id?: string
           product_id?: string | null
           product_title: string
+          quantity?: number | null
           status?: string
           user_id: string
         }
@@ -111,6 +113,7 @@ export type Database = {
           id?: string
           product_id?: string | null
           product_title?: string
+          quantity?: number | null
           status?: string
           user_id?: string
         }
@@ -134,9 +137,14 @@ export type Database = {
           image_url: string | null
           is_active: boolean
           is_offer: boolean
+          max_quantity: number | null
+          min_quantity: number | null
           price: number
+          quantity_enabled: boolean
           sort_order: number
           title: string
+          unit_label: string | null
+          unit_size: number
           updated_at: string
         }
         Insert: {
@@ -148,9 +156,14 @@ export type Database = {
           image_url?: string | null
           is_active?: boolean
           is_offer?: boolean
+          max_quantity?: number | null
+          min_quantity?: number | null
           price: number
+          quantity_enabled?: boolean
           sort_order?: number
           title: string
+          unit_label?: string | null
+          unit_size?: number
           updated_at?: string
         }
         Update: {
@@ -162,9 +175,14 @@ export type Database = {
           image_url?: string | null
           is_active?: boolean
           is_offer?: boolean
+          max_quantity?: number | null
+          min_quantity?: number | null
           price?: number
+          quantity_enabled?: boolean
           sort_order?: number
           title?: string
+          unit_label?: string | null
+          unit_size?: number
           updated_at?: string
         }
         Relationships: [
@@ -381,14 +399,24 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
-      process_purchase: {
-        Args: {
-          p_game_user_id?: string
-          p_product_id: string
-          p_user_id: string
-        }
-        Returns: string
-      }
+      process_purchase:
+        | {
+            Args: {
+              p_game_user_id?: string
+              p_product_id: string
+              p_user_id: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              p_game_user_id?: string
+              p_product_id: string
+              p_quantity?: number
+              p_user_id: string
+            }
+            Returns: string
+          }
       purchase_product: {
         Args: { p_game_user_id?: string; p_product_id: string }
         Returns: string
