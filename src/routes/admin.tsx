@@ -716,3 +716,52 @@ function AdminsTab({ isSuper }: { isSuper: boolean }) {
     </div>
   );
 }
+
+function PaymentMethodsTab() {
+  const getFn = useServerFn(getPaymentMethods);
+  const updateFn = useServerFn(adminUpdatePaymentMethods);
+  const qc = useQueryClient();
+  const { data } = useQuery({ queryKey: ["payment-methods-admin"], queryFn: () => getFn() });
+  const [local, setLocal] = useState<null | { vodafone_cash: string; instapay_account: string; instapay_link: string; binance: string }>(null);
+  const state = local ?? data ?? { vodafone_cash: "", instapay_account: "", instapay_link: "", binance: "" };
+  const save = useMutation({
+    mutationFn: () => updateFn({ data: state }),
+    onSuccess: () => {
+      toast.success("تم حفظ وسائل الدفع");
+      qc.invalidateQueries({ queryKey: ["payment-methods"] });
+      qc.invalidateQueries({ queryKey: ["payment-methods-admin"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const set = (k: keyof typeof state, v: string) => setLocal({ ...state, [k]: v });
+
+  return (
+    <div className="max-w-lg">
+      <div className="rounded-2xl bg-card/70 border border-border p-5 space-y-4">
+        <h3 className="text-lg font-extrabold text-gold-gradient flex items-center gap-2"><Wallet className="size-5" /> وسائل الدفع وأرقام الشحن</h3>
+        <p className="text-xs text-muted-foreground">هذه البيانات تظهر للمستخدمين في صفحة شحن الرصيد. (السوبر أدمن فقط)</p>
+
+        <div>
+          <label className="text-xs font-bold mb-1 block">رقم فودافون كاش</label>
+          <input dir="ltr" value={state.vodafone_cash} onChange={(e) => set("vodafone_cash", e.target.value)} placeholder="01xxxxxxxxx" className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3 text-right" />
+        </div>
+        <div>
+          <label className="text-xs font-bold mb-1 block">حساب إنستا باي</label>
+          <input dir="ltr" value={state.instapay_account} onChange={(e) => set("instapay_account", e.target.value)} placeholder="name@instapay" className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3 text-right" />
+        </div>
+        <div>
+          <label className="text-xs font-bold mb-1 block">رابط إنستا باي (اختياري)</label>
+          <input dir="ltr" value={state.instapay_link} onChange={(e) => set("instapay_link", e.target.value)} placeholder="https://ipn.eg/..." className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3 text-right" />
+        </div>
+        <div>
+          <label className="text-xs font-bold mb-1 block">عنوان Binance / USDT (TRC20)</label>
+          <input dir="ltr" value={state.binance} onChange={(e) => set("binance", e.target.value)} placeholder="Txxxxxxxxxxxxxxxxxxxxx" className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3 text-right" />
+        </div>
+
+        <button disabled={save.isPending} onClick={() => save.mutate()} className="w-full rounded-xl bg-gold-gradient text-primary-foreground font-extrabold py-2 disabled:opacity-50">
+          {save.isPending ? "..." : "حفظ"}
+        </button>
+      </div>
+    </div>
+  );
+}
