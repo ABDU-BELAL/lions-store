@@ -199,20 +199,69 @@ function TopupsTab() {
   );
 }
 
-function ProductsTab() {
+async function fileToBase64(file: File): Promise<{ base64: string; contentType: string; filename: string }> {
+  const buf = await file.arrayBuffer();
+  let bin = ""; const bytes = new Uint8Array(buf);
+  for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+  return { base64: btoa(bin), contentType: file.type || "image/jpeg", filename: file.name };
+}
+
+function ImageUploadField({ value, previewUrl, onChange, label = "اختر صورة (حتى 5MB)" }: { value: string; previewUrl?: string; onChange: (path: string) => void; label?: string }) {
+  const upload = useServerFn(adminUploadProductImage);
+  const [busy, setBusy] = useState(false);
+  const handle = async (file: File) => {
+    if (file.size > 5 * 1024 * 1024) { toast.error("الصورة أكبر من 5MB"); return; }
+    setBusy(true);
+    try {
+      const payload = await fileToBase64(file);
+      const { path } = await upload({ data: payload });
+      onChange(path);
+      toast.success("تم رفع الصورة");
+    } catch (e) { toast.error((e as Error).message); }
+    finally { setBusy(false); }
+  };
+  return (
+    <div>
+      <label className="block">
+        <div className="rounded-xl border-2 border-dashed border-gold/40 bg-secondary/50 p-4 text-center cursor-pointer hover:border-gold transition">
+          <Upload className="mx-auto size-6 text-gold mb-1" />
+          <p className="text-sm font-bold">{busy ? "جاري الرفع..." : label}</p>
+        </div>
+        <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && handle(e.target.files[0])} />
+      </label>
+      {value && (
+        <div className="mt-2 flex items-center gap-2">
+          {previewUrl && previewUrl.startsWith("http") ? (
+            <img src={previewUrl} alt="" className="size-16 object-cover rounded-lg border border-border" />
+          ) : (
+            <p className="text-xs text-emerald-400 font-bold">✓ تم رفع صورة</p>
+          )}
+          <button type="button" onClick={() => onChange("")} className="text-xs text-destructive hover:underline">إزالة</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ProductsTab({ initialCollectionId, onBack }: { initialCollectionId?: string | null; onBack?: () => void } = {}) {
   const list = useServerFn(adminListProducts);
   const upsert = useServerFn(adminUpsertProduct);
   const del = useServerFn(adminDeleteProduct);
+  const colsList = useServerFn(adminListCollections);
   const qc = useQueryClient();
   const { data } = useQuery({ queryKey: ["admin-products"], queryFn: () => list() });
-  const [editing, setEditing] = useState<null | { id?: string; title: string; description: string; image_url: string; category: string; price: number; is_active: boolean; is_offer: boolean; sort_order: number }>(null);
+  const { data: collections = [] } = useQuery({ queryKey: ["admin-collections"], queryFn: () => colsList() });
+  const [filter, setFilter] = useState<string>(initialCollectionId ?? "");
+  type EditState = { id?: string; title: string; description: string; image_url: string; category: string; price: number; is_active: boolean; is_offer: boolean; sort_order: number; collection_id: string | null };
+  const [editing, setEditing] = useState<null | EditState>(null);
 
-  const blank = () => ({ title: "", description: "", image_url: "", category: "games", price: 0, is_active: true, is_offer: false, sort_order: 0 });
+  const blank = (): EditState => ({ title: "", description: "", image_url: "", category: "games", price: 0, is_active: true, is_offer: false, sort_order: 0, collection_id: filter || null });
 
   const save = useMutation({
     mutationFn: () => upsert({ data: { id: editing?.id, data: {
       title: editing!.title, description: editing!.description || undefined, image_url: editing!.image_url || undefined,
       category: editing!.category, price: editing!.price, is_active: editing!.is_active, is_offer: editing!.is_offer, sort_order: editing!.sort_order,
+      collection_id: editing!.collection_id || null,
     } } }),
     onSuccess: () => { toast.success("تم الحفظ"); setEditing(null); qc.invalidateQueries({ queryKey: ["admin-products"] }); },
     onError: (e: Error) => toast.error(e.message),
@@ -223,40 +272,63 @@ function ProductsTab() {
     onSuccess: () => { toast.success("تم الحذف"); qc.invalidateQueries({ queryKey: ["admin-products"] }); },
   });
 
+  const visible = (data ?? []).filter((p) => !filter || p.collection_id === filter);
+  const scopedCollection = initialCollectionId ? collections.find((c) => c.id === initialCollectionId) : null;
+
   return (
     <div>
-      <button onClick={() => setEditing(blank())} className="mb-4 rounded-full bg-gold-gradient text-primary-foreground font-bold px-4 py-2 text-sm flex items-center gap-2"><Plus className="size-4" /> إضافة منتج جديد</button>
+      {onBack && (
+        <button onClick={onBack} className="mb-3 text-sm text-gold hover:underline">← رجوع للأقسام</button>
+      )}
+      {scopedCollection && (
+        <div className="mb-4 p-3 rounded-xl bg-gold/10 border border-gold/30">
+          <p className="text-sm">إدارة منتجات قسم: <span className="font-extrabold text-gold-gradient">{scopedCollection.title}</span></p>
+        </div>
+      )}
+      <div className="flex items-center gap-2 mb-4 flex-wrap">
+        <button onClick={() => setEditing(blank())} className="rounded-full bg-gold-gradient text-primary-foreground font-bold px-4 py-2 text-sm flex items-center gap-2"><Plus className="size-4" /> منتج جديد</button>
+        {!initialCollectionId && (
+          <select value={filter} onChange={(e) => setFilter(e.target.value)} className="rounded-full bg-secondary border border-border px-3 py-2 text-sm">
+            <option value="">كل المنتجات</option>
+            {collections.map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}
+          </select>
+        )}
+      </div>
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        {(data ?? []).map((p) => (
+        {visible.map((p) => (
           <div key={p.id} className="rounded-2xl bg-card/70 border border-border p-4">
             {p.image_url && <img src={p.image_url} alt={p.title} className="aspect-video w-full object-cover rounded-xl mb-2" />}
             <p className="font-extrabold">{p.title}</p>
             <p className="text-xs text-muted-foreground">{p.category} • {p.is_active ? "مفعّل" : "متوقف"}{p.is_offer ? " • عرض" : ""}</p>
             <p className="mt-1 font-black text-gold-gradient">EG {Number(p.price).toLocaleString()}</p>
             <div className="mt-3 flex gap-2">
-              <button onClick={() => setEditing({ id: p.id, title: p.title, description: p.description ?? "", image_url: p.image_url ?? "", category: p.category, price: Number(p.price), is_active: p.is_active, is_offer: p.is_offer, sort_order: p.sort_order })} className="flex-1 rounded-lg bg-secondary py-1.5 text-sm font-bold">تعديل</button>
+              <button onClick={() => setEditing({ id: p.id, title: p.title, description: p.description ?? "", image_url: p.image_url ?? "", category: p.category, price: Number(p.price), is_active: p.is_active, is_offer: p.is_offer, sort_order: p.sort_order, collection_id: p.collection_id ?? null })} className="flex-1 rounded-lg bg-secondary py-1.5 text-sm font-bold">تعديل</button>
               <button onClick={() => confirm("متأكد؟") && remove.mutate(p.id)} className="rounded-lg bg-destructive text-white px-3 py-1.5 text-sm font-bold"><Trash2 className="size-4" /></button>
             </div>
           </div>
         ))}
-        {(data ?? []).length === 0 && <p className="col-span-full text-center py-8 text-muted-foreground">لا يوجد منتجات. أضف أول واحد!</p>}
+        {visible.length === 0 && <p className="col-span-full text-center py-8 text-muted-foreground">لا يوجد منتجات. أضف أول واحد!</p>}
       </div>
 
       {editing && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm grid place-items-center p-4" onClick={() => setEditing(null)}>
           <form onClick={(e) => e.stopPropagation()} onSubmit={(e) => { e.preventDefault(); save.mutate(); }} className="w-full max-w-lg bg-card border-gold rounded-2xl p-5 space-y-3 max-h-[90vh] overflow-y-auto">
             <h3 className="text-xl font-extrabold text-gold-gradient">{editing.id ? "تعديل منتج" : "منتج جديد"}</h3>
-            <input required placeholder="الاسم" value={editing.title} onChange={(e) => setEditing({ ...editing, title: e.target.value })} className="w-full rounded-xl bg-secondary px-3 py-2" />
+            <input required placeholder="الاسم (مثال: 60 UC ببجي)" value={editing.title} onChange={(e) => setEditing({ ...editing, title: e.target.value })} className="w-full rounded-xl bg-secondary px-3 py-2" />
             <textarea placeholder="الوصف" value={editing.description} onChange={(e) => setEditing({ ...editing, description: e.target.value })} rows={2} className="w-full rounded-xl bg-secondary px-3 py-2" />
-            <input placeholder="رابط الصورة" value={editing.image_url} onChange={(e) => setEditing({ ...editing, image_url: e.target.value })} className="w-full rounded-xl bg-secondary px-3 py-2" />
+            <ImageUploadField value={editing.image_url} previewUrl={editing.image_url} onChange={(v) => setEditing({ ...editing, image_url: v })} />
             <div className="grid grid-cols-2 gap-2">
+              <select value={editing.collection_id ?? ""} onChange={(e) => setEditing({ ...editing, collection_id: e.target.value || null })} className="rounded-xl bg-secondary px-3 py-2">
+                <option value="">بدون قسم</option>
+                {collections.map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}
+              </select>
               <select value={editing.category} onChange={(e) => setEditing({ ...editing, category: e.target.value })} className="rounded-xl bg-secondary px-3 py-2">
                 <option value="games">ألعاب</option>
                 <option value="apps">تطبيقات</option>
                 <option value="other">أخرى</option>
               </select>
-              <input type="number" required min={0} placeholder="السعر" value={editing.price} onChange={(e) => setEditing({ ...editing, price: Number(e.target.value) })} className="rounded-xl bg-secondary px-3 py-2" />
             </div>
+            <input type="number" required min={0} placeholder="السعر" value={editing.price} onChange={(e) => setEditing({ ...editing, price: Number(e.target.value) })} className="w-full rounded-xl bg-secondary px-3 py-2" />
             <div className="flex items-center gap-4 text-sm">
               <label className="flex items-center gap-2"><input type="checkbox" checked={editing.is_active} onChange={(e) => setEditing({ ...editing, is_active: e.target.checked })} /> مفعّل</label>
               <label className="flex items-center gap-2"><input type="checkbox" checked={editing.is_offer} onChange={(e) => setEditing({ ...editing, is_offer: e.target.checked })} /> عرض</label>
@@ -272,6 +344,115 @@ function ProductsTab() {
     </div>
   );
 }
+
+function CollectionsTab() {
+  const list = useServerFn(adminListCollections);
+  const upsert = useServerFn(adminUpsertCollection);
+  const del = useServerFn(adminDeleteCollection);
+  const qc = useQueryClient();
+  const { data = [] } = useQuery({ queryKey: ["admin-collections"], queryFn: () => list() });
+  type EditState = { id?: string; slug: string; title: string; image_url: string; sort_order: number; is_active: boolean; show_on_home: boolean };
+  const [editing, setEditing] = useState<null | EditState>(null);
+  const [manageId, setManageId] = useState<string | null>(null);
+
+  const blank = (): EditState => ({ slug: "", title: "", image_url: "", sort_order: 0, is_active: true, show_on_home: true });
+
+  const save = useMutation({
+    mutationFn: () => upsert({ data: { id: editing?.id, data: {
+      slug: editing!.slug, title: editing!.title, image_url: editing!.image_url || null,
+      sort_order: editing!.sort_order, is_active: editing!.is_active, show_on_home: editing!.show_on_home,
+    } } }),
+    onSuccess: () => { toast.success("تم"); setEditing(null); qc.invalidateQueries({ queryKey: ["admin-collections"] }); qc.invalidateQueries({ queryKey: ["collections-active"] }); qc.invalidateQueries({ queryKey: ["home-collections"] }); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const remove = useMutation({
+    mutationFn: (id: string) => del({ data: { id } }),
+    onSuccess: () => { toast.success("تم الحذف"); qc.invalidateQueries({ queryKey: ["admin-collections"] }); },
+  });
+
+  if (manageId) return <ProductsTab initialCollectionId={manageId} onBack={() => setManageId(null)} />;
+
+  return (
+    <div>
+      <button onClick={() => setEditing(blank())} className="mb-4 rounded-full bg-gold-gradient text-primary-foreground font-bold px-4 py-2 text-sm flex items-center gap-2"><Plus className="size-4" /> قسم جديد</button>
+      <p className="text-xs text-muted-foreground mb-3">القسم هو زر مثل "ببجي موبايل" — افتحه لإضافة منتجاته (UC، عروض...).</p>
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        {data.map((c) => (
+          <div key={c.id} className="rounded-2xl bg-card/70 border border-border p-4">
+            {c.image_url && <img src={c.image_url} alt={c.title} className="aspect-video w-full object-cover rounded-xl mb-2" />}
+            <p className="font-extrabold">{c.title}</p>
+            <p className="text-xs text-muted-foreground">/{c.slug} • {c.is_active ? "مفعّل" : "متوقف"}{c.show_on_home ? " • في الرئيسية" : ""}</p>
+            <div className="mt-3 flex gap-2 flex-wrap">
+              <button onClick={() => setManageId(c.id)} className="flex-1 rounded-lg bg-gold-gradient text-primary-foreground py-1.5 text-sm font-bold flex items-center justify-center gap-1"><Package className="size-4" /> المنتجات</button>
+              <button onClick={() => setEditing({ id: c.id, slug: c.slug, title: c.title, image_url: c.image_url ?? "", sort_order: c.sort_order, is_active: c.is_active, show_on_home: c.show_on_home })} className="rounded-lg bg-secondary px-3 py-1.5 text-sm font-bold">تعديل</button>
+              <button onClick={() => confirm("متأكد؟") && remove.mutate(c.id)} className="rounded-lg bg-destructive text-white px-3 py-1.5 text-sm font-bold"><Trash2 className="size-4" /></button>
+            </div>
+          </div>
+        ))}
+        {data.length === 0 && <p className="col-span-full text-center py-8 text-muted-foreground">لا يوجد أقسام. ابدأ بإضافة قسم زي "ببجي موبايل".</p>}
+      </div>
+
+      {editing && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm grid place-items-center p-4" onClick={() => setEditing(null)}>
+          <form onClick={(e) => e.stopPropagation()} onSubmit={(e) => { e.preventDefault(); save.mutate(); }} className="w-full max-w-lg bg-card border-gold rounded-2xl p-5 space-y-3 max-h-[90vh] overflow-y-auto">
+            <h3 className="text-xl font-extrabold text-gold-gradient flex items-center gap-2"><Layers className="size-5" /> {editing.id ? "تعديل قسم" : "قسم جديد"}</h3>
+            <input required placeholder="الاسم (مثال: ببجي موبايل)" value={editing.title} onChange={(e) => setEditing({ ...editing, title: e.target.value })} className="w-full rounded-xl bg-secondary px-3 py-2" />
+            <input required placeholder="slug (مثال: pubg-mobile)" value={editing.slug} onChange={(e) => setEditing({ ...editing, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-") })} className="w-full rounded-xl bg-secondary px-3 py-2" dir="ltr" />
+            <ImageUploadField value={editing.image_url} previewUrl={editing.image_url} onChange={(v) => setEditing({ ...editing, image_url: v })} label="صورة الزر" />
+            <div className="flex items-center gap-4 text-sm flex-wrap">
+              <label className="flex items-center gap-2"><input type="checkbox" checked={editing.is_active} onChange={(e) => setEditing({ ...editing, is_active: e.target.checked })} /> مفعّل</label>
+              <label className="flex items-center gap-2"><input type="checkbox" checked={editing.show_on_home} onChange={(e) => setEditing({ ...editing, show_on_home: e.target.checked })} /> في الرئيسية</label>
+              <input type="number" placeholder="الترتيب" value={editing.sort_order} onChange={(e) => setEditing({ ...editing, sort_order: Number(e.target.value) })} className="ml-auto w-20 rounded-xl bg-secondary px-3 py-2" />
+            </div>
+            <div className="flex gap-2">
+              <button type="button" onClick={() => setEditing(null)} className="flex-1 rounded-xl bg-secondary py-2 font-bold">إلغاء</button>
+              <button disabled={save.isPending} className="flex-1 rounded-xl bg-gold-gradient text-primary-foreground font-extrabold py-2">حفظ</button>
+            </div>
+          </form>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SettingsTab() {
+  const getFn = useServerFn(getHomeSettings);
+  const updateFn = useServerFn(adminUpdateHomeSettings);
+  const qc = useQueryClient();
+  const { data } = useQuery({ queryKey: ["home-settings-admin"], queryFn: () => getFn() });
+  const [local, setLocal] = useState<{ show_featured: boolean; show_offers: boolean; show_collections: boolean } | null>(null);
+  const state = local ?? data ?? { show_featured: true, show_offers: true, show_collections: true };
+  const save = useMutation({
+    mutationFn: () => updateFn({ data: state }),
+    onSuccess: () => { toast.success("تم الحفظ"); qc.invalidateQueries({ queryKey: ["home-settings"] }); qc.invalidateQueries({ queryKey: ["home-settings-admin"] }); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const toggle = (k: keyof typeof state) => setLocal({ ...state, [k]: !state[k] });
+
+  return (
+    <div className="max-w-md">
+      <div className="rounded-2xl bg-card/70 border border-border p-5 space-y-4">
+        <h3 className="text-lg font-extrabold text-gold-gradient flex items-center gap-2"><SettingsIcon className="size-5" /> أقسام الصفحة الرئيسية</h3>
+        <label className="flex items-center justify-between cursor-pointer">
+          <span className="text-sm">إظهار قسم "الأقسام"</span>
+          <input type="checkbox" checked={state.show_collections} onChange={() => toggle("show_collections")} className="size-5" />
+        </label>
+        <label className="flex items-center justify-between cursor-pointer">
+          <span className="text-sm">إظهار قسم "الألعاب والتطبيقات"</span>
+          <input type="checkbox" checked={state.show_featured} onChange={() => toggle("show_featured")} className="size-5" />
+        </label>
+        <label className="flex items-center justify-between cursor-pointer">
+          <span className="text-sm">إظهار قسم "أبرز العروض"</span>
+          <input type="checkbox" checked={state.show_offers} onChange={() => toggle("show_offers")} className="size-5" />
+        </label>
+        <button disabled={save.isPending} onClick={() => save.mutate()} className="w-full rounded-xl bg-gold-gradient text-primary-foreground font-extrabold py-2 disabled:opacity-50">{save.isPending ? "..." : "حفظ"}</button>
+      </div>
+    </div>
+  );
+}
+
+
 
 function BannersTab() {
   const list = useServerFn(adminListBanners);
