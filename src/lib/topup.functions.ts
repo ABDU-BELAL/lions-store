@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { notifyTelegram, escapeTelegramHtml } from "./telegram.server";
+import { enforceRateLimit } from "./rate-limit.server";
 
 const createSchema = z.object({
   amount: z.number().positive().max(1_000_000),
@@ -15,6 +16,9 @@ export const createTopupRequest = createServerFn({ method: "POST" })
   .inputValidator((input) => createSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+
+    // Rate limit: max 5 topup requests per user per 10 minutes
+    await enforceRateLimit(`topup:${userId}`, 5, 600, "عدد كبير من طلبات الشحن. انتظر قليلًا ثم حاول مجددًا.");
 
     const { data: row, error } = await supabase
       .from("topup_requests")
