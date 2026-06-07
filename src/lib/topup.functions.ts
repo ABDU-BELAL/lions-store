@@ -70,6 +70,16 @@ export const createTopupRequest = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
 
+    // Reject if this payment method is currently under maintenance
+    const { data: pmRow } = await supabaseAdmin.from("site_settings").select("value").eq("key", "payment_methods").maybeSingle();
+    const pm = { ...DEFAULT_PAYMENT_METHODS, ...((pmRow?.value ?? {}) as Partial<PaymentMethods>) };
+    const enabledKey = data.method === "vodafone_cash" ? "vodafone_cash_enabled"
+      : data.method === "instapay" ? "instapay_enabled"
+      : data.method === "binance" ? "binance_enabled" : null;
+    if (enabledKey && !pm[enabledKey]) {
+      throw new Error("وسيلة الدفع هذه تحت الصيانة حاليًا، اختر طريقة أخرى");
+    }
+
     // Rate limit: max 5 topup requests per user per hour
     await enforceRateLimit(`topup:${userId}`, 5, 3600, "لقد تجاوزت الحد المسموح به، يرجى المحاولة لاحقاً");
 
