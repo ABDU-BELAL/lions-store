@@ -126,6 +126,10 @@ export function AppLayout({ children }: { children: ReactNode }) {
         <Link to="/payments" className="hover:text-gold">طرق الدفع</Link>
         <span className="opacity-30">•</span>
         <Link to="/about" className="hover:text-gold">من نحن</Link>
+        <span className="opacity-30">•</span>
+        <a href="https://www.facebook.com/Abdelrahman.Abdin" target="_blank" rel="noopener noreferrer" className="hover:text-gold">
+          تطوير وبرمجة: Abdelrahman Abdin
+        </a>
       </footer>
 
       {/* Bottom nav */}
