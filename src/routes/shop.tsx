@@ -44,13 +44,15 @@ function ShopPage() {
 
   const [selected, setSelected] = useState<Product | null>(null);
   const [gameId, setGameId] = useState("");
+  const [quantity, setQuantity] = useState<string>("");
 
   const mutation = useMutation({
-    mutationFn: (vars: { productId: string; gameUserId?: string }) => purchaseFn({ data: vars }),
+    mutationFn: (vars: { productId: string; gameUserId?: string; quantity?: number }) => purchaseFn({ data: vars }),
     onSuccess: () => {
       toast.success("تم إرسال الطلب! هيتم تنفيذه قريبًا.");
       setSelected(null);
       setGameId("");
+      setQuantity("");
       qc.invalidateQueries({ queryKey: ["account"] });
       qc.invalidateQueries({ queryKey: ["my-orders"] });
     },
@@ -63,6 +65,7 @@ function ShopPage() {
       toast.error(msg);
     },
   });
+
 
   const balance = Number(account.data?.balance ?? 0);
   const allList = products.data ?? [];
@@ -181,17 +184,54 @@ function ShopPage() {
       )}
 
       {/* Purchase modal */}
-      {selected && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 backdrop-blur-sm p-4" onClick={() => setSelected(null)}>
-          <div onClick={(e) => e.stopPropagation()} className="w-full max-w-md rounded-3xl bg-card border-gold shadow-card p-6 relative">
-            <button onClick={() => setSelected(null)} className="absolute top-3 left-3 grid place-items-center size-9 rounded-full bg-secondary hover:bg-secondary/70">
+      {selected && (() => {
+        const qtyEnabled = !!(selected as any).quantity_enabled;
+        const unitSize = Number((selected as any).unit_size ?? 1) || 1;
+        const unitLabel = (selected as any).unit_label ?? "";
+        const minQty = (selected as any).min_quantity != null ? Number((selected as any).min_quantity) : null;
+        const maxQty = (selected as any).max_quantity != null ? Number((selected as any).max_quantity) : null;
+        const qtyNum = Number(quantity) || 0;
+        const total = qtyEnabled ? Math.round((qtyNum / unitSize) * Number(selected.price) * 100) / 100 : Number(selected.price);
+        const qtyValid = !qtyEnabled || (qtyNum > 0 && (minQty == null || qtyNum >= minQty) && (maxQty == null || qtyNum <= maxQty));
+        return (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 backdrop-blur-sm p-4" onClick={() => { setSelected(null); setQuantity(""); }}>
+          <div onClick={(e) => e.stopPropagation()} className="w-full max-w-md rounded-3xl bg-card border-gold shadow-card p-6 relative max-h-[90vh] overflow-y-auto">
+            <button onClick={() => { setSelected(null); setQuantity(""); }} className="absolute top-3 left-3 grid place-items-center size-9 rounded-full bg-secondary hover:bg-secondary/70">
               <X className="size-5" />
             </button>
             <h3 className="text-xl font-black text-gold-gradient text-center">تأكيد الشراء</h3>
             <div className="mt-4 rounded-2xl bg-secondary/40 p-4 text-center">
               <p className="text-sm text-muted-foreground">{selected.title}</p>
-              <p className="text-3xl font-black text-gold mt-1">EG {Number(selected.price).toLocaleString()}</p>
+              {qtyEnabled ? (
+                <p className="text-base font-bold text-gold mt-1">EG {Number(selected.price).toLocaleString()} <span className="text-xs text-muted-foreground">/ كل {unitSize.toLocaleString()} {unitLabel || "وحدة"}</span></p>
+              ) : (
+                <p className="text-3xl font-black text-gold mt-1">EG {Number(selected.price).toLocaleString()}</p>
+              )}
             </div>
+
+            {qtyEnabled && (
+              <div className="mt-4">
+                <label className="text-xs font-bold mb-1 block">
+                  الكمية {unitLabel ? `(${unitLabel})` : ""}
+                  {minQty != null && <span className="text-muted-foreground"> — حد أدنى {minQty.toLocaleString()}</span>}
+                  {maxQty != null && <span className="text-muted-foreground"> — حد أقصى {maxQty.toLocaleString()}</span>}
+                </label>
+                <input
+                  type="number"
+                  min={minQty ?? 1}
+                  max={maxQty ?? undefined}
+                  step="any"
+                  value={quantity}
+                  onChange={(e) => setQuantity(e.target.value)}
+                  placeholder={String(minQty ?? unitSize)}
+                  className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gold/50"
+                />
+                <div className="mt-3 flex items-center justify-between rounded-xl bg-gold/10 border border-gold/30 p-3">
+                  <span className="text-sm text-muted-foreground">الإجمالي</span>
+                  <span className="text-2xl font-black text-gold-gradient">EG {total.toLocaleString()}</span>
+                </div>
+              </div>
+            )}
 
             <div className="mt-4 flex items-center justify-between text-sm">
               <span className="text-muted-foreground">رصيدك الحالي</span>
@@ -199,8 +239,8 @@ function ShopPage() {
             </div>
             <div className="mt-1 flex items-center justify-between text-sm">
               <span className="text-muted-foreground">الرصيد بعد الشراء</span>
-              <span className={`font-extrabold ${balance - Number(selected.price) < 0 ? "text-destructive" : "text-emerald-400"}`}>
-                EG {(balance - Number(selected.price)).toLocaleString()}
+              <span className={`font-extrabold ${balance - total < 0 ? "text-destructive" : "text-emerald-400"}`}>
+                EG {(balance - total).toLocaleString()}
               </span>
             </div>
 
@@ -216,7 +256,7 @@ function ShopPage() {
               </div>
             )}
 
-            {balance < Number(selected.price) ? (
+            {balance < total ? (
               <Link
                 to="/topup"
                 className="mt-5 w-full block text-center rounded-xl bg-gold-gradient text-primary-foreground font-extrabold py-3 shadow-gold"
@@ -225,16 +265,18 @@ function ShopPage() {
               </Link>
             ) : (
               <button
-                disabled={mutation.isPending}
-                onClick={() => mutation.mutate({ productId: selected.id, gameUserId: gameId.trim() || undefined })}
+                disabled={mutation.isPending || !qtyValid}
+                onClick={() => mutation.mutate({ productId: selected.id, gameUserId: gameId.trim() || undefined, quantity: qtyEnabled ? qtyNum : undefined })}
                 className="mt-5 w-full rounded-xl bg-gold-gradient text-primary-foreground font-extrabold py-3 shadow-gold disabled:opacity-50"
               >
-                {mutation.isPending ? "جاري التنفيذ..." : "أكد الشراء"}
+                {mutation.isPending ? "جاري التنفيذ..." : qtyEnabled ? `أكد الشراء — EG ${total.toLocaleString()}` : "أكد الشراء"}
               </button>
             )}
           </div>
         </div>
-      )}
+        );
+      })()}
     </AppLayout>
   );
 }
+
