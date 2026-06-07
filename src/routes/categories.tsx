@@ -2,8 +2,9 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { AppLayout } from "@/components/AppLayout";
+import { FramedImage } from "@/components/FramedImage";
 import { listActiveCollections } from "@/lib/collections.functions";
-import { Tag, CreditCard, Headphones } from "lucide-react";
+import { CreditCard, Headphones } from "lucide-react";
 
 export const Route = createFileRoute("/categories")({
   head: () => ({ meta: [{ title: "الأقسام — Lion Store" }] }),
