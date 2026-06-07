@@ -318,20 +318,26 @@ function ProductsTab({ initialCollectionId, onBack }: { initialCollectionId?: st
   const { data } = useQuery({ queryKey: ["admin-products"], queryFn: () => list() });
   const { data: collections = [] } = useQuery({ queryKey: ["admin-collections"], queryFn: () => colsList() });
   const [filter, setFilter] = useState<string>(initialCollectionId ?? "");
-  type EditState = { id?: string; title: string; description: string; image_url: string; category: string; price: number; is_active: boolean; is_offer: boolean; sort_order: number; collection_id: string | null };
+  type EditState = { id?: string; title: string; description: string; image_url: string; category: string; price: number; is_active: boolean; is_offer: boolean; sort_order: number; collection_id: string | null; quantity_enabled: boolean; unit_size: number; unit_label: string; min_quantity: string; max_quantity: string };
   const [editing, setEditing] = useState<null | EditState>(null);
 
-  const blank = (): EditState => ({ title: "", description: "", image_url: "", category: "games", price: 0, is_active: true, is_offer: false, sort_order: 0, collection_id: filter || null });
+  const blank = (): EditState => ({ title: "", description: "", image_url: "", category: "games", price: 0, is_active: true, is_offer: false, sort_order: 0, collection_id: filter || null, quantity_enabled: false, unit_size: 1, unit_label: "", min_quantity: "", max_quantity: "" });
 
   const save = useMutation({
     mutationFn: () => upsert({ data: { id: editing?.id, data: {
       title: editing!.title, description: editing!.description || undefined, image_url: editing!.image_url || undefined,
       category: editing!.category, price: editing!.price, is_active: editing!.is_active, is_offer: editing!.is_offer, sort_order: editing!.sort_order,
       collection_id: editing!.collection_id || null,
+      quantity_enabled: editing!.quantity_enabled,
+      unit_size: editing!.quantity_enabled ? Number(editing!.unit_size) || 1 : 1,
+      unit_label: editing!.quantity_enabled ? (editing!.unit_label.trim() || null) : null,
+      min_quantity: editing!.quantity_enabled && editing!.min_quantity ? Number(editing!.min_quantity) : null,
+      max_quantity: editing!.quantity_enabled && editing!.max_quantity ? Number(editing!.max_quantity) : null,
     } } }),
     onSuccess: () => { toast.success("تم الحفظ"); setEditing(null); qc.invalidateQueries({ queryKey: ["admin-products"] }); },
     onError: (e: Error) => toast.error(e.message),
   });
+
 
   const remove = useMutation({
     mutationFn: (id: string) => del({ data: { id } }),
@@ -368,7 +374,7 @@ function ProductsTab({ initialCollectionId, onBack }: { initialCollectionId?: st
             <p className="text-xs text-muted-foreground">{p.category} • {p.is_active ? "مفعّل" : "متوقف"}{p.is_offer ? " • عرض" : ""}</p>
             <p className="mt-1 font-black text-gold-gradient">EG {Number(p.price).toLocaleString()}</p>
             <div className="mt-3 flex gap-2">
-              <button onClick={() => setEditing({ id: p.id, title: p.title, description: p.description ?? "", image_url: p.image_url ?? "", category: p.category, price: Number(p.price), is_active: p.is_active, is_offer: p.is_offer, sort_order: p.sort_order, collection_id: p.collection_id ?? null })} className="flex-1 rounded-lg bg-secondary py-1.5 text-sm font-bold">تعديل</button>
+              <button onClick={() => setEditing({ id: p.id, title: p.title, description: p.description ?? "", image_url: p.image_url ?? "", category: p.category, price: Number(p.price), is_active: p.is_active, is_offer: p.is_offer, sort_order: p.sort_order, collection_id: p.collection_id ?? null, quantity_enabled: (p as any).quantity_enabled ?? false, unit_size: Number((p as any).unit_size ?? 1), unit_label: (p as any).unit_label ?? "", min_quantity: (p as any).min_quantity != null ? String((p as any).min_quantity) : "", max_quantity: (p as any).max_quantity != null ? String((p as any).max_quantity) : "" })} className="flex-1 rounded-lg bg-secondary py-1.5 text-sm font-bold">تعديل</button>
               <button onClick={() => confirm("متأكد؟") && remove.mutate(p.id)} className="rounded-lg bg-destructive text-white px-3 py-1.5 text-sm font-bold"><Trash2 className="size-4" /></button>
             </div>
           </div>
@@ -394,12 +400,44 @@ function ProductsTab({ initialCollectionId, onBack }: { initialCollectionId?: st
                 <option value="other">أخرى</option>
               </select>
             </div>
-            <input type="number" required min={0} placeholder="السعر" value={editing.price} onChange={(e) => setEditing({ ...editing, price: Number(e.target.value) })} className="w-full rounded-xl bg-secondary px-3 py-2" />
+            <input type="number" required min={0} step="0.01" placeholder={editing.quantity_enabled ? `السعر لكل ${editing.unit_size || 1} ${editing.unit_label || "وحدة"}` : "السعر"} value={editing.price} onChange={(e) => setEditing({ ...editing, price: Number(e.target.value) })} className="w-full rounded-xl bg-secondary px-3 py-2" />
+
+            <div className="rounded-xl border border-border bg-secondary/40 p-3 space-y-2">
+              <label className="flex items-center gap-2 text-sm font-bold">
+                <input type="checkbox" checked={editing.quantity_enabled} onChange={(e) => setEditing({ ...editing, quantity_enabled: e.target.checked })} />
+                تفعيل الكمية (سعر متغير حسب الكمية)
+              </label>
+              {editing.quantity_enabled && (
+                <>
+                  <p className="text-xs text-muted-foreground">مثال: السعر 50 EG لكل 1000 كوينز. العميل يكتب الكمية اللي عاوزها والسعر يتحسب تلقائياً.</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-[11px] text-muted-foreground">حجم الوحدة</label>
+                      <input type="number" min={1} step="any" value={editing.unit_size} onChange={(e) => setEditing({ ...editing, unit_size: Number(e.target.value) })} className="w-full rounded-xl bg-secondary px-3 py-2" placeholder="1000" />
+                    </div>
+                    <div>
+                      <label className="text-[11px] text-muted-foreground">اسم الوحدة</label>
+                      <input value={editing.unit_label} onChange={(e) => setEditing({ ...editing, unit_label: e.target.value })} className="w-full rounded-xl bg-secondary px-3 py-2" placeholder="كوينز" />
+                    </div>
+                    <div>
+                      <label className="text-[11px] text-muted-foreground">أقل كمية</label>
+                      <input type="number" min={0} step="any" value={editing.min_quantity} onChange={(e) => setEditing({ ...editing, min_quantity: e.target.value })} className="w-full rounded-xl bg-secondary px-3 py-2" placeholder="1000" />
+                    </div>
+                    <div>
+                      <label className="text-[11px] text-muted-foreground">أعلى كمية</label>
+                      <input type="number" min={0} step="any" value={editing.max_quantity} onChange={(e) => setEditing({ ...editing, max_quantity: e.target.value })} className="w-full rounded-xl bg-secondary px-3 py-2" placeholder="10000000" />
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
             <div className="flex items-center gap-4 text-sm">
               <label className="flex items-center gap-2"><input type="checkbox" checked={editing.is_active} onChange={(e) => setEditing({ ...editing, is_active: e.target.checked })} /> مفعّل</label>
               <label className="flex items-center gap-2"><input type="checkbox" checked={editing.is_offer} onChange={(e) => setEditing({ ...editing, is_offer: e.target.checked })} /> عرض</label>
               <input type="number" placeholder="الترتيب" value={editing.sort_order} onChange={(e) => setEditing({ ...editing, sort_order: Number(e.target.value) })} className="ml-auto w-20 rounded-xl bg-secondary px-3 py-2" />
             </div>
+
             <div className="flex gap-2">
               <button type="button" onClick={() => setEditing(null)} className="flex-1 rounded-xl bg-secondary py-2 font-bold">إلغاء</button>
               <button disabled={save.isPending} className="flex-1 rounded-xl bg-gold-gradient text-primary-foreground font-extrabold py-2">حفظ</button>
