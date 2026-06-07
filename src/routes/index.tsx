@@ -13,8 +13,46 @@ import { ShoppingBag, LayoutGrid, CreditCard, Tag, Headphones, Zap, ShieldCheck,
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Lion Store — الرئيسية" },
-      { name: "description", content: "ليون ستور: شحن ألعاب وتطبيقات بأمان وأفضل الأسعار في السوق." },
+      { title: "Lion Store — شحن ألعاب وتطبيقات بأفضل الأسعار" },
+      { name: "description", content: "ليون ستور: شحن ألعاب وتطبيقات في مصر والوطن العربي بأمان كامل، أسرع توصيل، وأفضل الأسعار في السوق." },
+      { property: "og:title", content: "Lion Store — شحن ألعاب وتطبيقات بأفضل الأسعار" },
+      { property: "og:description", content: "شحن فوري للألعاب والتطبيقات مع دعم فني على مدار الساعة وطرق دفع متعددة." },
+      { property: "og:url", content: "https://lions-stores.com/" },
+    ],
+    links: [{ rel: "canonical", href: "https://lions-stores.com/" }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Organization",
+          name: "Lion Store",
+          alternateName: "ليون ستور",
+          url: "https://lions-stores.com/",
+          logo: "https://lions-stores.com/favicon.ico",
+          contactPoint: [{
+            "@type": "ContactPoint",
+            telephone: "+20-101-059-4146",
+            contactType: "customer support",
+            email: "lions.storeeg@gmail.com",
+            availableLanguage: ["Arabic", "English"],
+          }],
+        }),
+      },
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          name: "Lion Store",
+          url: "https://lions-stores.com/",
+          potentialAction: {
+            "@type": "SearchAction",
+            target: "https://lions-stores.com/search?q={search_term_string}",
+            "query-input": "required name=search_term_string",
+          },
+        }),
+      },
     ],
   }),
   component: Home,
