@@ -17,8 +17,20 @@ export const createTopupRequest = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
 
-    // Rate limit: max 5 topup requests per user per 10 minutes
-    await enforceRateLimit(`topup:${userId}`, 5, 600, "عدد كبير من طلبات الشحن. انتظر قليلًا ثم حاول مجددًا.");
+    // Rate limit: max 5 topup requests per user per hour
+    await enforceRateLimit(`topup:${userId}`, 5, 3600, "لقد تجاوزت الحد المسموح به، يرجى المحاولة لاحقاً");
+
+    // Block duplicate reference numbers globally
+    const refTrimmed = data.reference.trim();
+    const { data: existing } = await supabase
+      .from("topup_requests")
+      .select("id")
+      .eq("reference", refTrimmed)
+      .limit(1)
+      .maybeSingle();
+    if (existing) {
+      throw new Error("هذا الرقم المرجعي مستخدم من قبل");
+    }
 
     const { data: row, error } = await supabase
       .from("topup_requests")
@@ -26,13 +38,20 @@ export const createTopupRequest = createServerFn({ method: "POST" })
         user_id: userId,
         amount: data.amount,
         method: data.method,
-        reference: data.reference,
+        reference: refTrimmed,
         note: data.note ?? null,
       })
       .select("id, amount, method, reference, created_at")
       .single();
 
-    if (error) { console.error("[db]", error); throw new Error("حدث خطأ، حاول مرة أخرى"); };
+    if (error) {
+      console.error("[db]", error);
+      // 23505 = unique_violation (race with another insert hitting the unique index)
+      if ((error as { code?: string }).code === "23505") {
+        throw new Error("هذا الرقم المرجعي مستخدم من قبل");
+      }
+      throw new Error("حدث خطأ، حاول مرة أخرى");
+    }
 
     // Best-effort Telegram notification
     const { data: profile } = await supabase.from("profiles").select("full_name, phone").eq("id", userId).maybeSingle();
