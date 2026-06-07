@@ -34,6 +34,13 @@ const features = [
 ];
 
 function Home() {
+  const fetchProducts = useServerFn(listShopProducts);
+  const { data: products = [] } = useQuery({
+    queryKey: ["home-products"],
+    queryFn: () => fetchProducts(),
+  });
+  const featured = products.filter((p) => !p.is_offer).slice(0, 8);
+  const offerItems = products.filter((p) => p.is_offer).slice(0, 8);
   return (
     <AppLayout>
       {/* Hero */}
