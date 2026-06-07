@@ -8,7 +8,7 @@ import { getMyAccount } from "@/lib/account.functions";
 import { useAuth } from "@/hooks/useAuth";
 import { useState } from "react";
 import { toast } from "sonner";
-import proframe from "@/assets/proframe.png.asset.json";
+
 import { FramedImage } from "@/components/FramedImage";
 import { Wallet, X, ShoppingBag } from "lucide-react";
 
