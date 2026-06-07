@@ -163,6 +163,73 @@ export const adminDeleteProduct = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+// -------- Orders management --------
+export const adminListOrders = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { status?: "pending" | "completed" | "rejected" | "failed" } | undefined) => input ?? {})
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+    let q = supabaseAdmin
+      .from("orders")
+      .select("id, user_id, product_id, product_title, amount, status, game_user_id, created_at")
+      .order("created_at", { ascending: false })
+      .limit(200);
+    if (data.status) q = q.eq("status", data.status);
+    const { data: rows } = await q;
+    const userIds = [...new Set((rows ?? []).map((r) => r.user_id))];
+    const { data: profiles } = await supabaseAdmin
+      .from("profiles")
+      .select("id, full_name, phone, email")
+      .in("id", userIds.length ? userIds : ["00000000-0000-0000-0000-000000000000"]);
+    const map = new Map((profiles ?? []).map((p) => [p.id, p]));
+    return (rows ?? []).map((r) => ({ ...r, profile: map.get(r.user_id) ?? null }));
+  });
+
+export const decideOrder = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z.object({
+      id: z.string().uuid(),
+      decision: z.enum(["completed", "rejected"]),
+    }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+
+    // Atomic claim: only acts on pending orders to prevent double refunds.
+    const { data: claimed, error: claimError } = await supabaseAdmin
+      .from("orders")
+      .update({ status: data.decision })
+      .eq("id", data.id)
+      .eq("status", "pending")
+      .select("id, user_id, amount, product_title")
+      .maybeSingle();
+    if (claimError) throw new Error(claimError.message);
+    if (!claimed) throw new Error("الطلب غير موجود أو تمت معالجته مسبقًا");
+
+    if (data.decision === "rejected") {
+      // Refund the user's wallet
+      const { data: wallet } = await supabaseAdmin
+        .from("wallets")
+        .select("balance")
+        .eq("user_id", claimed.user_id)
+        .maybeSingle();
+      const newBalance = Number(wallet?.balance ?? 0) + Number(claimed.amount);
+      const { error: e3 } = await supabaseAdmin
+        .from("wallets")
+        .upsert({ user_id: claimed.user_id, balance: newBalance }, { onConflict: "user_id" });
+      if (e3) throw new Error(e3.message);
+    }
+
+    notifyTelegram(
+      data.decision === "completed"
+        ? `✅ تم تنفيذ طلب: ${escapeTelegramHtml(claimed.product_title)} (EG ${escapeTelegramHtml(claimed.amount)})`
+        : `❌ تم رفض الطلب: ${escapeTelegramHtml(claimed.product_title)} — تم إرجاع EG ${escapeTelegramHtml(claimed.amount)} للعميل`,
+    ).catch(() => {});
+
+    return { ok: true };
+  });
+
 // -------- Admin management (super admin only) --------
 async function assertSuperAdmin(userId: string) {
   const { data } = await supabaseAdmin.from("user_roles").select("role").eq("user_id", userId).eq("role", "super_admin");

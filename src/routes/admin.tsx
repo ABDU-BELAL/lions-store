@@ -8,7 +8,7 @@ import {
   getAdminStats, listAllTopups, decideTopup,
   adminListProducts, adminUpsertProduct, adminDeleteProduct,
   listAdmins, grantAdmin, revokeAdmin, claimSuperAdmin,
-  verifyAdminAccess,
+  verifyAdminAccess, adminListOrders, decideOrder,
 } from "@/lib/admin.functions";
 import { adminListBanners, adminUpsertBanner, adminDeleteBanner, adminUploadBannerImage } from "@/lib/banners.functions";
 import {
@@ -35,7 +35,7 @@ export const Route = createFileRoute("/admin")({
   component: AdminPage,
 });
 
-type Tab = "stats" | "topups" | "products" | "collections" | "banners" | "settings" | "admins";
+type Tab = "stats" | "topups" | "orders" | "products" | "collections" | "banners" | "settings" | "admins";
 
 function AdminPage() {
   const { user, loading } = useAuth();
@@ -68,6 +68,7 @@ function AdminPage() {
         {([
           { id: "stats", label: "الإحصائيات" },
           { id: "topups", label: "طلبات الشحن" },
+          { id: "orders", label: "الطلبات" },
           { id: "collections", label: "الأقسام" },
           { id: "products", label: "المنتجات" },
           { id: "banners", label: "السلايدر" },
@@ -83,6 +84,7 @@ function AdminPage() {
 
       {tab === "stats" && <StatsTab />}
       {tab === "topups" && <TopupsTab />}
+      {tab === "orders" && <OrdersTab />}
       {tab === "collections" && <CollectionsTab />}
       {tab === "products" && <ProductsTab />}
       {tab === "banners" && <BannersTab />}
@@ -198,6 +200,70 @@ function TopupsTab() {
     </div>
   );
 }
+
+function OrdersTab() {
+  const list = useServerFn(adminListOrders);
+  const decide = useServerFn(decideOrder);
+  const qc = useQueryClient();
+  const [filter, setFilter] = useState<"pending" | "completed" | "rejected" | "all">("pending");
+  const { data } = useQuery({
+    queryKey: ["admin-orders", filter],
+    queryFn: () => list({ data: filter === "all" ? {} : { status: filter } }),
+  });
+
+  const m = useMutation({
+    mutationFn: (v: { id: string; decision: "completed" | "rejected" }) => decide({ data: v }),
+    onSuccess: (_d, v) => {
+      toast.success(v.decision === "completed" ? "تم تنفيذ الطلب" : "تم رفض الطلب وإرجاع المبلغ للعميل");
+      qc.invalidateQueries();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <div>
+      <div className="flex gap-2 mb-4 overflow-x-auto">
+        {(["pending", "completed", "rejected", "all"] as const).map((f) => (
+          <button key={f} onClick={() => setFilter(f)} className={`shrink-0 px-3 py-1.5 rounded-full text-sm font-bold ${filter === f ? "bg-gold-gradient text-primary-foreground" : "bg-secondary"}`}>
+            {f === "pending" ? "معلقة" : f === "completed" ? "مكتملة" : f === "rejected" ? "مرفوضة" : "الكل"}
+          </button>
+        ))}
+      </div>
+      <div className="space-y-3">
+        {(data ?? []).length === 0 && <p className="text-center py-8 text-muted-foreground">لا توجد طلبات</p>}
+        {(data ?? []).map((o) => (
+          <div key={o.id} className="rounded-2xl bg-card/70 border border-border p-4">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="font-extrabold">{o.profile?.full_name || "—"} <span className="text-xs text-muted-foreground">({o.profile?.phone || o.profile?.email || "—"})</span></p>
+                <p className="mt-1 font-bold">{o.product_title}</p>
+                <p className="mt-1 text-2xl font-black text-gold-gradient">EG {Number(o.amount).toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground">{new Date(o.created_at).toLocaleString("ar-EG")}</p>
+                {o.game_user_id && <p className="text-sm mt-1">🆔 <span className="font-mono">{o.game_user_id}</span></p>}
+              </div>
+              {o.status === "pending" ? (
+                <div className="flex gap-2">
+                  <button disabled={m.isPending} onClick={() => m.mutate({ id: o.id, decision: "completed" })} className="rounded-lg bg-emerald-600 text-white font-bold px-3 py-2 text-sm flex items-center gap-1 disabled:opacity-50">
+                    <CheckCircle2 className="size-4" /> تم
+                  </button>
+                  <button disabled={m.isPending} onClick={() => { if (confirm("سيتم رفض الطلب وإرجاع المبلغ للعميل. متأكد؟")) m.mutate({ id: o.id, decision: "rejected" }); }} className="rounded-lg bg-destructive text-white font-bold px-3 py-2 text-sm flex items-center gap-1 disabled:opacity-50">
+                    <XCircle className="size-4" /> رفض + استرداد
+                  </button>
+                </div>
+              ) : (
+                <span className={`text-xs font-bold ${o.status === "completed" ? "text-emerald-400" : "text-destructive"}`}>
+                  {o.status === "completed" ? "مكتمل" : o.status === "rejected" ? "مرفوض" : o.status}
+                </span>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+
 
 async function fileToBase64(file: File): Promise<{ base64: string; contentType: string; filename: string }> {
   const buf = await file.arrayBuffer();
