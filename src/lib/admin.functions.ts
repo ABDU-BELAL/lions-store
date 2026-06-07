@@ -214,26 +214,19 @@ export const decideOrder = createServerFn({ method: "POST" })
     if (!claimed) throw new Error("الطلب غير موجود أو تمت معالجته مسبقًا");
 
     if (data.decision === "rejected") {
-      // Refund the user's wallet
-      const { data: wallet } = await supabaseAdmin
-        .from("wallets")
-        .select("balance")
-        .eq("user_id", claimed.user_id)
-        .maybeSingle();
-      const newBalance = Number(wallet?.balance ?? 0) + Number(claimed.amount);
-      const { error: e3 } = await supabaseAdmin
-        .from("wallets")
-        .upsert({ user_id: claimed.user_id, balance: newBalance }, { onConflict: "user_id" });
-      if (e3) throw new Error(e3.message);
-      await supabaseAdmin.from("wallet_transactions").insert({
-        user_id: claimed.user_id,
-        type: "refund",
-        amount: Number(claimed.amount),
-        balance_after: newBalance,
-        description: `استرداد: ${claimed.product_title}`,
-        ref_table: "orders",
-        ref_id: claimed.id,
+      // Atomic refund via SECURITY DEFINER function that locks the wallet row.
+      const { error: e3 } = await supabaseAdmin.rpc("credit_wallet", {
+        p_user_id: claimed.user_id,
+        p_amount: Number(claimed.amount),
+        p_type: "refund",
+        p_description: `استرداد: ${claimed.product_title}`,
+        p_ref_table: "orders",
+        p_ref_id: claimed.id,
       });
+      if (e3) {
+        console.error("[decideOrder] credit_wallet", e3);
+        throw new Error("تعذر استرداد الرصيد");
+      }
     }
 
     notifyTelegram(
