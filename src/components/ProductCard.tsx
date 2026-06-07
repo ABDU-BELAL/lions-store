@@ -22,7 +22,7 @@ export function ProductCard({ title, image, badge, to, search }: Props) {
       </div>
 
       <div className="px-4 pb-4 pt-1 text-center">
-        <h3 className="text-base font-extrabold text-gold-gradient">{title}</h3>
+        <h2 className="text-base font-extrabold text-gold-gradient">{title}</h2>
         {badge && <p className="mt-1 text-[11px] text-muted-foreground">{badge}</p>}
       </div>
 

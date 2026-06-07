@@ -47,14 +47,19 @@ export function AppLayout({ children }: { children: ReactNode }) {
           </Link>
 
           <form
+            role="search"
             className="flex-1 relative"
             onSubmit={(e) => {
               e.preventDefault();
               navigate({ to: "/search", search: { q: headerQ.trim() || undefined } });
             }}
           >
+            <label htmlFor="header-search" className="sr-only">ابحث عن اللعبة أو التطبيق</label>
             <Search className="absolute right-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <input
+              id="header-search"
+              type="search"
+              aria-label="ابحث عن اللعبة أو التطبيق"
               value={headerQ}
               onChange={(e) => setHeaderQ(e.target.value)}
               placeholder="ابحث عن اللعبة أو التطبيق"
@@ -75,7 +80,13 @@ export function AppLayout({ children }: { children: ReactNode }) {
             </Link>
           )}
 
-          <button onClick={() => setMenuOpen((v) => !v)} className="grid place-items-center size-10 rounded-lg bg-secondary/70 border border-border">
+          <button
+            type="button"
+            aria-label={menuOpen ? "إغلاق القائمة" : "فتح القائمة"}
+            aria-expanded={menuOpen}
+            onClick={() => setMenuOpen((v) => !v)}
+            className="grid place-items-center size-10 rounded-lg bg-secondary/70 border border-border"
+          >
             <Menu className="size-5" />
           </button>
         </div>
