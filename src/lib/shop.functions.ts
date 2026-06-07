@@ -2,17 +2,18 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { signMany } from "@/lib/storage.server";
 import { notifyTelegram, escapeTelegramHtml } from "@/lib/telegram.server";
 
 export const listShopProducts = createServerFn({ method: "GET" }).handler(async () => {
   const { data, error } = await supabaseAdmin
     .from("products")
-    .select("id, title, description, category, price, image_url, is_offer, sort_order")
+    .select("id, title, description, category, price, image_url, is_offer, sort_order, collection_id")
     .eq("is_active", true)
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: false });
   if (error) throw new Error(error.message);
-  return data ?? [];
+  return signMany("products", data ?? []);
 });
 
 const purchaseSchema = z.object({
