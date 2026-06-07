@@ -34,6 +34,20 @@ function About() {
           </a>
         ))}
       </div>
+
+      <div className="mt-10 text-center text-xs text-muted-foreground">
+        <p>
+          تطوير وبرمجة:{" "}
+          <a
+            href="https://www.facebook.com/Abdelrahman.Abdin"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-gold hover:underline"
+          >
+            Abdelrahman Abdin
+          </a>
+        </p>
+      </div>
     </AppLayout>
   );
 }
