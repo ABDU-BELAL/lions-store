@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AppLayout } from "@/components/AppLayout";
-import { Phone, MessageCircle, Mail, MapPin } from "lucide-react";
+import { MessageCircle, Mail } from "lucide-react";
 import logo from "@/assets/logo.jpeg.asset.json";
 
 export const Route = createFileRoute("/about")({
@@ -22,10 +22,8 @@ function About() {
 
       <div className="mt-6 grid sm:grid-cols-2 gap-4">
         {[
-          { icon: Phone, label: "الهاتف", value: "+20 102 792 3110", href: "tel:+201027923110" },
-          { icon: MessageCircle, label: "واتساب", value: "010 1356 1868", href: "https://wa.me/201013561868" },
-          { icon: Mail, label: "البريد", value: "support@lionstore.eg", href: "mailto:support@lionstore.eg" },
-          { icon: MapPin, label: "العنوان", value: "القاهرة، مصر" },
+          { icon: MessageCircle, label: "واتساب", value: "+20 101 059 4146", href: "https://wa.me/201010594146" },
+          { icon: Mail, label: "البريد", value: "lions.storeeg@gmail.com", href: "mailto:lions.storeeg@gmail.com" },
         ].map((c) => (
           <a key={c.label} href={c.href} className="flex items-center gap-4 p-5 rounded-2xl bg-card/70 border border-border hover:border-gold/50 transition">
             <div className="grid place-items-center size-12 rounded-xl bg-gold-gradient text-primary-foreground"><c.icon className="size-6" /></div>
