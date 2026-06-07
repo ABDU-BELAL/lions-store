@@ -142,6 +142,14 @@ function ShopPage() {
             <div className="px-4 pb-4 pt-1 text-center">
               <h3 className="text-sm font-extrabold text-gold-gradient line-clamp-1">{p.title}</h3>
               <p className="mt-1 text-lg font-black text-gold">EG {Number(p.price).toLocaleString()}</p>
+              <Link
+                to="/product/$id"
+                params={{ id: p.id }}
+                onClick={(e) => e.stopPropagation()}
+                className="mt-2 inline-block text-[11px] text-muted-foreground hover:text-gold underline"
+              >
+                التفاصيل
+              </Link>
             </div>
             <div className="absolute inset-x-0 top-0 h-1 bg-gold-gradient opacity-80" />
           </button>
