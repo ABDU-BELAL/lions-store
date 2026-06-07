@@ -68,8 +68,10 @@ function AdminPage() {
         {([
           { id: "stats", label: "الإحصائيات" },
           { id: "topups", label: "طلبات الشحن" },
+          { id: "collections", label: "الأقسام" },
           { id: "products", label: "المنتجات" },
           { id: "banners", label: "السلايدر" },
+          { id: "settings", label: "الصفحة الرئيسية" },
           { id: "admins", label: "الأدمنز" },
         ] as { id: Tab; label: string }[]).map((t) => (
           <button key={t.id} onClick={() => setTab(t.id)}
@@ -81,8 +83,10 @@ function AdminPage() {
 
       {tab === "stats" && <StatsTab />}
       {tab === "topups" && <TopupsTab />}
+      {tab === "collections" && <CollectionsTab />}
       {tab === "products" && <ProductsTab />}
       {tab === "banners" && <BannersTab />}
+      {tab === "settings" && <SettingsTab />}
       {tab === "admins" && <AdminsTab isSuper={!!account.data.isSuperAdmin} />}
     </AppLayout>
   );
