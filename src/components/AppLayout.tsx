@@ -132,6 +132,19 @@ export function AppLayout({ children }: { children: ReactNode }) {
         </a>
       </footer>
 
+      {/* WhatsApp support floating button */}
+      <a
+        href="https://wa.me/201010594146"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="تواصل عبر واتساب"
+        className="fixed bottom-24 left-4 z-50 grid place-items-center size-14 rounded-full bg-[#25D366] shadow-lg hover:scale-110 transition-transform"
+      >
+        <svg viewBox="0 0 32 32" className="size-8 fill-white" xmlns="http://www.w3.org/2000/svg">
+          <path d="M19.11 17.205c-.372 0-1.088 1.39-1.518 1.39a.63.63 0 01-.315-.1c-.802-.402-1.504-.817-2.163-1.447-.545-.516-1.146-1.29-1.46-1.963a.426.426 0 01-.073-.215c0-.33.99-.945.99-1.49 0-.143-.73-2.09-.832-2.335-.143-.372-.214-.487-.6-.487-.187 0-.36-.043-.53-.043-.302 0-.53.115-.746.315-.688.645-1.032 1.318-1.06 2.264v.114c-.015.99.472 1.977 1.017 2.78 1.23 1.82 2.506 3.41 4.554 4.34.616.287 2.035.888 2.722.888.817 0 2.15-.515 2.478-1.318.13-.33.244-.66.244-1.02 0-.402-1.346-.66-1.674-.717zm-2.94 7.182a8.255 8.255 0 01-4.197-1.146l-3.008.953.96-2.95a8.156 8.156 0 01-1.247-4.353c0-4.55 3.72-8.27 8.27-8.27S25.27 12.34 25.27 16.89c-.058 4.52-3.778 8.498-8.27 8.498zm0-18.218c-5.428 0-9.834 4.405-9.834 9.834.014 1.69.45 3.366 1.305 4.823L4.86 27.4l5.97-1.892a9.745 9.745 0 004.392 1.057c5.428 0 9.834-4.405 9.834-9.834 0-2.622-1.032-5.1-2.894-6.962a9.788 9.788 0 00-6.94-2.894z"/>
+        </svg>
+      </a>
+
       {/* Bottom nav */}
       <nav className="fixed bottom-0 inset-x-0 z-40 backdrop-blur-xl bg-background/90 border-t border-border">
         <div className="mx-auto max-w-6xl px-2 grid grid-cols-5">
