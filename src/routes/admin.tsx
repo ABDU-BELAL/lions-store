@@ -74,6 +74,7 @@ function AdminPage() {
           { id: "products", label: "المنتجات" },
           { id: "banners", label: "السلايدر" },
           { id: "settings", label: "الصفحة الرئيسية" },
+          ...(account.data.isSuperAdmin ? [{ id: "payments" as Tab, label: "وسائل الدفع" }] : []),
           { id: "admins", label: "الأدمنز" },
         ] as { id: Tab; label: string }[]).map((t) => (
           <button key={t.id} onClick={() => setTab(t.id)}
@@ -90,6 +91,7 @@ function AdminPage() {
       {tab === "products" && <ProductsTab />}
       {tab === "banners" && <BannersTab />}
       {tab === "settings" && <SettingsTab />}
+      {tab === "payments" && account.data.isSuperAdmin && <PaymentMethodsTab />}
       {tab === "admins" && <AdminsTab isSuper={!!account.data.isSuperAdmin} />}
     </AppLayout>
   );
