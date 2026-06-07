@@ -722,8 +722,9 @@ function PaymentMethodsTab() {
   const updateFn = useServerFn(adminUpdatePaymentMethods);
   const qc = useQueryClient();
   const { data } = useQuery({ queryKey: ["payment-methods-admin"], queryFn: () => getFn() });
-  const [local, setLocal] = useState<null | { vodafone_cash: string; instapay_account: string; instapay_link: string; binance: string }>(null);
-  const state = local ?? data ?? { vodafone_cash: "", instapay_account: "", instapay_link: "", binance: "" };
+  type PMState = { vodafone_cash: string; instapay_account: string; instapay_link: string; binance: string; vodafone_cash_enabled: boolean; instapay_enabled: boolean; binance_enabled: boolean };
+  const [local, setLocal] = useState<PMState | null>(null);
+  const state: PMState = local ?? data ?? { vodafone_cash: "", instapay_account: "", instapay_link: "", binance: "", vodafone_cash_enabled: true, instapay_enabled: true, binance_enabled: true };
   const save = useMutation({
     mutationFn: () => updateFn({ data: state }),
     onSuccess: () => {
@@ -733,28 +734,46 @@ function PaymentMethodsTab() {
     },
     onError: (e: Error) => toast.error(e.message),
   });
-  const set = (k: keyof typeof state, v: string) => setLocal({ ...state, [k]: v });
+  const set = <K extends keyof PMState>(k: K, v: PMState[K]) => setLocal({ ...state, [k]: v });
+
+  const MaintenanceToggle = ({ enabled, onToggle }: { enabled: boolean; onToggle: () => void }) => (
+    <button
+      type="button"
+      onClick={onToggle}
+      className={`text-[11px] font-extrabold rounded-full px-3 py-1 border ${enabled ? "bg-emerald-500/15 border-emerald-500/50 text-emerald-400" : "bg-destructive/15 border-destructive/50 text-destructive"}`}
+    >
+      {enabled ? "✓ مفعّل" : "⚠ تحت الصيانة"}
+    </button>
+  );
 
   return (
     <div className="max-w-lg">
       <div className="rounded-2xl bg-card/70 border border-border p-5 space-y-4">
         <h3 className="text-lg font-extrabold text-gold-gradient flex items-center gap-2"><Wallet className="size-5" /> وسائل الدفع وأرقام الشحن</h3>
-        <p className="text-xs text-muted-foreground">هذه البيانات تظهر للمستخدمين في صفحة شحن الرصيد. (السوبر أدمن فقط)</p>
+        <p className="text-xs text-muted-foreground">هذه البيانات تظهر للمستخدمين في صفحة شحن الرصيد. اضغط على الزر بجانب كل طريقة لإيقافها مؤقتًا للصيانة. (السوبر أدمن فقط)</p>
 
         <div>
-          <label className="text-xs font-bold mb-1 block">رقم فودافون كاش</label>
+          <div className="flex items-center justify-between mb-1">
+            <label className="text-xs font-bold">رقم فودافون كاش</label>
+            <MaintenanceToggle enabled={state.vodafone_cash_enabled} onToggle={() => set("vodafone_cash_enabled", !state.vodafone_cash_enabled)} />
+          </div>
           <input dir="ltr" value={state.vodafone_cash} onChange={(e) => set("vodafone_cash", e.target.value)} placeholder="01xxxxxxxxx" className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3 text-right" />
         </div>
+
         <div>
-          <label className="text-xs font-bold mb-1 block">حساب إنستا باي</label>
-          <input dir="ltr" value={state.instapay_account} onChange={(e) => set("instapay_account", e.target.value)} placeholder="name@instapay" className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3 text-right" />
+          <div className="flex items-center justify-between mb-1">
+            <label className="text-xs font-bold">إنستا باي</label>
+            <MaintenanceToggle enabled={state.instapay_enabled} onToggle={() => set("instapay_enabled", !state.instapay_enabled)} />
+          </div>
+          <input dir="ltr" value={state.instapay_account} onChange={(e) => set("instapay_account", e.target.value)} placeholder="name@instapay" className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3 text-right mb-2" />
+          <input dir="ltr" value={state.instapay_link} onChange={(e) => set("instapay_link", e.target.value)} placeholder="رابط إنستا باي (اختياري) https://ipn.eg/..." className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3 text-right" />
         </div>
+
         <div>
-          <label className="text-xs font-bold mb-1 block">رابط إنستا باي (اختياري)</label>
-          <input dir="ltr" value={state.instapay_link} onChange={(e) => set("instapay_link", e.target.value)} placeholder="https://ipn.eg/..." className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3 text-right" />
-        </div>
-        <div>
-          <label className="text-xs font-bold mb-1 block">عنوان Binance / USDT (TRC20)</label>
+          <div className="flex items-center justify-between mb-1">
+            <label className="text-xs font-bold">عنوان Binance / USDT (TRC20)</label>
+            <MaintenanceToggle enabled={state.binance_enabled} onToggle={() => set("binance_enabled", !state.binance_enabled)} />
+          </div>
           <input dir="ltr" value={state.binance} onChange={(e) => set("binance", e.target.value)} placeholder="Txxxxxxxxxxxxxxxxxxxxx" className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3 text-right" />
         </div>
 
