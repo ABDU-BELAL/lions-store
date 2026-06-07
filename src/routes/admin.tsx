@@ -261,6 +261,9 @@ function OrdersTab() {
       </div>
     </div>
   );
+}
+
+
 
 async function fileToBase64(file: File): Promise<{ base64: string; contentType: string; filename: string }> {
   const buf = await file.arrayBuffer();
