@@ -4,6 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { signMany } from "@/lib/storage.server";
 import { notifyTelegram, escapeTelegramHtml } from "@/lib/telegram.server";
+import { enforceRateLimit } from "@/lib/rate-limit.server";
 
 export const listShopProducts = createServerFn({ method: "GET" }).handler(async () => {
   const { data, error } = await supabaseAdmin
