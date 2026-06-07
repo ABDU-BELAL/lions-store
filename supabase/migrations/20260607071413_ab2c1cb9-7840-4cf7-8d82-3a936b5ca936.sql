@@ -1,0 +1,4 @@
+CREATE POLICY "Products bucket: anyone reads" ON storage.objects FOR SELECT TO anon, authenticated USING (bucket_id = 'products');
+CREATE POLICY "Products bucket: admins write" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'products' AND public.is_admin(auth.uid()));
+CREATE POLICY "Products bucket: admins update" ON storage.objects FOR UPDATE TO authenticated USING (bucket_id = 'products' AND public.is_admin(auth.uid()));
+CREATE POLICY "Products bucket: admins delete" ON storage.objects FOR DELETE TO authenticated USING (bucket_id = 'products' AND public.is_admin(auth.uid()));
