@@ -1,8 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { AppLayout } from "@/components/AppLayout";
 import { ProductCard } from "@/components/ProductCard";
 import { BannerSlideshow } from "@/components/BannerSlideshow";
-import { games, apps, offers } from "@/lib/products";
+import { listShopProducts } from "@/lib/shop.functions";
 import logo from "@/assets/logo.jpeg.asset.json";
 import { Gamepad2, Smartphone, LayoutGrid, CreditCard, Tag, Phone, Headphones, Zap, ShieldCheck, BadgePercent } from "lucide-react";
 
@@ -32,6 +34,13 @@ const features = [
 ];
 
 function Home() {
+  const fetchProducts = useServerFn(listShopProducts);
+  const { data: products = [] } = useQuery({
+    queryKey: ["home-products"],
+    queryFn: () => fetchProducts(),
+  });
+  const featured = products.filter((p) => !p.is_offer).slice(0, 8);
+  const offerItems = products.filter((p) => p.is_offer).slice(0, 8);
   return (
     <AppLayout>
       {/* Hero */}
@@ -77,27 +86,32 @@ function Home() {
         ))}
       </section>
 
-      {/* Section header */}
-      <div className="mt-8 flex items-center justify-between">
-        <h2 className="text-xl md:text-2xl font-extrabold text-gold-gradient flex items-center gap-2">
-          <Gamepad2 className="size-5 text-gold" /> الألعاب والتطبيقات
-        </h2>
-        <Link to="/shop" className="text-sm text-gold hover:underline">عرض الكل</Link>
-      </div>
+      {featured.length > 0 && (
+        <>
+          <div className="mt-8 flex items-center justify-between">
+            <h2 className="text-xl md:text-2xl font-extrabold text-gold-gradient flex items-center gap-2">
+              <Gamepad2 className="size-5 text-gold" /> الألعاب والتطبيقات
+            </h2>
+            <Link to="/shop" className="text-sm text-gold hover:underline">عرض الكل</Link>
+          </div>
+          <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+            {featured.map((p) => (
+              <ProductCard key={p.id} title={p.title} image={p.image_url || logo.url} to="/shop" search={{ q: p.title }} />
+            ))}
+          </div>
+        </>
+      )}
 
-      <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
-        {[...games.slice(0, 4), ...apps.slice(0, 4)].map((p) => (
-          <ProductCard key={p.id} title={p.title} image={p.image} to="/shop" search={{ q: p.title }} />
-        ))}
-      </div>
-
-      {/* Offers strip */}
-      <div className="mt-8">
-        <h2 className="text-xl font-extrabold text-gold-gradient flex items-center gap-2"><Tag className="size-5 text-gold" /> أبرز العروض</h2>
-        <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
-          {offers.map((o) => <ProductCard key={o.id} title={o.title} image={o.image} badge={o.badge} to="/shop" search={{ q: o.title }} />)}
+      {offerItems.length > 0 && (
+        <div className="mt-8">
+          <h2 className="text-xl font-extrabold text-gold-gradient flex items-center gap-2"><Tag className="size-5 text-gold" /> أبرز العروض</h2>
+          <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+            {offerItems.map((o) => (
+              <ProductCard key={o.id} title={o.title} image={o.image_url || logo.url} to="/shop" search={{ q: o.title }} />
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Features */}
       <section className="mt-10 rounded-3xl border border-border bg-card/60 p-5 grid grid-cols-2 md:grid-cols-4 gap-4">
