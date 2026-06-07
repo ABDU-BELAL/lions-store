@@ -1,8 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { AppLayout } from "@/components/AppLayout";
 import { ProductCard } from "@/components/ProductCard";
 import { BannerSlideshow } from "@/components/BannerSlideshow";
-import { games, apps, offers } from "@/lib/products";
+import { listShopProducts } from "@/lib/shop.functions";
 import logo from "@/assets/logo.jpeg.asset.json";
 import { Gamepad2, Smartphone, LayoutGrid, CreditCard, Tag, Phone, Headphones, Zap, ShieldCheck, BadgePercent } from "lucide-react";
 
