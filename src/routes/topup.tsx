@@ -173,8 +173,8 @@ function TopupPage() {
           <label className="text-xs font-bold mb-1 block">ملاحظات (اختياري)</label>
           <textarea maxLength={500} value={note} onChange={(e) => setNote(e.target.value)} rows={2} className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gold/50 resize-none" />
         </div>
-        <button disabled={mutation.isPending} className="w-full rounded-xl bg-gold-gradient text-primary-foreground font-extrabold py-3 shadow-gold disabled:opacity-50">
-          {mutation.isPending ? "جاري الإرسال..." : "إرسال طلب الشحن"}
+        <button disabled={mutation.isPending || !activeEnabled} className="w-full rounded-xl bg-gold-gradient text-primary-foreground font-extrabold py-3 shadow-gold disabled:opacity-50">
+          {!activeEnabled ? "تحت الصيانة" : mutation.isPending ? "جاري الإرسال..." : "إرسال طلب الشحن"}
         </button>
       </form>
 
