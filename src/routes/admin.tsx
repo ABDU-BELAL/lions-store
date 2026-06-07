@@ -11,9 +11,13 @@ import {
   verifyAdminAccess,
 } from "@/lib/admin.functions";
 import { adminListBanners, adminUpsertBanner, adminDeleteBanner, adminUploadBannerImage } from "@/lib/banners.functions";
+import {
+  adminListCollections, adminUpsertCollection, adminDeleteCollection,
+  adminUploadProductImage, getHomeSettings, adminUpdateHomeSettings,
+} from "@/lib/collections.functions";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Users, Wallet, ShoppingBag, Package, CheckCircle2, XCircle, Trash2, Plus, Crown, Shield, Image as ImageIcon, Upload } from "lucide-react";
+import { Users, Wallet, ShoppingBag, Package, CheckCircle2, XCircle, Trash2, Plus, Crown, Shield, Image as ImageIcon, Upload, Settings as SettingsIcon, Layers } from "lucide-react";
 
 export const Route = createFileRoute("/admin")({
   ssr: false,
