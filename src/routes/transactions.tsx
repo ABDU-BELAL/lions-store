@@ -9,7 +9,16 @@ import { listMyWalletTxns } from "@/lib/wallet.functions";
 import { useEffect, useState } from "react";
 
 export const Route = createFileRoute("/transactions")({
+  ssr: false,
   head: () => ({ meta: [{ title: "المعاملات — Lion Store" }] }),
+  beforeLoad: async () => {
+    const { supabase } = await import("@/integrations/supabase/client");
+    const { data } = await supabase.auth.getSession();
+    if (!data.session) {
+      const { redirect } = await import("@tanstack/react-router");
+      throw redirect({ to: "/login" });
+    }
+  },
   component: Transactions,
 });
 
