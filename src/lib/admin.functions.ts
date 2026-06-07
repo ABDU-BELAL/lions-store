@@ -228,6 +228,15 @@ export const decideOrder = createServerFn({ method: "POST" })
         .from("wallets")
         .upsert({ user_id: claimed.user_id, balance: newBalance }, { onConflict: "user_id" });
       if (e3) throw new Error(e3.message);
+      await supabaseAdmin.from("wallet_transactions").insert({
+        user_id: claimed.user_id,
+        type: "refund",
+        amount: Number(claimed.amount),
+        balance_after: newBalance,
+        description: `استرداد: ${claimed.product_title}`,
+        ref_table: "orders",
+        ref_id: claimed.id,
+      });
     }
 
     notifyTelegram(
