@@ -5,8 +5,9 @@ import { AppLayout } from "@/components/AppLayout";
 import { ProductCard } from "@/components/ProductCard";
 import { BannerSlideshow } from "@/components/BannerSlideshow";
 import { listShopProducts } from "@/lib/shop.functions";
+import { listActiveCollections, getHomeSettings } from "@/lib/collections.functions";
 import logo from "@/assets/logo.jpeg.asset.json";
-import { Gamepad2, Smartphone, LayoutGrid, CreditCard, Tag, Phone, Headphones, Zap, ShieldCheck, BadgePercent } from "lucide-react";
+import { ShoppingBag, LayoutGrid, CreditCard, Tag, Headphones, Zap, ShieldCheck, BadgePercent, Gamepad2 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -18,12 +19,10 @@ export const Route = createFileRoute("/")({
   component: Home,
 });
 
-const categories: { to: "/shop" | "/games" | "/apps" | "/categories" | "/payments" | "/offers"; label: string; icon: typeof Gamepad2; active?: boolean; search?: Record<string, string> }[] = [
-  { to: "/shop", label: "شحن ألعاب", icon: Gamepad2, active: true, search: { q: "games" } },
-  { to: "/shop", label: "شحن تطبيقات", icon: Smartphone, search: { q: "apps" } },
-  { to: "/categories", label: "أقسام أخرى", icon: LayoutGrid },
+const navTiles: { to: "/shop" | "/categories" | "/payments"; label: string; icon: typeof ShoppingBag; active?: boolean }[] = [
+  { to: "/shop", label: "المتجر", icon: ShoppingBag, active: true },
+  { to: "/categories", label: "الأقسام", icon: LayoutGrid },
   { to: "/payments", label: "طرق الدفع", icon: CreditCard },
-  { to: "/offers", label: "العروض", icon: Tag },
 ];
 
 const features = [
@@ -35,12 +34,21 @@ const features = [
 
 function Home() {
   const fetchProducts = useServerFn(listShopProducts);
-  const { data: products = [] } = useQuery({
-    queryKey: ["home-products"],
-    queryFn: () => fetchProducts(),
-  });
+  const fetchCollections = useServerFn(listActiveCollections);
+  const fetchSettings = useServerFn(getHomeSettings);
+
+  const { data: products = [] } = useQuery({ queryKey: ["home-products"], queryFn: () => fetchProducts() });
+  const { data: collections = [] } = useQuery({ queryKey: ["home-collections"], queryFn: () => fetchCollections() });
+  const { data: settings } = useQuery({ queryKey: ["home-settings"], queryFn: () => fetchSettings() });
+
   const featured = products.filter((p) => !p.is_offer).slice(0, 8);
   const offerItems = products.filter((p) => p.is_offer).slice(0, 8);
+  const homeCollections = collections.filter((c) => c.show_on_home);
+
+  const showFeatured = settings?.show_featured ?? true;
+  const showOffers = settings?.show_offers ?? true;
+  const showCollections = settings?.show_collections ?? true;
+
   return (
     <AppLayout>
       {/* Hero */}
@@ -54,11 +62,7 @@ function Home() {
               أمانك يهمنا. تأكد دائمًا من التواصل عبر أرقامنا الرسمية وتجنب أي وسيط أو مصادر غير موثوقة.
             </p>
             <div className="mt-5 flex flex-wrap gap-3">
-              <Link to="/games" className="rounded-full bg-gold-gradient text-primary-foreground font-extrabold px-6 py-2.5 shadow-gold">تسوق الآن</Link>
-              <a href="tel:+201027923110" className="flex items-center gap-2 rounded-full border-gold bg-card/60 px-4 py-2.5 text-sm font-bold" dir="ltr">
-                <Phone className="size-4 text-gold" />
-                <span>+20 102 792 3110</span>
-              </a>
+              <Link to="/shop" className="rounded-full bg-gold-gradient text-primary-foreground font-extrabold px-6 py-2.5 shadow-gold">تسوق الآن</Link>
             </div>
           </div>
           <div className="flex justify-center">
@@ -70,23 +74,45 @@ function Home() {
         </div>
       </section>
 
-      {/* Slideshow banners (managed in admin) */}
       <BannerSlideshow />
 
-      {/* Categories */}
-      <section className="mt-6 grid grid-cols-3 md:grid-cols-6 gap-3">
-
-        {categories.map((c) => (
-          <Link key={c.label} to={c.to} search={c.search as never} className={`group flex flex-col items-center justify-center gap-2 rounded-2xl border ${c.active ? "border-gold/60 bg-gradient-to-b from-gold/20 to-card" : "border-border bg-card/60"} p-4 hover:border-gold/60 transition`}>
-            <div className={`grid place-items-center size-10 rounded-xl ${c.active ? "bg-gold-gradient text-primary-foreground" : "bg-secondary/80 text-gold"}`}>
-              <c.icon className="size-5" />
-            </div>
+      {/* Top nav tiles */}
+      <section className="mt-6 grid grid-cols-3 gap-3">
+        {navTiles.map((c) => (
+          <Link key={c.label} to={c.to} className={`group flex flex-col items-center justify-center gap-2 rounded-2xl border ${c.active ? "border-gold/60 bg-gradient-to-b from-gold/20 to-card" : "border-border bg-card/60"} p-4 hover:border-gold/60 transition`}>
+            <div className={`grid place-items-center size-10 rounded-xl ${c.active ? "bg-gold-gradient text-primary-foreground" : "bg-secondary/80 text-gold"}`}><c.icon className="size-5" /></div>
             <span className="text-xs md:text-sm font-bold text-center">{c.label}</span>
           </Link>
         ))}
       </section>
 
-      {featured.length > 0 && (
+      {/* Admin-managed collections */}
+      {showCollections && homeCollections.length > 0 && (
+        <>
+          <div className="mt-8 flex items-center justify-between">
+            <h2 className="text-xl md:text-2xl font-extrabold text-gold-gradient flex items-center gap-2">
+              <Gamepad2 className="size-5 text-gold" /> الأقسام
+            </h2>
+            <Link to="/categories" className="text-sm text-gold hover:underline">عرض الكل</Link>
+          </div>
+          <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+            {homeCollections.map((c) => (
+              <Link key={c.id} to="/collection/$slug" params={{ slug: c.slug }} className="group rounded-2xl overflow-hidden bg-dark-gradient border border-gold/30 hover:border-gold/70 hover:shadow-gold transition">
+                <div className="aspect-square bg-secondary/40 grid place-items-center overflow-hidden">
+                  {c.image_url ? (
+                    <img src={c.image_url} alt={c.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                  ) : (
+                    <Tag className="size-12 text-gold opacity-60" />
+                  )}
+                </div>
+                <p className="font-extrabold text-center p-3 text-gold-gradient">{c.title}</p>
+              </Link>
+            ))}
+          </div>
+        </>
+      )}
+
+      {showFeatured && featured.length > 0 && (
         <>
           <div className="mt-8 flex items-center justify-between">
             <h2 className="text-xl md:text-2xl font-extrabold text-gold-gradient flex items-center gap-2">
@@ -102,7 +128,7 @@ function Home() {
         </>
       )}
 
-      {offerItems.length > 0 && (
+      {showOffers && offerItems.length > 0 && (
         <div className="mt-8">
           <h2 className="text-xl font-extrabold text-gold-gradient flex items-center gap-2"><Tag className="size-5 text-gold" /> أبرز العروض</h2>
           <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -113,13 +139,10 @@ function Home() {
         </div>
       )}
 
-      {/* Features */}
       <section className="mt-10 rounded-3xl border border-border bg-card/60 p-5 grid grid-cols-2 md:grid-cols-4 gap-4">
         {features.map((f) => (
           <div key={f.title} className="flex items-center gap-3">
-            <div className="grid place-items-center size-11 rounded-xl bg-gold-gradient text-primary-foreground shrink-0">
-              <f.icon className="size-5" />
-            </div>
+            <div className="grid place-items-center size-11 rounded-xl bg-gold-gradient text-primary-foreground shrink-0"><f.icon className="size-5" /></div>
             <div>
               <p className="font-bold text-sm">{f.title}</p>
               <p className="text-xs text-muted-foreground">{f.desc}</p>

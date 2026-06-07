@@ -1,28 +1,48 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { AppLayout } from "@/components/AppLayout";
-import { Gamepad2, Smartphone, Tag, CreditCard, Headphones, Trophy } from "lucide-react";
+import { listActiveCollections } from "@/lib/collections.functions";
+import { Tag, CreditCard, Headphones } from "lucide-react";
 
 export const Route = createFileRoute("/categories")({
   head: () => ({ meta: [{ title: "الأقسام — Lion Store" }] }),
   component: Categories,
 });
 
-const cats = [
-  { to: "/games", label: "شحن الألعاب", icon: Gamepad2 },
-  { to: "/apps", label: "شحن التطبيقات", icon: Smartphone },
-  { to: "/offers", label: "العروض", icon: Tag },
-  { to: "/payments", label: "طرق الدفع", icon: CreditCard },
-  { to: "/about", label: "الدعم الفني", icon: Headphones },
-  { to: "/offers", label: "بطولات", icon: Trophy },
-] as const;
+const systemLinks = [
+  { to: "/payments" as const, label: "طرق الدفع", icon: CreditCard },
+  { to: "/about" as const, label: "الدعم الفني", icon: Headphones },
+];
 
 function Categories() {
+  const fn = useServerFn(listActiveCollections);
+  const { data: collections = [] } = useQuery({ queryKey: ["collections-active"], queryFn: () => fn() });
+
   return (
     <AppLayout>
       <h1 className="text-3xl font-black text-gold-gradient mb-6">الأقسام</h1>
+
+      {collections.length === 0 && (
+        <p className="text-center text-muted-foreground py-8">لا يوجد أقسام بعد. الأدمن لسه مضاف أقسام.</p>
+      )}
+
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-        {cats.map((c) => (
-          <Link key={c.label} to={c.to} className="flex flex-col items-center gap-3 p-6 rounded-2xl bg-card/70 border border-border hover:border-gold/60 hover:shadow-gold transition">
+        {collections.map((c) => (
+          <Link key={c.id} to="/collection/$slug" params={{ slug: c.slug }} className="group rounded-2xl bg-card/70 border border-border hover:border-gold/60 hover:shadow-gold transition overflow-hidden text-center">
+            <div className="aspect-square bg-secondary/50 grid place-items-center">
+              {c.image_url ? (
+                <img src={c.image_url} alt={c.title} className="w-full h-full object-cover" />
+              ) : (
+                <Tag className="size-12 text-gold opacity-60" />
+              )}
+            </div>
+            <p className="font-extrabold text-sm p-3">{c.title}</p>
+          </Link>
+        ))}
+
+        {systemLinks.map((c) => (
+          <Link key={c.label} to={c.to} className="flex flex-col items-center justify-center gap-3 p-6 rounded-2xl bg-card/70 border border-border hover:border-gold/60 hover:shadow-gold transition">
             <div className="grid place-items-center size-14 rounded-2xl bg-gold-gradient text-primary-foreground"><c.icon className="size-7" /></div>
             <span className="font-extrabold text-center">{c.label}</span>
           </Link>

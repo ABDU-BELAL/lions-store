@@ -12,21 +12,18 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as TransactionsRouteImport } from './routes/transactions'
 import { Route as TopupRouteImport } from './routes/topup'
 import { Route as TermsRouteImport } from './routes/terms'
-import { Route as StoreRouteImport } from './routes/store'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as ShopRouteImport } from './routes/shop'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PaymentsRouteImport } from './routes/payments'
-import { Route as OffersRouteImport } from './routes/offers'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as LoginRouteImport } from './routes/login'
-import { Route as GamesRouteImport } from './routes/games'
 import { Route as CategoriesRouteImport } from './routes/categories'
-import { Route as AppsRouteImport } from './routes/apps'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CollectionSlugRouteImport } from './routes/collection.$slug'
 
 const TransactionsRoute = TransactionsRouteImport.update({
   id: '/transactions',
@@ -41,11 +38,6 @@ const TopupRoute = TopupRouteImport.update({
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const StoreRoute = StoreRouteImport.update({
-  id: '/store',
-  path: '/store',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SignupRoute = SignupRouteImport.update({
@@ -73,11 +65,6 @@ const PaymentsRoute = PaymentsRouteImport.update({
   path: '/payments',
   getParentRoute: () => rootRouteImport,
 } as any)
-const OffersRoute = OffersRouteImport.update({
-  id: '/offers',
-  path: '/offers',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const NotificationsRoute = NotificationsRouteImport.update({
   id: '/notifications',
   path: '/notifications',
@@ -88,19 +75,9 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const GamesRoute = GamesRouteImport.update({
-  id: '/games',
-  path: '/games',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const CategoriesRoute = CategoriesRouteImport.update({
   id: '/categories',
   path: '/categories',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AppsRoute = AppsRouteImport.update({
-  id: '/apps',
-  path: '/apps',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRoute = AdminRouteImport.update({
@@ -118,67 +95,63 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CollectionSlugRoute = CollectionSlugRouteImport.update({
+  id: '/collection/$slug',
+  path: '/collection/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/admin': typeof AdminRoute
-  '/apps': typeof AppsRoute
   '/categories': typeof CategoriesRoute
-  '/games': typeof GamesRoute
   '/login': typeof LoginRoute
   '/notifications': typeof NotificationsRoute
-  '/offers': typeof OffersRoute
   '/payments': typeof PaymentsRoute
   '/privacy': typeof PrivacyRoute
   '/search': typeof SearchRoute
   '/shop': typeof ShopRoute
   '/signup': typeof SignupRoute
-  '/store': typeof StoreRoute
   '/terms': typeof TermsRoute
   '/topup': typeof TopupRoute
   '/transactions': typeof TransactionsRoute
+  '/collection/$slug': typeof CollectionSlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/admin': typeof AdminRoute
-  '/apps': typeof AppsRoute
   '/categories': typeof CategoriesRoute
-  '/games': typeof GamesRoute
   '/login': typeof LoginRoute
   '/notifications': typeof NotificationsRoute
-  '/offers': typeof OffersRoute
   '/payments': typeof PaymentsRoute
   '/privacy': typeof PrivacyRoute
   '/search': typeof SearchRoute
   '/shop': typeof ShopRoute
   '/signup': typeof SignupRoute
-  '/store': typeof StoreRoute
   '/terms': typeof TermsRoute
   '/topup': typeof TopupRoute
   '/transactions': typeof TransactionsRoute
+  '/collection/$slug': typeof CollectionSlugRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/admin': typeof AdminRoute
-  '/apps': typeof AppsRoute
   '/categories': typeof CategoriesRoute
-  '/games': typeof GamesRoute
   '/login': typeof LoginRoute
   '/notifications': typeof NotificationsRoute
-  '/offers': typeof OffersRoute
   '/payments': typeof PaymentsRoute
   '/privacy': typeof PrivacyRoute
   '/search': typeof SearchRoute
   '/shop': typeof ShopRoute
   '/signup': typeof SignupRoute
-  '/store': typeof StoreRoute
   '/terms': typeof TermsRoute
   '/topup': typeof TopupRoute
   '/transactions': typeof TransactionsRoute
+  '/collection/$slug': typeof CollectionSlugRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -186,82 +159,70 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/admin'
-    | '/apps'
     | '/categories'
-    | '/games'
     | '/login'
     | '/notifications'
-    | '/offers'
     | '/payments'
     | '/privacy'
     | '/search'
     | '/shop'
     | '/signup'
-    | '/store'
     | '/terms'
     | '/topup'
     | '/transactions'
+    | '/collection/$slug'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/about'
     | '/admin'
-    | '/apps'
     | '/categories'
-    | '/games'
     | '/login'
     | '/notifications'
-    | '/offers'
     | '/payments'
     | '/privacy'
     | '/search'
     | '/shop'
     | '/signup'
-    | '/store'
     | '/terms'
     | '/topup'
     | '/transactions'
+    | '/collection/$slug'
   id:
     | '__root__'
     | '/'
     | '/about'
     | '/admin'
-    | '/apps'
     | '/categories'
-    | '/games'
     | '/login'
     | '/notifications'
-    | '/offers'
     | '/payments'
     | '/privacy'
     | '/search'
     | '/shop'
     | '/signup'
-    | '/store'
     | '/terms'
     | '/topup'
     | '/transactions'
+    | '/collection/$slug'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
   AdminRoute: typeof AdminRoute
-  AppsRoute: typeof AppsRoute
   CategoriesRoute: typeof CategoriesRoute
-  GamesRoute: typeof GamesRoute
   LoginRoute: typeof LoginRoute
   NotificationsRoute: typeof NotificationsRoute
-  OffersRoute: typeof OffersRoute
   PaymentsRoute: typeof PaymentsRoute
   PrivacyRoute: typeof PrivacyRoute
   SearchRoute: typeof SearchRoute
   ShopRoute: typeof ShopRoute
   SignupRoute: typeof SignupRoute
-  StoreRoute: typeof StoreRoute
   TermsRoute: typeof TermsRoute
   TopupRoute: typeof TopupRoute
   TransactionsRoute: typeof TransactionsRoute
+  CollectionSlugRoute: typeof CollectionSlugRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -285,13 +246,6 @@ declare module '@tanstack/react-router' {
       path: '/terms'
       fullPath: '/terms'
       preLoaderRoute: typeof TermsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/store': {
-      id: '/store'
-      path: '/store'
-      fullPath: '/store'
-      preLoaderRoute: typeof StoreRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/signup': {
@@ -329,13 +283,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PaymentsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/offers': {
-      id: '/offers'
-      path: '/offers'
-      fullPath: '/offers'
-      preLoaderRoute: typeof OffersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/notifications': {
       id: '/notifications'
       path: '/notifications'
@@ -350,25 +297,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/games': {
-      id: '/games'
-      path: '/games'
-      fullPath: '/games'
-      preLoaderRoute: typeof GamesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/categories': {
       id: '/categories'
       path: '/categories'
       fullPath: '/categories'
       preLoaderRoute: typeof CategoriesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/apps': {
-      id: '/apps'
-      path: '/apps'
-      fullPath: '/apps'
-      preLoaderRoute: typeof AppsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin': {
@@ -392,6 +325,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/collection/$slug': {
+      id: '/collection/$slug'
+      path: '/collection/$slug'
+      fullPath: '/collection/$slug'
+      preLoaderRoute: typeof CollectionSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -399,21 +339,18 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
   AdminRoute: AdminRoute,
-  AppsRoute: AppsRoute,
   CategoriesRoute: CategoriesRoute,
-  GamesRoute: GamesRoute,
   LoginRoute: LoginRoute,
   NotificationsRoute: NotificationsRoute,
-  OffersRoute: OffersRoute,
   PaymentsRoute: PaymentsRoute,
   PrivacyRoute: PrivacyRoute,
   SearchRoute: SearchRoute,
   ShopRoute: ShopRoute,
   SignupRoute: SignupRoute,
-  StoreRoute: StoreRoute,
   TermsRoute: TermsRoute,
   TopupRoute: TopupRoute,
   TransactionsRoute: TransactionsRoute,
+  CollectionSlugRoute: CollectionSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
