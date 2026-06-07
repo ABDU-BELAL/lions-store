@@ -10,6 +10,6 @@ export const listMyWalletTxns = createServerFn({ method: "GET" })
       .select("id, type, amount, balance_after, description, created_at")
       .order("created_at", { ascending: false })
       .limit(100);
-    if (error) throw new Error(error.message);
+    if (error) { console.error("[db]", error); throw new Error("حدث خطأ، حاول مرة أخرى"); };
     return data ?? [];
   });

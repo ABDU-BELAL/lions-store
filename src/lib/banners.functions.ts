@@ -31,7 +31,7 @@ export const listActiveBanners = createServerFn({ method: "GET" }).handler(async
     .eq("is_active", true)
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: false });
-  if (error) throw new Error(error.message);
+  if (error) { console.error("[db]", error); throw new Error("حدث خطأ، حاول مرة أخرى"); };
   return withSignedUrl(data ?? []);
 });
 
@@ -44,7 +44,7 @@ export const adminListBanners = createServerFn({ method: "GET" })
       .select("*")
       .order("sort_order", { ascending: true })
       .order("created_at", { ascending: false });
-    if (error) throw new Error(error.message);
+    if (error) { console.error("[db]", error); throw new Error("حدث خطأ، حاول مرة أخرى"); };
     return withSignedUrl(data ?? []);
   });
 
@@ -70,10 +70,10 @@ export const adminUpsertBanner = createServerFn({ method: "POST" })
     await assertAdmin(context.userId);
     if (data.id) {
       const { error } = await supabaseAdmin.from("banners").update(data.data).eq("id", data.id);
-      if (error) throw new Error(error.message);
+      if (error) { console.error("[db]", error); throw new Error("حدث خطأ، حاول مرة أخرى"); };
     } else {
       const { error } = await supabaseAdmin.from("banners").insert(data.data);
-      if (error) throw new Error(error.message);
+      if (error) { console.error("[db]", error); throw new Error("حدث خطأ، حاول مرة أخرى"); };
     }
     return { ok: true };
   });
@@ -84,7 +84,7 @@ export const adminDeleteBanner = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId);
     const { error } = await supabaseAdmin.from("banners").delete().eq("id", data.id);
-    if (error) throw new Error(error.message);
+    if (error) { console.error("[db]", error); throw new Error("حدث خطأ، حاول مرة أخرى"); };
     if (data.storagePath && !/^https?:\/\//i.test(data.storagePath)) {
       await supabaseAdmin.storage.from("banners").remove([data.storagePath]).catch(() => {});
     }

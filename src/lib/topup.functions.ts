@@ -32,7 +32,7 @@ export const createTopupRequest = createServerFn({ method: "POST" })
       .select("id, amount, method, reference, created_at")
       .single();
 
-    if (error) throw new Error(error.message);
+    if (error) { console.error("[db]", error); throw new Error("حدث خطأ، حاول مرة أخرى"); };
 
     // Best-effort Telegram notification
     const { data: profile } = await supabase.from("profiles").select("full_name, phone").eq("id", userId).maybeSingle();

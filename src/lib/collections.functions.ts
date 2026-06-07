@@ -67,10 +67,10 @@ export const adminUpsertCollection = createServerFn({ method: "POST" })
     await assertAdmin(context.userId);
     if (data.id) {
       const { error } = await supabaseAdmin.from("collections").update(data.data).eq("id", data.id);
-      if (error) throw new Error(error.message);
+      if (error) { console.error("[db]", error); throw new Error("حدث خطأ، حاول مرة أخرى"); };
     } else {
       const { error } = await supabaseAdmin.from("collections").insert(data.data);
-      if (error) throw new Error(error.message);
+      if (error) { console.error("[db]", error); throw new Error("حدث خطأ، حاول مرة أخرى"); };
     }
     return { ok: true };
   });
@@ -81,7 +81,7 @@ export const adminDeleteCollection = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId);
     const { error } = await supabaseAdmin.from("collections").delete().eq("id", data.id);
-    if (error) throw new Error(error.message);
+    if (error) { console.error("[db]", error); throw new Error("حدث خطأ، حاول مرة أخرى"); };
     return { ok: true };
   });
 
@@ -105,7 +105,7 @@ export const adminUploadProductImage = createServerFn({ method: "POST" })
     const { error } = await supabaseAdmin.storage.from("products").upload(path, buf, {
       contentType: data.contentType, upsert: false,
     });
-    if (error) throw new Error(error.message);
+    if (error) { console.error("[db]", error); throw new Error("حدث خطأ، حاول مرة أخرى"); };
     return { path };
   });
 
@@ -133,6 +133,6 @@ export const adminUpdateHomeSettings = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId);
     const { error } = await supabaseAdmin.from("site_settings").upsert({ key: "home", value: data }, { onConflict: "key" });
-    if (error) throw new Error(error.message);
+    if (error) { console.error("[db]", error); throw new Error("حدث خطأ، حاول مرة أخرى"); };
     return { ok: true };
   });

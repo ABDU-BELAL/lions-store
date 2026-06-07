@@ -13,7 +13,7 @@ export const listShopProducts = createServerFn({ method: "GET" }).handler(async 
     .eq("is_active", true)
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: false });
-  if (error) throw new Error(error.message);
+  if (error) { console.error("[db]", error); throw new Error("حدث خطأ، حاول مرة أخرى"); };
   return signMany("products", data ?? []);
 });
 
@@ -34,7 +34,7 @@ export const purchaseProduct = createServerFn({ method: "POST" })
       p_product_id: data.productId,
       p_game_user_id: data.gameUserId,
     });
-    if (error) throw new Error(error.message);
+    if (error) { console.error("[db]", error); throw new Error("حدث خطأ، حاول مرة أخرى"); };
 
     // Fire-and-forget notification
     try {
@@ -73,6 +73,6 @@ export const listMyOrders = createServerFn({ method: "GET" })
       .select("id, product_title, amount, status, game_user_id, created_at")
       .order("created_at", { ascending: false })
       .limit(100);
-    if (error) throw new Error(error.message);
+    if (error) { console.error("[db]", error); throw new Error("حدث خطأ، حاول مرة أخرى"); };
     return data ?? [];
   });

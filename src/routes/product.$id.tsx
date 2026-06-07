@@ -22,7 +22,7 @@ export const getProductById = createServerFn({ method: "GET" })
       .eq("id", data.id)
       .eq("is_active", true)
       .maybeSingle();
-    if (error) throw new Error(error.message);
+    if (error) { console.error("[db]", error); throw new Error("حدث خطأ، حاول مرة أخرى"); };
     if (!product) return null;
     return { ...product, image_url: await signBucketPath("products", product.image_url) };
   });

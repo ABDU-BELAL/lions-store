@@ -93,7 +93,7 @@ export const decideTopup = createServerFn({ method: "POST" })
       .eq("status", "pending")
       .select("id, user_id, amount")
       .maybeSingle();
-    if (claimError) throw new Error(claimError.message);
+    if (claimError) { console.error("[db]", claimError); throw new Error("حدث خطأ، حاول مرة أخرى"); };
     if (!claimed) throw new Error("الطلب غير موجود أو تمت معالجته مسبقًا");
 
     if (data.decision === "approved") {
@@ -151,10 +151,10 @@ export const adminUpsertProduct = createServerFn({ method: "POST" })
     await assertAdmin(context.userId);
     if (data.id) {
       const { error } = await supabaseAdmin.from("products").update(data.data).eq("id", data.id);
-      if (error) throw new Error(error.message);
+      if (error) { console.error("[db]", error); throw new Error("حدث خطأ، حاول مرة أخرى"); };
     } else {
       const { error } = await supabaseAdmin.from("products").insert(data.data);
-      if (error) throw new Error(error.message);
+      if (error) { console.error("[db]", error); throw new Error("حدث خطأ، حاول مرة أخرى"); };
     }
     return { ok: true };
   });
@@ -165,7 +165,7 @@ export const adminDeleteProduct = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId);
     const { error } = await supabaseAdmin.from("products").delete().eq("id", data.id);
-    if (error) throw new Error(error.message);
+    if (error) { console.error("[db]", error); throw new Error("حدث خطأ، حاول مرة أخرى"); };
     return { ok: true };
   });
 
@@ -210,7 +210,7 @@ export const decideOrder = createServerFn({ method: "POST" })
       .eq("status", "pending")
       .select("id, user_id, amount, product_title")
       .maybeSingle();
-    if (claimError) throw new Error(claimError.message);
+    if (claimError) { console.error("[db]", claimError); throw new Error("حدث خطأ، حاول مرة أخرى"); };
     if (!claimed) throw new Error("الطلب غير موجود أو تمت معالجته مسبقًا");
 
     if (data.decision === "rejected") {
@@ -276,7 +276,7 @@ export const grantAdmin = createServerFn({ method: "POST" })
     const { error } = await supabaseAdmin
       .from("user_roles")
       .upsert({ user_id: profile.id, role: data.role }, { onConflict: "user_id,role" });
-    if (error) throw new Error(error.message);
+    if (error) { console.error("[db]", error); throw new Error("حدث خطأ، حاول مرة أخرى"); };
     return { ok: true };
   });
 
@@ -293,7 +293,7 @@ export const revokeAdmin = createServerFn({ method: "POST" })
       .delete()
       .eq("user_id", data.userId)
       .eq("role", data.role);
-    if (error) throw new Error(error.message);
+    if (error) { console.error("[db]", error); throw new Error("حدث خطأ، حاول مرة أخرى"); };
     return { ok: true };
   });
 
@@ -310,6 +310,6 @@ export const claimSuperAdmin = createServerFn({ method: "POST" })
     const { error } = await supabaseAdmin
       .from("user_roles")
       .upsert({ user_id: context.userId, role: "super_admin" }, { onConflict: "user_id,role" });
-    if (error) throw new Error(error.message);
+    if (error) { console.error("[db]", error); throw new Error("حدث خطأ، حاول مرة أخرى"); };
     return { ok: true };
   });
