@@ -111,10 +111,39 @@ function ProductPage() {
           <h1 className="text-3xl font-black text-gold-gradient">{product.title}</h1>
           <p className="mt-2 text-sm text-muted-foreground">{product.category}</p>
 
-          <p className="mt-6 text-4xl font-black text-gold">EG {Number(product.price).toLocaleString()}</p>
+          {qtyEnabled ? (
+            <p className="mt-6 text-lg font-bold text-gold">
+              EG {Number(product.price).toLocaleString()} <span className="text-sm text-muted-foreground">/ كل {unitSize.toLocaleString()} {unitLabel || "وحدة"}</span>
+            </p>
+          ) : (
+            <p className="mt-6 text-4xl font-black text-gold">EG {Number(product.price).toLocaleString()}</p>
+          )}
 
           {product.description && (
             <p className="mt-4 text-sm leading-relaxed whitespace-pre-line text-foreground/90">{product.description}</p>
+          )}
+
+          {qtyEnabled && (
+            <div className="mt-5">
+              <label className="text-xs font-bold mb-1 block">
+                الكمية {unitLabel ? `(${unitLabel})` : ""}
+                {minQty != null && <span className="text-muted-foreground"> — حد أدنى {minQty.toLocaleString()}</span>}
+                {maxQty != null && <span className="text-muted-foreground"> — حد أقصى {maxQty.toLocaleString()}</span>}
+              </label>
+              <input
+                type="number"
+                min={minQty ?? 1}
+                max={maxQty ?? undefined}
+                step="any"
+                value={quantity}
+                onChange={(e) => setQuantity(e.target.value)}
+                className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3"
+              />
+              <div className="mt-3 flex items-center justify-between rounded-xl bg-gold/10 border border-gold/30 p-3">
+                <span className="text-sm text-muted-foreground">الإجمالي</span>
+                <span className="text-2xl font-black text-gold-gradient">EG {totalPrice.toLocaleString()}</span>
+              </div>
+            </div>
           )}
 
           {user && (
@@ -140,19 +169,20 @@ function ProductPage() {
             <Link to="/login" className="mt-6 w-full block text-center rounded-xl bg-gold-gradient text-primary-foreground font-extrabold py-3 shadow-gold">
               سجّل دخول للشراء
             </Link>
-          ) : balance < Number(product.price) ? (
+          ) : balance < totalPrice ? (
             <Link to="/topup" className="mt-6 w-full block text-center rounded-xl bg-gold-gradient text-primary-foreground font-extrabold py-3 shadow-gold">
               اشحن رصيدك أولًا
             </Link>
           ) : (
             <button
-              disabled={mutation.isPending}
-              onClick={() => mutation.mutate({ productId: product.id, gameUserId: gameId.trim() || undefined })}
+              disabled={mutation.isPending || !qtyValid}
+              onClick={() => mutation.mutate({ productId: product.id, gameUserId: gameId.trim() || undefined, quantity: qtyEnabled ? qtyNum : undefined })}
               className="mt-6 w-full rounded-xl bg-gold-gradient text-primary-foreground font-extrabold py-3 shadow-gold disabled:opacity-50"
             >
-              {mutation.isPending ? "..." : "أكد الشراء"}
+              {mutation.isPending ? "..." : qtyEnabled ? `أكد الشراء — EG ${totalPrice.toLocaleString()}` : "أكد الشراء"}
             </button>
           )}
+
         </div>
       </div>
     </AppLayout>
