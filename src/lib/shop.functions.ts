@@ -4,6 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { signMany } from "@/lib/storage.server";
 import { notifyTelegram, escapeTelegramHtml } from "@/lib/telegram.server";
+import { enforceRateLimit } from "@/lib/rate-limit.server";
 
 export const listShopProducts = createServerFn({ method: "GET" }).handler(async () => {
   const { data, error } = await supabaseAdmin
@@ -26,6 +27,8 @@ export const purchaseProduct = createServerFn({ method: "POST" })
   .inputValidator((input) => purchaseSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { userId } = context;
+    // Rate limit purchases: max 10 per minute per user
+    await enforceRateLimit(`purchase:${userId}`, 10, 60, "عدد كبير من المحاولات. حاول بعد قليل.");
     const { data: orderId, error } = await supabaseAdmin.rpc("process_purchase", {
       p_user_id: userId,
       p_product_id: data.productId,

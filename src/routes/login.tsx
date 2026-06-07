@@ -70,7 +70,10 @@ function LoginPage() {
           تسجيل الدخول بـ Google
         </button>
 
-        <p className="mt-6 text-sm text-center text-muted-foreground">
+        <p className="mt-4 text-sm text-center">
+          <Link to="/forgot-password" className="text-gold font-bold">نسيت كلمة السر؟</Link>
+        </p>
+        <p className="mt-2 text-sm text-center text-muted-foreground">
           ليس لديك حساب؟ <Link to="/signup" className="text-gold font-bold">سجل الآن</Link>
         </p>
       </div>
