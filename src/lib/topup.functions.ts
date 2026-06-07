@@ -11,6 +11,9 @@ export type PaymentMethods = {
   instapay_account: string;
   instapay_link: string;
   binance: string;
+  vodafone_cash_enabled: boolean;
+  instapay_enabled: boolean;
+  binance_enabled: boolean;
 };
 
 const DEFAULT_PAYMENT_METHODS: PaymentMethods = {
@@ -18,6 +21,9 @@ const DEFAULT_PAYMENT_METHODS: PaymentMethods = {
   instapay_account: "islam20304050@instapay",
   instapay_link: "https://ipn.eg/S/islam20304050/instapay/7sbSIb",
   binance: "TS3NudYfcXA3cUBqZmMUFPpidZRdFG86PD",
+  vodafone_cash_enabled: true,
+  instapay_enabled: true,
+  binance_enabled: true,
 };
 
 export const getPaymentMethods = createServerFn({ method: "GET" }).handler(async () => {
@@ -30,6 +36,9 @@ const paymentMethodsSchema = z.object({
   instapay_account: z.string().trim().max(200),
   instapay_link: z.string().trim().max(500),
   binance: z.string().trim().max(200),
+  vodafone_cash_enabled: z.boolean(),
+  instapay_enabled: z.boolean(),
+  binance_enabled: z.boolean(),
 });
 
 export const adminUpdatePaymentMethods = createServerFn({ method: "POST" })
@@ -60,6 +69,16 @@ export const createTopupRequest = createServerFn({ method: "POST" })
   .inputValidator((input) => createSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+
+    // Reject if this payment method is currently under maintenance
+    const { data: pmRow } = await supabaseAdmin.from("site_settings").select("value").eq("key", "payment_methods").maybeSingle();
+    const pm = { ...DEFAULT_PAYMENT_METHODS, ...((pmRow?.value ?? {}) as Partial<PaymentMethods>) };
+    const enabledKey = data.method === "vodafone_cash" ? "vodafone_cash_enabled"
+      : data.method === "instapay" ? "instapay_enabled"
+      : data.method === "binance" ? "binance_enabled" : null;
+    if (enabledKey && !pm[enabledKey]) {
+      throw new Error("وسيلة الدفع هذه تحت الصيانة حاليًا، اختر طريقة أخرى");
+    }
 
     // Rate limit: max 5 topup requests per user per hour
     await enforceRateLimit(`topup:${userId}`, 5, 3600, "لقد تجاوزت الحد المسموح به، يرجى المحاولة لاحقاً");
