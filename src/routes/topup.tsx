@@ -42,6 +42,7 @@ function TopupPage() {
   const getAccount = useServerFn(getMyAccount);
   const createTopup = useServerFn(createTopupRequest);
   const myTopups = useServerFn(listMyTopups);
+  const fetchPaymentMethods = useServerFn(getPaymentMethods);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -51,8 +52,9 @@ function TopupPage() {
 
   const account = useQuery({ queryKey: ["account", user?.id], queryFn: () => getAccount(), enabled: !!user });
   const topups = useQuery({ queryKey: ["my-topups"], queryFn: () => myTopups(), enabled: !!user });
+  const paymentMethods = useQuery({ queryKey: ["payment-methods"], queryFn: () => fetchPaymentMethods() });
 
-  const [method, setMethod] = useState<typeof methods[number]["id"]>("vodafone_cash");
+  const [method, setMethod] = useState<typeof methodMeta[number]["id"]>("vodafone_cash");
   const [amount, setAmount] = useState<number>(100);
   const [reference, setReference] = useState("");
   const [note, setNote] = useState("");
