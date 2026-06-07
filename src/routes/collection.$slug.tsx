@@ -18,7 +18,7 @@ export const Route = createFileRoute("/collection/$slug")({
   component: CollectionPage,
 });
 
-type ColProduct = { id: string; title: string; description: string | null; price: number; image_url: string; is_offer: boolean; category: string };
+type ColProduct = { id: string; title: string; description: string | null; price: number; image_url: string | null; is_offer: boolean; category: string };
 
 function CollectionPage() {
   const { slug } = Route.useParams();
