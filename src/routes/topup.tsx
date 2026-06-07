@@ -10,7 +10,16 @@ import { Wallet, Phone, Building2, Bitcoin, Clock, CheckCircle2, XCircle, Copy, 
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/topup")({
+  ssr: false,
   head: () => ({ meta: [{ title: "شحن الرصيد — Lion Store" }] }),
+  beforeLoad: async () => {
+    const { supabase } = await import("@/integrations/supabase/client");
+    const { data } = await supabase.auth.getSession();
+    if (!data.session) {
+      const { redirect } = await import("@tanstack/react-router");
+      throw redirect({ to: "/login" });
+    }
+  },
   component: TopupPage,
 });
 

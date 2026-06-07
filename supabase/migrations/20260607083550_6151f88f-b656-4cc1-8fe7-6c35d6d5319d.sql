@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX IF NOT EXISTS topup_requests_reference_unique ON public.topup_requests (reference);
