@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useState } from "react";
 import { toast } from "sonner";
 import proframe from "@/assets/proframe.png.asset.json";
+import { FramedImage } from "@/components/FramedImage";
 import { Wallet, X, ShoppingBag } from "lucide-react";
 
 export const Route = createFileRoute("/collection/$slug")({
@@ -80,17 +81,7 @@ function CollectionPage() {
             className="group relative text-right rounded-2xl overflow-hidden bg-dark-gradient shadow-card border border-gold/20 transition-transform hover:-translate-y-1 hover:shadow-gold"
           >
             {p.is_offer && <span className="absolute top-2 right-2 z-20 text-[10px] font-extrabold bg-destructive text-destructive-foreground rounded-full px-2 py-1">عرض</span>}
-            <div className="relative aspect-square p-6 flex items-center justify-center">
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_oklch(0.7_0.18_75/_18%),_transparent_65%)]" />
-              <div className="relative w-full h-full grid place-items-center">
-                {p.image_url ? (
-                  <img src={p.image_url} alt={p.title} className="absolute inset-[18%] w-[64%] h-[64%] object-cover rounded-2xl z-10" />
-                ) : (
-                  <div className="absolute inset-[18%] w-[64%] h-[64%] grid place-items-center rounded-2xl bg-secondary z-10 text-3xl">🎮</div>
-                )}
-                <img src={proframe.url} alt="" aria-hidden className="relative w-full h-full object-contain" />
-              </div>
-            </div>
+            <FramedImage src={p.image_url} alt={p.title} />
             <div className="px-4 pb-4 pt-1 text-center">
               <h3 className="text-sm font-extrabold text-gold-gradient line-clamp-1">{p.title}</h3>
               <p className="mt-1 text-lg font-black text-gold">EG {Number(p.price).toLocaleString()}</p>

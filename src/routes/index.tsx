@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { AppLayout } from "@/components/AppLayout";
 import { ProductCard } from "@/components/ProductCard";
+import { FramedImage } from "@/components/FramedImage";
 import { BannerSlideshow } from "@/components/BannerSlideshow";
 import { listShopProducts } from "@/lib/shop.functions";
 import { listActiveCollections, getHomeSettings } from "@/lib/collections.functions";
@@ -98,13 +99,7 @@ function Home() {
           <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
             {homeCollections.map((c) => (
               <Link key={c.id} to="/collection/$slug" params={{ slug: c.slug }} className="group rounded-2xl overflow-hidden bg-dark-gradient border border-gold/30 hover:border-gold/70 hover:shadow-gold transition">
-                <div className="aspect-square bg-secondary/40 grid place-items-center overflow-hidden">
-                  {c.image_url ? (
-                    <img src={c.image_url} alt={c.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-                  ) : (
-                    <Tag className="size-12 text-gold opacity-60" />
-                  )}
-                </div>
+                <FramedImage src={c.image_url} alt={c.title} />
                 <p className="font-extrabold text-center p-3 text-gold-gradient">{c.title}</p>
               </Link>
             ))}
