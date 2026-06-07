@@ -31,7 +31,7 @@ export const listActiveBanners = createServerFn({ method: "GET" }).handler(async
     .eq("is_active", true)
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: false });
-  if (error) throw new Error(error.message);
+  if (error) { console.error("[db]", error); throw new Error("حدث خطأ، حاول مرة أخرى"); };
   return withSignedUrl(data ?? []);
 });
 
@@ -44,7 +44,7 @@ export const adminListBanners = createServerFn({ method: "GET" })
       .select("*")
       .order("sort_order", { ascending: true })
       .order("created_at", { ascending: false });
-    if (error) throw new Error(error.message);
+    if (error) { console.error("[db]", error); throw new Error("حدث خطأ، حاول مرة أخرى"); };
     return withSignedUrl(data ?? []);
   });
 
@@ -70,10 +70,10 @@ export const adminUpsertBanner = createServerFn({ method: "POST" })
     await assertAdmin(context.userId);
     if (data.id) {
       const { error } = await supabaseAdmin.from("banners").update(data.data).eq("id", data.id);
-      if (error) throw new Error(error.message);
+      if (error) { console.error("[db]", error); throw new Error("حدث خطأ، حاول مرة أخرى"); };
     } else {
       const { error } = await supabaseAdmin.from("banners").insert(data.data);
-      if (error) throw new Error(error.message);
+      if (error) { console.error("[db]", error); throw new Error("حدث خطأ، حاول مرة أخرى"); };
     }
     return { ok: true };
   });
@@ -84,7 +84,7 @@ export const adminDeleteBanner = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId);
     const { error } = await supabaseAdmin.from("banners").delete().eq("id", data.id);
-    if (error) throw new Error(error.message);
+    if (error) { console.error("[db]", error); throw new Error("حدث خطأ، حاول مرة أخرى"); };
     if (data.storagePath && !/^https?:\/\//i.test(data.storagePath)) {
       await supabaseAdmin.storage.from("banners").remove([data.storagePath]).catch(() => {});
     }
@@ -94,9 +94,11 @@ export const adminDeleteBanner = createServerFn({ method: "POST" })
 // Upload via base64 — keeps it simple and bypasses CORS on client uploads
 const uploadSchema = z.object({
   filename: z.string().trim().min(1).max(200),
-  contentType: z.string().trim().min(1).max(100),
+  contentType: z.string().trim().min(1).max(100).regex(/^image\//i, "Only image files allowed"),
   base64: z.string().min(1),
 });
+
+const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
 
 export const adminUploadBannerImage = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -106,10 +108,15 @@ export const adminUploadBannerImage = createServerFn({ method: "POST" })
     const ext = (data.filename.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "");
     const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
     const buf = Buffer.from(data.base64, "base64");
+    if (buf.byteLength === 0) throw new Error("الملف فارغ");
+    if (buf.byteLength > MAX_UPLOAD_BYTES) throw new Error("الحد الأقصى 5 ميجابايت");
     const { error } = await supabaseAdmin.storage.from("banners").upload(path, buf, {
       contentType: data.contentType,
       upsert: false,
     });
-    if (error) throw new Error(error.message);
+    if (error) {
+      console.error("[adminUploadBannerImage]", error);
+      throw new Error("فشل رفع الصورة");
+    }
     return { path };
   });
