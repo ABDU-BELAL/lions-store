@@ -2,10 +2,16 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AppLayout } from "@/components/AppLayout";
 
 export const Route = createFileRoute("/privacy")({
-  head: () => ({ meta: [
-    { title: "سياسة الخصوصية — Lion Store" },
-    { name: "description", content: "كيف تجمع Lion Store بياناتك وتحميها." },
-  ] }),
+  head: () => ({
+    meta: [
+      { title: "سياسة الخصوصية — Lion Store" },
+      { name: "description", content: "تعرّف على كيفية جمع ليون ستور لبياناتك وحمايتها، وحقوقك تجاه معلوماتك الشخصية." },
+      { property: "og:title", content: "سياسة الخصوصية — Lion Store" },
+      { property: "og:description", content: "كيف نحمي بياناتك في ليون ستور." },
+      { property: "og:url", content: "https://lions-stores.com/privacy" },
+    ],
+    links: [{ rel: "canonical", href: "https://lions-stores.com/privacy" }],
+  }),
   component: Privacy,
 });
 

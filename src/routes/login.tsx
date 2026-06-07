@@ -7,7 +7,17 @@ import logo from "@/assets/logo.jpeg.asset.json";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/login")({
-  head: () => ({ meta: [{ title: "تسجيل الدخول — Lion Store" }] }),
+  head: () => ({
+    meta: [
+      { title: "تسجيل الدخول — Lion Store" },
+      { name: "description", content: "ادخل على حسابك في ليون ستور لمتابعة طلبات الشحن والرصيد والمعاملات." },
+      { property: "og:title", content: "تسجيل الدخول — Lion Store" },
+      { property: "og:description", content: "ادخل على حسابك في ليون ستور." },
+      { property: "og:url", content: "https://lions-stores.com/login" },
+      { name: "robots", content: "noindex" },
+    ],
+    links: [{ rel: "canonical", href: "https://lions-stores.com/login" }],
+  }),
   component: LoginPage,
 });
 

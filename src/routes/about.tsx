@@ -4,7 +4,31 @@ import { MessageCircle, Mail } from "lucide-react";
 import logo from "@/assets/logo.jpeg.asset.json";
 
 export const Route = createFileRoute("/about")({
-  head: () => ({ meta: [{ title: "من نحن — Lion Store" }] }),
+  head: () => ({
+    meta: [
+      { title: "من نحن — Lion Store" },
+      { name: "description", content: "تعرف على ليون ستور: وجهتك الأولى لشحن الألعاب والتطبيقات في مصر والوطن العربي بأفضل الأسعار ودعم فني 24/7." },
+      { property: "og:title", content: "من نحن — قصة Lion Store" },
+      { property: "og:description", content: "ليون ستور — أمانة، احترافية، وأسرع شحن للألعاب والتطبيقات." },
+      { property: "og:url", content: "https://lions-stores.com/about" },
+    ],
+    links: [{ rel: "canonical", href: "https://lions-stores.com/about" }],
+    scripts: [{
+      type: "application/ld+json",
+      children: JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "LocalBusiness",
+        name: "Lion Store",
+        alternateName: "ليون ستور",
+        url: "https://lions-stores.com/about",
+        image: "https://lions-stores.com/favicon.ico",
+        description: "متجر شحن الألعاب والتطبيقات في مصر والوطن العربي.",
+        telephone: "+20-101-059-4146",
+        email: "lions.storeeg@gmail.com",
+        areaServed: "EG",
+      }),
+    }],
+  }),
   component: About,
 });
 

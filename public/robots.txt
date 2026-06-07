@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /login
+Disallow: /signup
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /topup
+Disallow: /transactions
+Disallow: /notifications
+
+Sitemap: https://lions-stores.com/sitemap.xml

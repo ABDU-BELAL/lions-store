@@ -10,7 +10,15 @@ import { useEffect, useState } from "react";
 
 export const Route = createFileRoute("/transactions")({
   ssr: false,
-  head: () => ({ meta: [{ title: "المعاملات — Lion Store" }] }),
+  head: () => ({
+    meta: [
+      { title: "المعاملات — Lion Store" },
+      { name: "description", content: "استعرض سجل طلبات الشحن وعمليات المحفظة في حسابك على ليون ستور." },
+      { property: "og:url", content: "https://lions-stores.com/transactions" },
+      { name: "robots", content: "noindex" },
+    ],
+    links: [{ rel: "canonical", href: "https://lions-stores.com/transactions" }],
+  }),
   beforeLoad: async () => {
     const { supabase } = await import("@/integrations/supabase/client");
     const { data } = await supabase.auth.getSession();

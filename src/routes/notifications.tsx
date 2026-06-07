@@ -3,7 +3,15 @@ import { AppLayout } from "@/components/AppLayout";
 import { Bell, Gift, Zap, Tag } from "lucide-react";
 
 export const Route = createFileRoute("/notifications")({
-  head: () => ({ meta: [{ title: "الإشعارات — Lion Store" }] }),
+  head: () => ({
+    meta: [
+      { title: "الإشعارات — Lion Store" },
+      { name: "description", content: "تابع آخر الإشعارات والعروض وتحديثات الطلبات في حسابك على ليون ستور." },
+      { property: "og:url", content: "https://lions-stores.com/notifications" },
+      { name: "robots", content: "noindex" },
+    ],
+    links: [{ rel: "canonical", href: "https://lions-stores.com/notifications" }],
+  }),
   component: Notifications,
 });
 

@@ -14,7 +14,16 @@ import { z } from "zod";
 const shopSearch = z.object({ q: z.string().optional().catch("") });
 
 export const Route = createFileRoute("/shop")({
-  head: () => ({ meta: [{ title: "المتجر — Lion Store" }] }),
+  head: () => ({
+    meta: [
+      { title: "المتجر — Lion Store" },
+      { name: "description", content: "تصفح متجر ليون ستور: شحن الألعاب والتطبيقات بأسعار تنافسية، توصيل فوري، ودفع آمن عبر فودافون كاش وإنستا باي وUSDT." },
+      { property: "og:title", content: "المتجر — شحن الألعاب والتطبيقات" },
+      { property: "og:description", content: "كل منتجات الشحن في مكان واحد: ببجي، فري فاير، فورتنايت، تطبيقات وألعاب أخرى." },
+      { property: "og:url", content: "https://lions-stores.com/shop" },
+    ],
+    links: [{ rel: "canonical", href: "https://lions-stores.com/shop" }],
+  }),
   validateSearch: shopSearch,
   component: ShopPage,
 });

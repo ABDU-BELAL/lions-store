@@ -7,7 +7,16 @@ import { listActiveCollections } from "@/lib/collections.functions";
 import { CreditCard, Headphones } from "lucide-react";
 
 export const Route = createFileRoute("/categories")({
-  head: () => ({ meta: [{ title: "الأقسام — Lion Store" }] }),
+  head: () => ({
+    meta: [
+      { title: "الأقسام — Lion Store" },
+      { name: "description", content: "تصفح أقسام ليون ستور: الألعاب، التطبيقات، الباقات، والعروض المميزة. اختر القسم الذي يناسبك واشحن في ثواني." },
+      { property: "og:title", content: "الأقسام — تصفح فئات الشحن" },
+      { property: "og:description", content: "كل فئات شحن الألعاب والتطبيقات في مكان واحد." },
+      { property: "og:url", content: "https://lions-stores.com/categories" },
+    ],
+    links: [{ rel: "canonical", href: "https://lions-stores.com/categories" }],
+  }),
   component: Categories,
 });
 
