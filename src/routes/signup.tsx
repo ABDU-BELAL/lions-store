@@ -38,7 +38,7 @@ function SignupPage() {
     e.preventDefault();
     if (password.length < 6) return toast.error("كلمة السر 6 حروف على الأقل");
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email, password,
       options: {
         emailRedirectTo: window.location.origin,
@@ -47,8 +47,13 @@ function SignupPage() {
     });
     setLoading(false);
     if (error) return toast.error(error.message);
-    toast.success("تم إنشاء الحساب! راجع بريدك لتأكيد الإيميل ثم سجل دخول.");
-    navigate({ to: "/login" });
+    if (data.session) {
+      toast.success("تم إنشاء الحساب بنجاح");
+      navigate({ to: "/", replace: true });
+    } else {
+      toast.success("تم إنشاء الحساب! راجع بريدك لتأكيد الإيميل ثم سجل دخول.");
+      navigate({ to: "/login" });
+    }
   };
 
   const google = async () => {
