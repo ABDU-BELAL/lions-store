@@ -62,8 +62,8 @@ export function AppLayout({ children }: { children: ReactNode }) {
               aria-label="ابحث عن اللعبة أو التطبيق"
               value={headerQ}
               onChange={(e) => setHeaderQ(e.target.value)}
-              placeholder="ابحث عن اللعبة أو التطبيق"
-              className="w-full rounded-full bg-secondary/60 border border-border pr-10 pl-4 py-2.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-gold/50"
+              placeholder="ابحث"
+              className="w-full rounded-full bg-secondary/60 border border-border pr-9 sm:pr-10 pl-3 sm:pl-4 py-2 sm:py-2.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-gold/50 min-w-0"
             />
           </form>
 
