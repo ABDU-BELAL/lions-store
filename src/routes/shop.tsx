@@ -270,17 +270,17 @@ function ShopPage() {
               </span>
             </div>
 
-            {selected.category === "games" && (
-              <div className="mt-4">
-                <label className="text-xs font-bold mb-1 block">ID اللاعب (اختياري)</label>
-                <input
-                  value={gameId}
-                  onChange={(e) => setGameId(e.target.value)}
-                  placeholder="مثلاً: 123456789"
-                  className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gold/50"
-                />
-              </div>
-            )}
+            <div className="mt-4">
+              <label className="text-xs font-bold mb-1 block">
+                {selected.category === "games" ? "ID اللاعب (اختياري)" : "ID الحساب / رقم التعريف (اختياري)"}
+              </label>
+              <input
+                value={gameId}
+                onChange={(e) => setGameId(e.target.value)}
+                placeholder="مثلاً: 123456789"
+                className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gold/50"
+              />
+            </div>
 
             {balance < total ? (
               <Link
