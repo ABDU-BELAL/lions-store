@@ -42,7 +42,48 @@ const errorMiddleware = createMiddleware().server(async ({ next }) => {
   }
 });
 
+// Security headers: CSP + clickjacking/MIME/referrer/permissions hardening.
+// Applied to every server response (SSR pages, server fns, server routes).
+const securityHeadersMiddleware = createMiddleware().server(async ({ next }) => {
+  const response = await next();
+  const res = response as unknown as Response;
+  if (!res || typeof res.headers?.set !== "function") return response;
+
+  const contentType = res.headers.get("content-type") ?? "";
+  const isHtml = contentType.includes("text/html");
+
+  // Always-on headers
+  res.headers.set("X-Content-Type-Options", "nosniff");
+  res.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  res.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=()");
+  res.headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+
+  // CSP only on HTML responses (don't pollute JSON/asset responses)
+  if (isHtml) {
+    const csp = [
+      "default-src 'self'",
+      // React/TanStack SSR hydration requires inline; keep unsafe-inline only for scripts/styles
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.lovable.app https://*.lovable.dev",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      "font-src 'self' data: https://fonts.gstatic.com",
+      "img-src 'self' data: blob: https:",
+      "media-src 'self' https:",
+      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.lovable.app https://*.lovable.dev https://api.telegram.org",
+      // Allow Lovable editor preview iframe; block all other framing
+      "frame-ancestors 'self' https://*.lovable.app https://*.lovable.dev",
+      "frame-src 'self' https://*.lovable.app https://*.lovable.dev",
+      "object-src 'none'",
+      "base-uri 'self'",
+      "form-action 'self'",
+      "upgrade-insecure-requests",
+    ].join("; ");
+    res.headers.set("Content-Security-Policy", csp);
+  }
+
+  return response;
+});
+
 export const startInstance = createStart(() => ({
-  requestMiddleware: [errorMiddleware],
+  requestMiddleware: [securityHeadersMiddleware, errorMiddleware],
   functionMiddleware: [attachSupabaseAuth],
 }));
