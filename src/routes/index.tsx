@@ -91,13 +91,13 @@ function Home() {
   return (
     <AppLayout>
       {/* Hero */}
-      <section className="relative overflow-hidden rounded-3xl bg-dark-gradient border-gold shadow-card p-6 md:p-10">
+      <section className="relative overflow-hidden rounded-3xl bg-dark-gradient border-gold shadow-card p-4 sm:p-6 md:p-10">
         <div className="absolute inset-0 opacity-30 bg-[radial-gradient(circle_at_50%_50%,_oklch(0.7_0.18_75_/_50%),_transparent_60%)]" />
-        <div className="relative grid md:grid-cols-2 gap-6 items-center">
-          <div className="text-right">
-            <h1 className="text-4xl md:text-6xl font-black text-gold-gradient leading-tight">LION STORE — شحن ألعاب وتطبيقات</h1>
-            <p className="mt-3 text-lg md:text-xl font-bold text-gold-soft">ملك الشحن — أفضل الأسعار</p>
-            <p className="mt-2 text-sm md:text-base text-muted-foreground max-w-md md:mr-0 mr-auto">
+        <div className="relative grid md:grid-cols-2 gap-4 sm:gap-6 items-center">
+          <div className="text-right min-w-0">
+            <h1 className="text-2xl sm:text-3xl md:text-6xl font-black text-gold-gradient leading-tight break-words">LION STORE — شحن ألعاب وتطبيقات</h1>
+            <p className="mt-3 text-base sm:text-lg md:text-xl font-bold text-gold-soft">ملك الشحن — أفضل الأسعار</p>
+            <p className="mt-2 text-xs sm:text-sm md:text-base text-muted-foreground max-w-md md:mr-0 mr-auto">
               أمانك يهمنا. تأكد دائمًا من التواصل عبر أرقامنا الرسمية وتجنب أي وسيط أو مصادر غير موثوقة.
             </p>
             <div className="mt-5 flex flex-wrap gap-3">
@@ -105,7 +105,7 @@ function Home() {
             </div>
           </div>
           <div className="flex justify-center">
-            <div className="relative size-48 md:size-64">
+            <div className="relative size-32 sm:size-44 md:size-64">
               <div className="absolute inset-0 rounded-full bg-gold-gradient opacity-25 blur-2xl animate-pulse" />
               <img src={logo.url} alt="Lion Store" className="relative rounded-full size-full object-cover ring-4 ring-gold/40 shadow-gold" />
             </div>
