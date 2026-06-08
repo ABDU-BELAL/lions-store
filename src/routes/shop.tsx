@@ -76,17 +76,19 @@ function ShopPage() {
   });
 
 
+  const [tab, setTab] = useState<"games" | "apps">("games");
+
   const balance = Number(account.data?.balance ?? 0);
   const allList = products.data ?? [];
   const list = useMemo(() => {
     const query = q.trim().toLowerCase();
-    if (!query) return allList;
-    return allList.filter((p) =>
+    const byTab = allList.filter((p) => (p.category ?? "").toLowerCase() === tab);
+    if (!query) return byTab;
+    return byTab.filter((p) =>
       p.title.toLowerCase().includes(query) ||
-      (p.description ?? "").toLowerCase().includes(query) ||
-      (p.category ?? "").toLowerCase().includes(query),
+      (p.description ?? "").toLowerCase().includes(query),
     );
-  }, [allList, q]);
+  }, [allList, q, tab]);
 
   return (
     <AppLayout>
@@ -114,6 +116,21 @@ function ShopPage() {
           placeholder="ابحث داخل المتجر..."
           className="w-full rounded-full bg-secondary/60 border border-border pr-12 pl-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50"
         />
+      </div>
+
+      <div className="mt-5 grid grid-cols-2 gap-2 rounded-2xl bg-secondary/40 p-1 border border-border">
+        {([
+          { id: "games", label: "الألعاب" },
+          { id: "apps", label: "التطبيقات" },
+        ] as const).map((t) => (
+          <button
+            key={t.id}
+            onClick={() => setTab(t.id)}
+            className={`py-2.5 rounded-xl text-sm font-extrabold transition ${tab === t.id ? "bg-gold-gradient text-primary-foreground shadow-gold" : "text-muted-foreground hover:text-foreground"}`}
+          >
+            {t.label}
+          </button>
+        ))}
       </div>
 
       {products.isLoading && <p className="mt-8 text-center text-muted-foreground">جاري التحميل...</p>}
