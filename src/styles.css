@@ -79,7 +79,7 @@
 
 @layer base {
   * { border-color: var(--color-border); }
-  html { font-family: var(--font-display); }
+  html { font-family: var(--font-display); -webkit-text-size-adjust: 100%; }
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
@@ -87,7 +87,10 @@
       radial-gradient(circle at 15% 0%, oklch(0.7 0.15 70 / 8%), transparent 50%),
       radial-gradient(circle at 85% 100%, oklch(0.6 0.14 60 / 8%), transparent 50%);
     min-height: 100vh;
+    overflow-x: hidden;
   }
+  img, video { max-width: 100%; height: auto; }
+  h1, h2, h3, p { overflow-wrap: anywhere; }
 }
 
 @utility text-gold-gradient {
