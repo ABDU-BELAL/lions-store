@@ -153,9 +153,11 @@ function ProductPage() {
             </div>
           )}
 
-          {product.category === "games" && user && (
+          {user && (
             <div className="mt-4">
-              <label className="text-xs font-bold mb-1 block">ID اللاعب (اختياري)</label>
+              <label className="text-xs font-bold mb-1 block">
+                {product.category === "games" ? "ID اللاعب" : "ID الحساب / رقم التعريف"} <span className="text-destructive">*</span>
+              </label>
               <input
                 value={gameId}
                 onChange={(e) => setGameId(e.target.value)}
@@ -176,7 +178,10 @@ function ProductPage() {
           ) : (
             <button
               disabled={mutation.isPending || !qtyValid}
-              onClick={() => mutation.mutate({ productId: product.id, gameUserId: gameId.trim() || undefined, quantity: qtyEnabled ? qtyNum : undefined })}
+              onClick={() => {
+                if (!gameId.trim()) { toast.error("من فضلك أدخل الـ ID أولًا"); return; }
+                mutation.mutate({ productId: product.id, gameUserId: gameId.trim(), quantity: qtyEnabled ? qtyNum : undefined });
+              }}
               className="mt-6 w-full rounded-xl bg-gold-gradient text-primary-foreground font-extrabold py-3 shadow-gold disabled:opacity-50"
             >
               {mutation.isPending ? "..." : qtyEnabled ? `أكد الشراء — EG ${totalPrice.toLocaleString()}` : "أكد الشراء"}
