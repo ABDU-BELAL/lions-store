@@ -85,7 +85,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
             aria-label={menuOpen ? "إغلاق القائمة" : "فتح القائمة"}
             aria-expanded={menuOpen}
             onClick={() => setMenuOpen((v) => !v)}
-            className="grid place-items-center size-10 rounded-lg bg-secondary/70 border border-border"
+            className="grid place-items-center size-9 sm:size-10 rounded-lg bg-secondary/70 border border-border shrink-0"
           >
             <Menu className="size-5" />
           </button>
