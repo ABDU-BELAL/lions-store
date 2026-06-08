@@ -142,16 +142,16 @@ function CollectionPage() {
               <span className="text-muted-foreground flex items-center gap-1"><Wallet className="size-4" />رصيدك</span>
               <span className="font-extrabold text-gold-gradient">EG {balance.toLocaleString()}</span>
             </div>
-            {selected.category === "games" && (
-              <div className="mt-4">
-                <label className="text-xs font-bold mb-1 block">ID اللاعب (اختياري)</label>
-                <input value={gameId} onChange={(e) => setGameId(e.target.value)} placeholder="123456789" className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3" />
-              </div>
-            )}
+            <div className="mt-4">
+              <label className="text-xs font-bold mb-1 block">
+                {selected.category === "games" ? "ID اللاعب" : "ID الحساب / رقم التعريف"} <span className="text-destructive">*</span>
+              </label>
+              <input value={gameId} onChange={(e) => setGameId(e.target.value)} placeholder="123456789" className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3" />
+            </div>
             {balance < total ? (
               <Link to="/topup" className="mt-5 w-full block text-center rounded-xl bg-gold-gradient text-primary-foreground font-extrabold py-3 shadow-gold">اشحن رصيدك أولًا</Link>
             ) : (
-              <button disabled={mutation.isPending || !qtyValid} onClick={() => mutation.mutate({ productId: selected.id, gameUserId: gameId.trim() || undefined, quantity: qtyEnabled ? qtyNum : undefined })} className="mt-5 w-full rounded-xl bg-gold-gradient text-primary-foreground font-extrabold py-3 shadow-gold disabled:opacity-50">
+              <button disabled={mutation.isPending || !qtyValid} onClick={() => { if (!gameId.trim()) { toast.error("من فضلك أدخل الـ ID أولًا"); return; } mutation.mutate({ productId: selected.id, gameUserId: gameId.trim(), quantity: qtyEnabled ? qtyNum : undefined }); }} className="mt-5 w-full rounded-xl bg-gold-gradient text-primary-foreground font-extrabold py-3 shadow-gold disabled:opacity-50">
                 {mutation.isPending ? "..." : qtyEnabled ? `أكد الشراء — EG ${total.toLocaleString()}` : "أكد الشراء"}
               </button>
             )}
