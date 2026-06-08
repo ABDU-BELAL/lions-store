@@ -40,9 +40,9 @@ export function AppLayout({ children }: { children: ReactNode }) {
       <ParticlesBackground />
       {/* Header */}
       <header className="sticky top-0 z-40 backdrop-blur-xl bg-background/80 border-b border-border">
-        <div className="mx-auto max-w-6xl px-4 py-3 flex items-center gap-3">
+        <div className="mx-auto max-w-6xl px-2 sm:px-4 py-2 sm:py-3 flex items-center gap-2 sm:gap-3">
           <Link to="/" className="flex items-center gap-2 shrink-0">
-            <img src={logo.url} alt="Lion Store" className="h-11 w-11 rounded-full object-cover ring-2 ring-gold/40" />
+            <img src={logo.url} alt="Lion Store" className="h-9 w-9 sm:h-11 sm:w-11 rounded-full object-cover ring-2 ring-gold/40" />
             <span className="hidden sm:block text-gold-gradient font-extrabold text-lg tracking-wide">LION STORE</span>
           </Link>
 
@@ -62,8 +62,8 @@ export function AppLayout({ children }: { children: ReactNode }) {
               aria-label="ابحث عن اللعبة أو التطبيق"
               value={headerQ}
               onChange={(e) => setHeaderQ(e.target.value)}
-              placeholder="ابحث عن اللعبة أو التطبيق"
-              className="w-full rounded-full bg-secondary/60 border border-border pr-10 pl-4 py-2.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-gold/50"
+              placeholder="ابحث"
+              className="w-full rounded-full bg-secondary/60 border border-border pr-9 sm:pr-10 pl-3 sm:pl-4 py-2 sm:py-2.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-gold/50 min-w-0"
             />
           </form>
 
@@ -85,7 +85,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
             aria-label={menuOpen ? "إغلاق القائمة" : "فتح القائمة"}
             aria-expanded={menuOpen}
             onClick={() => setMenuOpen((v) => !v)}
-            className="grid place-items-center size-10 rounded-lg bg-secondary/70 border border-border"
+            className="grid place-items-center size-9 sm:size-10 rounded-lg bg-secondary/70 border border-border shrink-0"
           >
             <Menu className="size-5" />
           </button>
@@ -125,7 +125,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
         )}
       </header>
 
-      <main className="mx-auto max-w-6xl px-4 py-5">
+      <main className="mx-auto max-w-6xl px-3 sm:px-4 py-4 sm:py-5">
         {children}
       </main>
 
