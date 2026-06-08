@@ -76,17 +76,19 @@ function ShopPage() {
   });
 
 
+  const [tab, setTab] = useState<"games" | "apps">("games");
+
   const balance = Number(account.data?.balance ?? 0);
   const allList = products.data ?? [];
   const list = useMemo(() => {
     const query = q.trim().toLowerCase();
-    if (!query) return allList;
-    return allList.filter((p) =>
+    const byTab = allList.filter((p) => (p.category ?? "").toLowerCase() === tab);
+    if (!query) return byTab;
+    return byTab.filter((p) =>
       p.title.toLowerCase().includes(query) ||
-      (p.description ?? "").toLowerCase().includes(query) ||
-      (p.category ?? "").toLowerCase().includes(query),
+      (p.description ?? "").toLowerCase().includes(query),
     );
-  }, [allList, q]);
+  }, [allList, q, tab]);
 
   return (
     <AppLayout>
