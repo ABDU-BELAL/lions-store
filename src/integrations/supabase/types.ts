@@ -258,6 +258,24 @@ export type Database = {
         }
         Relationships: []
       }
+      telegram_chats: {
+        Row: {
+          added_at: string
+          chat_id: string
+          title: string | null
+        }
+        Insert: {
+          added_at?: string
+          chat_id: string
+          title?: string | null
+        }
+        Update: {
+          added_at?: string
+          chat_id?: string
+          title?: string | null
+        }
+        Relationships: []
+      }
       topup_requests: {
         Row: {
           admin_note: string | null
