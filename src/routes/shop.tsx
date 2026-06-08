@@ -118,6 +118,21 @@ function ShopPage() {
         />
       </div>
 
+      <div className="mt-5 grid grid-cols-2 gap-2 rounded-2xl bg-secondary/40 p-1 border border-border">
+        {([
+          { id: "games", label: "الألعاب" },
+          { id: "apps", label: "التطبيقات" },
+        ] as const).map((t) => (
+          <button
+            key={t.id}
+            onClick={() => setTab(t.id)}
+            className={`py-2.5 rounded-xl text-sm font-extrabold transition ${tab === t.id ? "bg-gold-gradient text-primary-foreground shadow-gold" : "text-muted-foreground hover:text-foreground"}`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
       {products.isLoading && <p className="mt-8 text-center text-muted-foreground">جاري التحميل...</p>}
       {!products.isLoading && list.length === 0 && (
         <div className="mt-10 text-center text-muted-foreground">
