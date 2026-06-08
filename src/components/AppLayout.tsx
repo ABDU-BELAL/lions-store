@@ -42,7 +42,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
       <header className="sticky top-0 z-40 backdrop-blur-xl bg-background/80 border-b border-border">
         <div className="mx-auto max-w-6xl px-2 sm:px-4 py-2 sm:py-3 flex items-center gap-2 sm:gap-3">
           <Link to="/" className="flex items-center gap-2 shrink-0">
-            <img src={logo.url} alt="Lion Store" className="h-11 w-11 rounded-full object-cover ring-2 ring-gold/40" />
+            <img src={logo.url} alt="Lion Store" className="h-9 w-9 sm:h-11 sm:w-11 rounded-full object-cover ring-2 ring-gold/40" />
             <span className="hidden sm:block text-gold-gradient font-extrabold text-lg tracking-wide">LION STORE</span>
           </Link>
 
