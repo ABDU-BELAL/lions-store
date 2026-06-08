@@ -14,14 +14,24 @@ export function escapeTelegramHtml(input: unknown): string {
 
 export async function notifyTelegram(message: string): Promise<void> {
   const token = process.env.TELEGRAM_BOT_TOKEN;
-  const chatIdsRaw = process.env.TELEGRAM_CHAT_ID;
-  if (!token || !chatIdsRaw) return; // silently skip if not configured
+  if (!token) return;
 
-  // Support multiple chat IDs separated by comma, semicolon, space, or newline
-  const chatIds = chatIdsRaw
+  const envIds = (process.env.TELEGRAM_CHAT_ID ?? "")
     .split(/[\s,;]+/)
     .map((s) => s.trim())
     .filter(Boolean);
+
+  let dbIds: string[] = [];
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data } = await supabaseAdmin.from("telegram_chats").select("chat_id");
+    dbIds = (data ?? []).map((r: { chat_id: string }) => r.chat_id);
+  } catch (e) {
+    console.error("Failed to load telegram_chats", e);
+  }
+
+  const chatIds = Array.from(new Set([...envIds, ...dbIds]));
+  if (chatIds.length === 0) return;
 
   await Promise.all(
     chatIds.map(async (chatId) => {
