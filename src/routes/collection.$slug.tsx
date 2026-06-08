@@ -151,7 +151,7 @@ function CollectionPage() {
             {balance < total ? (
               <Link to="/topup" className="mt-5 w-full block text-center rounded-xl bg-gold-gradient text-primary-foreground font-extrabold py-3 shadow-gold">اشحن رصيدك أولًا</Link>
             ) : (
-              <button disabled={mutation.isPending || !qtyValid} onClick={() => mutation.mutate({ productId: selected.id, gameUserId: gameId.trim() || undefined, quantity: qtyEnabled ? qtyNum : undefined })} className="mt-5 w-full rounded-xl bg-gold-gradient text-primary-foreground font-extrabold py-3 shadow-gold disabled:opacity-50">
+              <button disabled={mutation.isPending || !qtyValid} onClick={() => { if (!gameId.trim()) { toast.error("من فضلك أدخل الـ ID أولًا"); return; } mutation.mutate({ productId: selected.id, gameUserId: gameId.trim(), quantity: qtyEnabled ? qtyNum : undefined }); }} className="mt-5 w-full rounded-xl bg-gold-gradient text-primary-foreground font-extrabold py-3 shadow-gold disabled:opacity-50">
                 {mutation.isPending ? "..." : qtyEnabled ? `أكد الشراء — EG ${total.toLocaleString()}` : "أكد الشراء"}
               </button>
             )}
