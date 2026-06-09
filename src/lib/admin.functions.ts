@@ -378,7 +378,7 @@ export const adminAdjustBalance = createServerFn({ method: "POST" })
       const { data: w } = await supabaseAdmin.from("wallets").select("balance").eq("user_id", data.userId).maybeSingle();
       const current = Number(w?.balance ?? 0);
       delta = data.amount - current;
-      type = delta >= 0 ? "admin_credit" : "admin_debit";
+      type = "adjustment";
     }
 
     if (delta === 0) return { ok: true, balance: data.amount };
