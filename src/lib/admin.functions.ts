@@ -245,9 +245,28 @@ export const decideOrder = createServerFn({ method: "POST" })
   });
 
 // -------- Admin management (super admin only) --------
+// Defense-in-depth: verify via both the DB security-definer `has_role` RPC
+// (canonical role check) AND a direct row lookup. Both must agree.
 async function assertSuperAdmin(userId: string) {
-  const { data } = await supabaseAdmin.from("user_roles").select("role").eq("user_id", userId).eq("role", "super_admin");
-  if (!data || data.length === 0) throw new Error("Forbidden: super admin only");
+  if (!userId || typeof userId !== "string") {
+    throw new Error("Forbidden: super admin only");
+  }
+  const [rpc, direct] = await Promise.all([
+    supabaseAdmin.rpc("has_role", { _user_id: userId, _role: "super_admin" }),
+    supabaseAdmin
+      .from("user_roles")
+      .select("user_id")
+      .eq("user_id", userId)
+      .eq("role", "super_admin")
+      .maybeSingle(),
+  ]);
+  if (rpc.error || direct.error) {
+    console.error("[assertSuperAdmin]", rpc.error ?? direct.error);
+    throw new Error("Forbidden: super admin only");
+  }
+  if (rpc.data !== true || !direct.data) {
+    throw new Error("Forbidden: super admin only");
+  }
 }
 
 export const listAdmins = createServerFn({ method: "GET" })
