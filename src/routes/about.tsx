@@ -46,7 +46,7 @@ function About() {
 
       <div className="mt-6 grid sm:grid-cols-2 gap-4">
         {[
-          { icon: MessageCircle, label: "واتساب", value: "+20 101 059 4146", href: "https://wa.me/201010594146" },
+          { icon: MessageCircle, label: "واتساب", value: "01010594146", href: "https://wa.me/201010594146" },
           { icon: Mail, label: "البريد", value: "lions.storeeg@gmail.com", href: "mailto:lions.storeeg@gmail.com" },
         ].map((c) => (
           <a key={c.label} href={c.href} className="flex items-center gap-4 p-5 rounded-2xl bg-card/70 border border-border hover:border-gold/50 transition">
