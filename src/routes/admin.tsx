@@ -96,7 +96,9 @@ function AdminPage() {
       {tab === "banners" && <BannersTab />}
       {tab === "settings" && <SettingsTab />}
       {tab === "payments" && account.data.isSuperAdmin && <PaymentMethodsTab />}
+      {tab === "users" && <UsersTab />}
       {tab === "admins" && <AdminsTab isSuper={!!account.data.isSuperAdmin} />}
+
     </AppLayout>
   );
 }
