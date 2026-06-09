@@ -323,15 +323,18 @@ export const claimSuperAdmin = createServerFn({ method: "POST" })
 // -------- Users management --------
 export const adminListUsers = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { search?: string } | undefined) => input ?? {})
+  .inputValidator((input: { search?: string } | undefined) =>
+    z.object({ search: z.string().trim().max(120).optional() }).parse(input ?? {}),
+  )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context.userId);
+    await assertSuperAdmin(context.userId);
     let q = supabaseAdmin
       .from("profiles")
       .select("id, full_name, phone, email, created_at")
       .order("created_at", { ascending: false })
       .limit(200);
-    const s = data.search?.trim();
+    // Sanitize: strip PostgREST/SQL LIKE metacharacters to prevent filter injection
+    const s = data.search?.replace(/[,()*:%_\\]/g, "").trim();
     if (s) q = q.or(`email.ilike.%${s}%,full_name.ilike.%${s}%,phone.ilike.%${s}%`);
     const { data: profiles, error } = await q;
     if (error) { console.error("[db]", error); throw new Error("حدث خطأ، حاول مرة أخرى"); }
@@ -350,15 +353,24 @@ export const adminAdjustBalance = createServerFn({ method: "POST" })
     z.object({
       userId: z.string().uuid(),
       mode: z.enum(["set", "add", "subtract"]),
-      amount: z.number().min(0).max(10_000_000),
+      amount: z.number().finite().min(0).max(10_000_000),
       note: z.string().trim().max(200).optional(),
     }).parse(input),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context.userId);
+    // Super admin only — regular admins cannot modify balances
+    await assertSuperAdmin(context.userId);
+
+    // Confirm target user actually exists (defense in depth)
+    const { data: target } = await supabaseAdmin
+      .from("profiles")
+      .select("id")
+      .eq("id", data.userId)
+      .maybeSingle();
+    if (!target) throw new Error("المستخدم غير موجود");
 
     let delta = 0;
-    let type = "adjustment";
+    let type = "admin_credit";
     if (data.mode === "add") { delta = data.amount; type = "admin_credit"; }
     else if (data.mode === "subtract") { delta = -data.amount; type = "admin_debit"; }
     else {
@@ -370,15 +382,17 @@ export const adminAdjustBalance = createServerFn({ method: "POST" })
 
     if (delta === 0) return { ok: true, balance: data.amount };
 
+    const safeNote = (data.note ?? "").replace(/[\r\n\t]+/g, " ").slice(0, 200);
     const { data: newBalance, error } = await supabaseAdmin.rpc("credit_wallet", {
       p_user_id: data.userId,
       p_amount: delta,
       p_type: type,
-      p_description: data.note || (delta >= 0 ? "تعديل الرصيد بواسطة الأدمن" : "خصم بواسطة الأدمن"),
+      p_description: safeNote || (delta >= 0 ? "تعديل الرصيد بواسطة الأدمن" : "خصم بواسطة الأدمن"),
       p_ref_table: "admin_adjustment",
       p_ref_id: null as unknown as string,
     });
     if (error) { console.error("[adminAdjustBalance]", error); throw new Error("تعذر تعديل الرصيد"); }
     return { ok: true, balance: Number(newBalance) };
   });
+
 
