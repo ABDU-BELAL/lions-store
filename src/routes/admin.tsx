@@ -77,7 +77,9 @@ function AdminPage() {
           { id: "banners", label: "السلايدر" },
           { id: "settings", label: "الصفحة الرئيسية" },
           ...(account.data.isSuperAdmin ? [{ id: "payments" as Tab, label: "وسائل الدفع" }] : []),
+          { id: "users", label: "المستخدمين" },
           { id: "admins", label: "الأدمنز" },
+
         ] as { id: Tab; label: string }[]).map((t) => (
           <button key={t.id} onClick={() => setTab(t.id)}
             className={`shrink-0 px-4 py-2 rounded-full font-bold text-sm transition ${tab === t.id ? "bg-gold-gradient text-primary-foreground shadow-gold" : "bg-card border border-border"}`}>
