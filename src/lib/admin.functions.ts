@@ -370,14 +370,15 @@ export const adminAdjustBalance = createServerFn({ method: "POST" })
     if (!target) throw new Error("المستخدم غير موجود");
 
     let delta = 0;
-    let type = "admin_credit";
-    if (data.mode === "add") { delta = data.amount; type = "admin_credit"; }
-    else if (data.mode === "subtract") { delta = -data.amount; type = "admin_debit"; }
+    let type = "adjustment";
+    if (data.mode === "add") { delta = data.amount; type = "adjustment"; }
+    else if (data.mode === "subtract") { delta = -data.amount; type = "adjustment"; }
+
     else {
       const { data: w } = await supabaseAdmin.from("wallets").select("balance").eq("user_id", data.userId).maybeSingle();
       const current = Number(w?.balance ?? 0);
       delta = data.amount - current;
-      type = delta >= 0 ? "admin_credit" : "admin_debit";
+      type = "adjustment";
     }
 
     if (delta === 0) return { ok: true, balance: data.amount };
