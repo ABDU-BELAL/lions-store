@@ -9,7 +9,9 @@ import {
   adminListProducts, adminUpsertProduct, adminDeleteProduct,
   listAdmins, grantAdmin, revokeAdmin, claimSuperAdmin,
   verifyAdminAccess, adminListOrders, decideOrder,
+  adminListUsers, adminAdjustBalance,
 } from "@/lib/admin.functions";
+
 import { adminListBanners, adminUpsertBanner, adminDeleteBanner, adminUploadBannerImage } from "@/lib/banners.functions";
 import {
   adminListCollections, adminUpsertCollection, adminDeleteCollection,
@@ -36,7 +38,7 @@ export const Route = createFileRoute("/admin")({
   component: AdminPage,
 });
 
-type Tab = "stats" | "topups" | "orders" | "products" | "collections" | "banners" | "settings" | "payments" | "admins";
+type Tab = "stats" | "topups" | "orders" | "products" | "collections" | "banners" | "settings" | "payments" | "users" | "admins";
 
 function AdminPage() {
   const { user, loading } = useAuth();
@@ -75,7 +77,9 @@ function AdminPage() {
           { id: "banners", label: "السلايدر" },
           { id: "settings", label: "الصفحة الرئيسية" },
           ...(account.data.isSuperAdmin ? [{ id: "payments" as Tab, label: "وسائل الدفع" }] : []),
+          { id: "users", label: "المستخدمين" },
           { id: "admins", label: "الأدمنز" },
+
         ] as { id: Tab; label: string }[]).map((t) => (
           <button key={t.id} onClick={() => setTab(t.id)}
             className={`shrink-0 px-4 py-2 rounded-full font-bold text-sm transition ${tab === t.id ? "bg-gold-gradient text-primary-foreground shadow-gold" : "bg-card border border-border"}`}>
@@ -92,7 +96,9 @@ function AdminPage() {
       {tab === "banners" && <BannersTab />}
       {tab === "settings" && <SettingsTab />}
       {tab === "payments" && account.data.isSuperAdmin && <PaymentMethodsTab />}
+      {tab === "users" && <UsersTab />}
       {tab === "admins" && <AdminsTab isSuper={!!account.data.isSuperAdmin} />}
+
     </AppLayout>
   );
 }
@@ -784,3 +790,108 @@ function PaymentMethodsTab() {
     </div>
   );
 }
+
+function UsersTab() {
+  const list = useServerFn(adminListUsers);
+  const adjust = useServerFn(adminAdjustBalance);
+  const qc = useQueryClient();
+  const [search, setSearch] = useState("");
+  const [editing, setEditing] = useState<null | { id: string; name: string; balance: number }>(null);
+  const [mode, setMode] = useState<"set" | "add" | "subtract">("set");
+  const [amount, setAmount] = useState<string>("");
+  const [note, setNote] = useState("");
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["admin-users", search],
+    queryFn: () => list({ data: { search: search || undefined } }),
+  });
+
+  const m = useMutation({
+    mutationFn: () => adjust({ data: { userId: editing!.id, mode, amount: Number(amount), note: note || undefined } }),
+    onSuccess: () => {
+      toast.success("تم تعديل الرصيد");
+      setEditing(null); setAmount(""); setNote(""); setMode("set");
+      qc.invalidateQueries({ queryKey: ["admin-users"] });
+      qc.invalidateQueries({ queryKey: ["account"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <div>
+      <div className="mb-4">
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="ابحث بالاسم أو الإيميل أو الرقم..."
+          className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3"
+        />
+      </div>
+
+      {isLoading && <p className="text-center py-8 text-muted-foreground">جاري التحميل...</p>}
+
+      <div className="space-y-3">
+        {(data ?? []).length === 0 && !isLoading && <p className="text-center py-8 text-muted-foreground">لا يوجد مستخدمين</p>}
+        {(data ?? []).map((u) => (
+          <div key={u.id} className="rounded-2xl bg-card/70 border border-border p-4 flex flex-wrap items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="font-extrabold truncate">{u.full_name || "—"}</p>
+              <p className="text-xs text-muted-foreground truncate">{u.email || "—"} {u.phone ? `• ${u.phone}` : ""}</p>
+              <p className="mt-1 text-lg font-black text-gold-gradient">EG {Number(u.balance).toLocaleString()}</p>
+            </div>
+            <button
+              onClick={() => { setEditing({ id: u.id, name: u.full_name || u.email || u.id, balance: Number(u.balance) }); setAmount(String(u.balance)); setMode("set"); }}
+              className="rounded-lg bg-gold-gradient text-primary-foreground font-bold px-4 py-2 text-sm flex items-center gap-1"
+            >
+              <Wallet className="size-4" /> تعديل الرصيد
+            </button>
+          </div>
+        ))}
+      </div>
+
+      {editing && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 backdrop-blur-sm p-4" onClick={() => setEditing(null)}>
+          <div onClick={(e) => e.stopPropagation()} className="w-full max-w-md rounded-3xl bg-card border-gold shadow-card p-6 max-h-[90vh] overflow-y-auto">
+            <h3 className="text-xl font-black text-gold-gradient text-center">تعديل رصيد</h3>
+            <p className="text-center text-sm text-muted-foreground mt-1">{editing.name}</p>
+            <p className="text-center mt-2">الرصيد الحالي: <span className="font-extrabold text-gold">EG {editing.balance.toLocaleString()}</span></p>
+
+            <div className="mt-4 grid grid-cols-3 gap-2">
+              {([
+                { id: "set", label: "تعيين" },
+                { id: "add", label: "إضافة" },
+                { id: "subtract", label: "خصم" },
+              ] as const).map((o) => (
+                <button key={o.id} onClick={() => setMode(o.id)}
+                  className={`rounded-xl py-2 text-sm font-bold ${mode === o.id ? "bg-gold-gradient text-primary-foreground" : "bg-secondary border border-border"}`}>
+                  {o.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="mt-4">
+              <label className="text-xs font-bold mb-1 block">المبلغ (EGP)</label>
+              <input type="number" min="0" step="any" value={amount} onChange={(e) => setAmount(e.target.value)}
+                className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3" />
+            </div>
+
+            <div className="mt-3">
+              <label className="text-xs font-bold mb-1 block">ملاحظة (اختياري)</label>
+              <input value={note} onChange={(e) => setNote(e.target.value)}
+                className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3" />
+            </div>
+
+            <div className="mt-5 flex gap-2">
+              <button onClick={() => setEditing(null)} className="flex-1 rounded-xl bg-secondary border border-border font-bold py-2.5">إلغاء</button>
+              <button disabled={m.isPending || !amount || isNaN(Number(amount))} onClick={() => m.mutate()}
+                className="flex-1 rounded-xl bg-gold-gradient text-primary-foreground font-extrabold py-2.5 disabled:opacity-50">
+                {m.isPending ? "..." : "حفظ"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+

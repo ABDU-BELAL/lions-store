@@ -319,3 +319,66 @@ export const claimSuperAdmin = createServerFn({ method: "POST" })
     if (error) { console.error("[db]", error); throw new Error("حدث خطأ، حاول مرة أخرى"); };
     return { ok: true };
   });
+
+// -------- Users management --------
+export const adminListUsers = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { search?: string } | undefined) => input ?? {})
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+    let q = supabaseAdmin
+      .from("profiles")
+      .select("id, full_name, phone, email, created_at")
+      .order("created_at", { ascending: false })
+      .limit(200);
+    const s = data.search?.trim();
+    if (s) q = q.or(`email.ilike.%${s}%,full_name.ilike.%${s}%,phone.ilike.%${s}%`);
+    const { data: profiles, error } = await q;
+    if (error) { console.error("[db]", error); throw new Error("حدث خطأ، حاول مرة أخرى"); }
+    const ids = (profiles ?? []).map((p) => p.id);
+    const { data: wallets } = await supabaseAdmin
+      .from("wallets")
+      .select("user_id, balance")
+      .in("user_id", ids.length ? ids : ["00000000-0000-0000-0000-000000000000"]);
+    const map = new Map((wallets ?? []).map((w) => [w.user_id, Number(w.balance)]));
+    return (profiles ?? []).map((p) => ({ ...p, balance: map.get(p.id) ?? 0 }));
+  });
+
+export const adminAdjustBalance = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z.object({
+      userId: z.string().uuid(),
+      mode: z.enum(["set", "add", "subtract"]),
+      amount: z.number().min(0).max(10_000_000),
+      note: z.string().trim().max(200).optional(),
+    }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+
+    let delta = 0;
+    let type = "adjustment";
+    if (data.mode === "add") { delta = data.amount; type = "admin_credit"; }
+    else if (data.mode === "subtract") { delta = -data.amount; type = "admin_debit"; }
+    else {
+      const { data: w } = await supabaseAdmin.from("wallets").select("balance").eq("user_id", data.userId).maybeSingle();
+      const current = Number(w?.balance ?? 0);
+      delta = data.amount - current;
+      type = delta >= 0 ? "admin_credit" : "admin_debit";
+    }
+
+    if (delta === 0) return { ok: true, balance: data.amount };
+
+    const { data: newBalance, error } = await supabaseAdmin.rpc("credit_wallet", {
+      p_user_id: data.userId,
+      p_amount: delta,
+      p_type: type,
+      p_description: data.note || (delta >= 0 ? "تعديل الرصيد بواسطة الأدمن" : "خصم بواسطة الأدمن"),
+      p_ref_table: "admin_adjustment",
+      p_ref_id: null as unknown as string,
+    });
+    if (error) { console.error("[adminAdjustBalance]", error); throw new Error("تعذر تعديل الرصيد"); }
+    return { ok: true, balance: Number(newBalance) };
+  });
+
