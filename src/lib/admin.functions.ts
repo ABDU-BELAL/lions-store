@@ -402,7 +402,12 @@ export const adminAdjustBalance = createServerFn({ method: "POST" })
 
     if (delta === 0) return { ok: true, balance: data.amount };
 
+    // TOCTOU defense: re-verify super admin immediately before the privileged write.
+    await assertSuperAdmin(context.userId);
+
     const safeNote = (data.note ?? "").replace(/[\r\n\t]+/g, " ").slice(0, 200);
+    console.info("[adminAdjustBalance] actor=%s target=%s mode=%s amount=%s delta=%s",
+      context.userId, data.userId, data.mode, data.amount, delta);
     const { data: newBalance, error } = await supabaseAdmin.rpc("credit_wallet", {
       p_user_id: data.userId,
       p_amount: delta,
