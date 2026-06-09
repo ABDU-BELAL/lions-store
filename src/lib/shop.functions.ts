@@ -52,11 +52,13 @@ export const purchaseProduct = createServerFn({ method: "POST" })
         .select("full_name, phone, email")
         .eq("id", userId)
         .maybeSingle();
+      const qtyText = data.quantity != null ? String(data.quantity) : "1";
       await notifyTelegram(
         `🛒 <b>طلب جديد</b>\n` +
           `👤 ${escapeTelegramHtml(prof?.full_name || prof?.email || userId)}\n` +
           `📱 ${escapeTelegramHtml(prof?.phone || "-")}\n` +
           `🎮 ${escapeTelegramHtml(prod?.title)}\n` +
+          `🔢 الكمية: ${escapeTelegramHtml(qtyText)}\n` +
           `💰 EG ${escapeTelegramHtml(Number(prod?.price ?? 0).toLocaleString())}\n` +
           (data.gameUserId ? `🆔 ${escapeTelegramHtml(data.gameUserId)}\n` : "") +
           `#order_${String(orderId).slice(0, 8)}`,
