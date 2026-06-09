@@ -44,8 +44,13 @@ export const purchaseProduct = createServerFn({ method: "POST" })
     try {
       const { data: prod } = await supabaseAdmin
         .from("products")
-        .select("title, price")
+        .select("title")
         .eq("id", data.productId)
+        .maybeSingle();
+      const { data: order } = await supabaseAdmin
+        .from("orders")
+        .select("amount")
+        .eq("id", orderId as string)
         .maybeSingle();
       const { data: prof } = await supabaseAdmin
         .from("profiles")
@@ -53,13 +58,15 @@ export const purchaseProduct = createServerFn({ method: "POST" })
         .eq("id", userId)
         .maybeSingle();
       const qtyText = data.quantity != null ? String(data.quantity) : "1";
+      const totalAmount = Number(order?.amount ?? 0);
       await notifyTelegram(
         `🛒 <b>طلب جديد</b>\n` +
           `👤 ${escapeTelegramHtml(prof?.full_name || prof?.email || userId)}\n` +
           `📱 ${escapeTelegramHtml(prof?.phone || "-")}\n` +
           `🎮 ${escapeTelegramHtml(prod?.title)}\n` +
           `🔢 الكمية: ${escapeTelegramHtml(qtyText)}\n` +
-          `💰 EG ${escapeTelegramHtml(Number(prod?.price ?? 0).toLocaleString())}\n` +
+          `💰 EG ${escapeTelegramHtml(totalAmount.toLocaleString())}\n` +
+
           (data.gameUserId ? `🆔 ${escapeTelegramHtml(data.gameUserId)}\n` : "") +
           `#order_${String(orderId).slice(0, 8)}`,
       );
