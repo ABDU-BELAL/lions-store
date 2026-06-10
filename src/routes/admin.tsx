@@ -80,7 +80,9 @@ function AdminPage() {
           { id: "settings", label: "الصفحة الرئيسية" },
           ...(account.data.isSuperAdmin ? [{ id: "payments" as Tab, label: "وسائل الدفع" }] : []),
           ...(account.data.isSuperAdmin ? [{ id: "users" as Tab, label: "المستخدمين" }] : []),
+          ...(account.data.isSuperAdmin ? [{ id: "discounts" as Tab, label: "الخصومات" }] : []),
           { id: "admins", label: "الأدمنز" },
+
 
 
         ] as { id: Tab; label: string }[]).map((t) => (
