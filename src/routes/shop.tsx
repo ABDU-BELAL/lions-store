@@ -50,7 +50,7 @@ function ShopPage() {
 
   const products = useQuery({ queryKey: ["shop-products"], queryFn: () => listFn() });
   const account = useQuery({ queryKey: ["account"], queryFn: () => accountFn(), enabled: !!user });
-  const orders = useQuery({ queryKey: ["my-orders"], queryFn: () => ordersFn(), enabled: !!user });
+  const orders = useQuery({ queryKey: ["my-orders", user?.id], queryFn: () => ordersFn(), enabled: !!user });
 
   const [selected, setSelected] = useState<Product | null>(null);
   const [gameId, setGameId] = useState("");
