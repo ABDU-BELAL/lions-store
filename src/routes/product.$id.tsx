@@ -59,8 +59,16 @@ function ProductPage() {
   const qc = useQueryClient();
   const accountFn = useServerFn(getMyAccount);
   const purchaseFn = useServerFn(purchaseProduct);
+  const discountFn = useServerFn(getMyProductDiscount);
 
   const account = useQuery({ queryKey: ["account"], queryFn: () => accountFn(), enabled: !!user });
+  const discountQ = useQuery({
+    queryKey: ["my-discount", product.id, user?.id],
+    queryFn: () => discountFn({ data: { productId: product.id } }),
+    enabled: !!user,
+  });
+  const discountPct = Number(discountQ.data?.percent ?? 0);
+
   const [gameId, setGameId] = useState("");
   const qtyEnabled = !!(product as any).quantity_enabled;
   const unitSize = Number((product as any).unit_size ?? 1) || 1;
@@ -69,8 +77,10 @@ function ProductPage() {
   const maxQty = (product as any).max_quantity != null ? Number((product as any).max_quantity) : null;
   const [quantity, setQuantity] = useState<string>(qtyEnabled ? String(minQty ?? unitSize) : "");
   const qtyNum = Number(quantity) || 0;
-  const totalPrice = qtyEnabled ? Math.round((qtyNum / unitSize) * Number(product.price) * 100) / 100 : Number(product.price);
+  const basePrice = qtyEnabled ? Math.round((qtyNum / unitSize) * Number(product.price) * 100) / 100 : Number(product.price);
+  const totalPrice = discountPct > 0 ? Math.round(basePrice * (1 - discountPct / 100) * 100) / 100 : basePrice;
   const qtyValid = !qtyEnabled || (qtyNum > 0 && (minQty == null || qtyNum >= minQty) && (maxQty == null || qtyNum <= maxQty));
+
 
   const mutation = useMutation({
     mutationFn: (vars: { productId: string; gameUserId?: string; quantity?: number }) => purchaseFn({ data: vars }),
