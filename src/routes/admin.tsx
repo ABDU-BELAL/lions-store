@@ -10,7 +10,9 @@ import {
   listAdmins, grantAdmin, revokeAdmin, claimSuperAdmin,
   verifyAdminAccess, adminListOrders, decideOrder,
   adminListUsers, adminAdjustBalance,
+  adminListDiscounts, adminUpsertDiscount, adminDeleteDiscount,
 } from "@/lib/admin.functions";
+
 
 import { adminListBanners, adminUpsertBanner, adminDeleteBanner, adminUploadBannerImage } from "@/lib/banners.functions";
 import {
