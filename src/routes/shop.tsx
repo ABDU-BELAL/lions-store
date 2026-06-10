@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { AppLayout } from "@/components/AppLayout";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { listShopProducts, purchaseProduct, listMyOrders } from "@/lib/shop.functions";
+import { listShopProducts, purchaseProduct, listMyOrders, getMyProductDiscount } from "@/lib/shop.functions";
 import { getMyAccount } from "@/lib/account.functions";
 import { useAuth } from "@/hooks/useAuth";
 import { useMemo, useState } from "react";
@@ -46,6 +46,7 @@ function ShopPage() {
   const accountFn = useServerFn(getMyAccount);
   const ordersFn = useServerFn(listMyOrders);
   const purchaseFn = useServerFn(purchaseProduct);
+  const discountFn = useServerFn(getMyProductDiscount);
 
   const products = useQuery({ queryKey: ["shop-products"], queryFn: () => listFn() });
   const account = useQuery({ queryKey: ["account"], queryFn: () => accountFn(), enabled: !!user });
@@ -54,6 +55,12 @@ function ShopPage() {
   const [selected, setSelected] = useState<Product | null>(null);
   const [gameId, setGameId] = useState("");
   const [quantity, setQuantity] = useState<string>("");
+  const discount = useQuery({
+    queryKey: ["my-discount", selected?.id, user?.id],
+    queryFn: () => discountFn({ data: { productId: selected!.id } }),
+    enabled: !!user && !!selected,
+  });
+  const discountPct = Number(discount.data?.percent ?? 0);
 
   const mutation = useMutation({
     mutationFn: (vars: { productId: string; gameUserId?: string; quantity?: number }) => purchaseFn({ data: vars }),
@@ -217,7 +224,10 @@ function ShopPage() {
         const minQty = (selected as any).min_quantity != null ? Number((selected as any).min_quantity) : null;
         const maxQty = (selected as any).max_quantity != null ? Number((selected as any).max_quantity) : null;
         const qtyNum = Number(quantity) || 0;
-        const total = qtyEnabled ? Math.round((qtyNum / unitSize) * Number(selected.price) * 100) / 100 : Number(selected.price);
+        const baseUnitPrice = Number(selected.price);
+        const discountedUnitPrice = discountPct > 0 ? Math.round(baseUnitPrice * (1 - discountPct / 100) * 100) / 100 : baseUnitPrice;
+        const baseTotal = qtyEnabled ? Math.round((qtyNum / unitSize) * baseUnitPrice * 100) / 100 : baseUnitPrice;
+        const total = discountPct > 0 ? Math.round(baseTotal * (1 - discountPct / 100) * 100) / 100 : baseTotal;
         const qtyValid = !qtyEnabled || (qtyNum > 0 && (minQty == null || qtyNum >= minQty) && (maxQty == null || qtyNum <= maxQty));
         return (
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 backdrop-blur-sm p-4" onClick={() => { setSelected(null); setQuantity(""); }}>
@@ -229,9 +239,19 @@ function ShopPage() {
             <div className="mt-4 rounded-2xl bg-secondary/40 p-4 text-center">
               <p className="text-sm text-muted-foreground">{selected.title}</p>
               {qtyEnabled ? (
-                <p className="text-base font-bold text-gold mt-1">EG {Number(selected.price).toLocaleString()} <span className="text-xs text-muted-foreground">/ كل {unitSize.toLocaleString()} {unitLabel || "وحدة"}</span></p>
+                <div className="mt-1">
+                  {discountPct > 0 && <p className="text-xs text-muted-foreground line-through">EG {baseUnitPrice.toLocaleString()}</p>}
+                  <p className="text-base font-bold text-gold">
+                    EG {discountedUnitPrice.toLocaleString()} <span className="text-xs text-muted-foreground">/ كل {unitSize.toLocaleString()} {unitLabel || "وحدة"}</span>
+                  </p>
+                  {discountPct > 0 && <p className="mt-1 text-xs font-extrabold text-gold-gradient">خصم {discountPct}%</p>}
+                </div>
               ) : (
-                <p className="text-3xl font-black text-gold mt-1">EG {Number(selected.price).toLocaleString()}</p>
+                <div className="mt-1">
+                  {discountPct > 0 && <p className="text-base text-muted-foreground line-through">EG {baseUnitPrice.toLocaleString()}</p>}
+                  <p className="text-3xl font-black text-gold">EG {total.toLocaleString()}</p>
+                  {discountPct > 0 && <p className="mt-1 text-xs font-extrabold text-gold-gradient">خصم {discountPct}%</p>}
+                </div>
               )}
             </div>
 
@@ -254,7 +274,10 @@ function ShopPage() {
                 />
                 <div className="mt-3 flex items-center justify-between rounded-xl bg-gold/10 border border-gold/30 p-3">
                   <span className="text-sm text-muted-foreground">الإجمالي</span>
-                  <span className="text-2xl font-black text-gold-gradient">EG {total.toLocaleString()}</span>
+                  <span className="text-left">
+                    {discountPct > 0 && <span className="block text-xs text-muted-foreground line-through">EG {baseTotal.toLocaleString()}</span>}
+                    <span className="block text-2xl font-black text-gold-gradient">EG {total.toLocaleString()}</span>
+                  </span>
                 </div>
               </div>
             )}
