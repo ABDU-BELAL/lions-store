@@ -421,3 +421,71 @@ export const adminAdjustBalance = createServerFn({ method: "POST" })
   });
 
 
+// -------- Per-user product discounts (super admin only) --------
+export const adminListDiscounts = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { userId?: string } | undefined) =>
+    z.object({ userId: z.string().uuid().optional() }).parse(input ?? {}),
+  )
+  .handler(async ({ data, context }) => {
+    await assertSuperAdmin(context.userId);
+    let q = supabaseAdmin
+      .from("user_discounts")
+      .select("id, user_id, product_id, percent, created_at")
+      .order("created_at", { ascending: false })
+      .limit(500);
+    if (data.userId) q = q.eq("user_id", data.userId);
+    const { data: rows, error } = await q;
+    if (error) { console.error("[db]", error); throw new Error("حدث خطأ، حاول مرة أخرى"); }
+    const uids = [...new Set((rows ?? []).map((r) => r.user_id))];
+    const pids = [...new Set((rows ?? []).map((r) => r.product_id))];
+    const [profiles, products] = await Promise.all([
+      supabaseAdmin.from("profiles").select("id, full_name, email, phone").in("id", uids.length ? uids : ["00000000-0000-0000-0000-000000000000"]),
+      supabaseAdmin.from("products").select("id, title, price").in("id", pids.length ? pids : ["00000000-0000-0000-0000-000000000000"]),
+    ]);
+    const pmap = new Map((profiles.data ?? []).map((p) => [p.id, p]));
+    const prmap = new Map((products.data ?? []).map((p) => [p.id, p]));
+    return (rows ?? []).map((r) => ({
+      ...r,
+      profile: pmap.get(r.user_id) ?? null,
+      product: prmap.get(r.product_id) ?? null,
+    }));
+  });
+
+export const adminUpsertDiscount = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z.object({
+      userId: z.string().uuid(),
+      productId: z.string().uuid(),
+      percent: z.number().finite().gt(0).max(100),
+    }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    await assertSuperAdmin(context.userId);
+    const [{ data: user }, { data: product }] = await Promise.all([
+      supabaseAdmin.from("profiles").select("id").eq("id", data.userId).maybeSingle(),
+      supabaseAdmin.from("products").select("id").eq("id", data.productId).maybeSingle(),
+    ]);
+    if (!user) throw new Error("المستخدم غير موجود");
+    if (!product) throw new Error("المنتج غير موجود");
+    const { error } = await supabaseAdmin
+      .from("user_discounts")
+      .upsert(
+        { user_id: data.userId, product_id: data.productId, percent: data.percent, created_by: context.userId },
+        { onConflict: "user_id,product_id" },
+      );
+    if (error) { console.error("[db]", error); throw new Error("حدث خطأ، حاول مرة أخرى"); }
+    return { ok: true };
+  });
+
+export const adminDeleteDiscount = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ id: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    await assertSuperAdmin(context.userId);
+    const { error } = await supabaseAdmin.from("user_discounts").delete().eq("id", data.id);
+    if (error) { console.error("[db]", error); throw new Error("حدث خطأ، حاول مرة أخرى"); }
+    return { ok: true };
+  });
+
