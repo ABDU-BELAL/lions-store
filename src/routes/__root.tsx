@@ -9,6 +9,8 @@ import {
 import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
+import logoAsset from "../assets/logo.jpeg.asset.json";
+
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AuthProvider } from "@/hooks/useAuth";
 import { Toaster } from "sonner";
@@ -57,7 +59,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:type", content: "website" },
       { name: "google-site-verification", content: "WX7mYZp9ZiHwK0Th8QtUQk0OVjARi_ipfHq92_O2naE" },
     ],
-    links: [{ rel: "stylesheet", href: appCss }, { rel: "preconnect", href: "https://fonts.googleapis.com" }, { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" }],
+    links: [
+      { rel: "stylesheet", href: appCss },
+      { rel: "icon", type: "image/jpeg", href: logoAsset.url },
+      { rel: "shortcut icon", type: "image/jpeg", href: logoAsset.url },
+      { rel: "apple-touch-icon", href: logoAsset.url },
+      { rel: "preconnect", href: "https://fonts.googleapis.com" },
+      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" },
+    ],
+
   }),
   shellComponent: RootShell,
   component: RootComponent,
