@@ -10,7 +10,9 @@ import {
   listAdmins, grantAdmin, revokeAdmin, claimSuperAdmin,
   verifyAdminAccess, adminListOrders, decideOrder,
   adminListUsers, adminAdjustBalance,
+  adminListDiscounts, adminUpsertDiscount, adminDeleteDiscount,
 } from "@/lib/admin.functions";
+
 
 import { adminListBanners, adminUpsertBanner, adminDeleteBanner, adminUploadBannerImage } from "@/lib/banners.functions";
 import {
@@ -38,7 +40,7 @@ export const Route = createFileRoute("/admin")({
   component: AdminPage,
 });
 
-type Tab = "stats" | "topups" | "orders" | "products" | "collections" | "banners" | "settings" | "payments" | "users" | "admins";
+type Tab = "stats" | "topups" | "orders" | "products" | "collections" | "banners" | "settings" | "payments" | "users" | "discounts" | "admins";
 
 function AdminPage() {
   const { user, loading } = useAuth();
@@ -78,7 +80,9 @@ function AdminPage() {
           { id: "settings", label: "الصفحة الرئيسية" },
           ...(account.data.isSuperAdmin ? [{ id: "payments" as Tab, label: "وسائل الدفع" }] : []),
           ...(account.data.isSuperAdmin ? [{ id: "users" as Tab, label: "المستخدمين" }] : []),
+          ...(account.data.isSuperAdmin ? [{ id: "discounts" as Tab, label: "الخصومات" }] : []),
           { id: "admins", label: "الأدمنز" },
+
 
 
         ] as { id: Tab; label: string }[]).map((t) => (
@@ -98,7 +102,9 @@ function AdminPage() {
       {tab === "settings" && <SettingsTab />}
       {tab === "payments" && account.data.isSuperAdmin && <PaymentMethodsTab />}
       {tab === "users" && account.data.isSuperAdmin && <UsersTab />}
+      {tab === "discounts" && account.data.isSuperAdmin && <DiscountsTab />}
       {tab === "admins" && <AdminsTab isSuper={!!account.data.isSuperAdmin} />}
+
 
     </AppLayout>
   );
@@ -896,3 +902,123 @@ function UsersTab() {
   );
 }
 
+
+function DiscountsTab() {
+  const list = useServerFn(adminListDiscounts);
+  const upsert = useServerFn(adminUpsertDiscount);
+  const del = useServerFn(adminDeleteDiscount);
+  const listUsers = useServerFn(adminListUsers);
+  const listProducts = useServerFn(adminListProducts);
+  const qc = useQueryClient();
+
+  const [userSearch, setUserSearch] = useState("");
+  const [userId, setUserId] = useState<string>("");
+  const [productId, setProductId] = useState<string>("");
+  const [percent, setPercent] = useState<string>("");
+
+  const discounts = useQuery({ queryKey: ["admin-discounts"], queryFn: () => list({}) });
+  const users = useQuery({
+    queryKey: ["admin-users-pick", userSearch],
+    queryFn: () => listUsers({ data: { search: userSearch || undefined } }),
+  });
+  const products = useQuery({ queryKey: ["admin-products-pick"], queryFn: () => listProducts() });
+
+  const mAdd = useMutation({
+    mutationFn: () => upsert({ data: { userId, productId, percent: Number(percent) } }),
+    onSuccess: () => {
+      toast.success("تم حفظ الخصم");
+      setUserId(""); setProductId(""); setPercent(""); setUserSearch("");
+      qc.invalidateQueries({ queryKey: ["admin-discounts"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const mDel = useMutation({
+    mutationFn: (id: string) => del({ data: { id } }),
+    onSuccess: () => { toast.success("تم الحذف"); qc.invalidateQueries({ queryKey: ["admin-discounts"] }); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const canSubmit = userId && productId && percent && Number(percent) > 0 && Number(percent) <= 100;
+
+  return (
+    <div className="space-y-6">
+      <div className="rounded-2xl bg-card/70 border border-border p-4 space-y-3">
+        <h3 className="font-extrabold text-gold-gradient">إضافة خصم لمستخدم</h3>
+
+        <div>
+          <label className="text-xs font-bold mb-1 block">ابحث عن المستخدم</label>
+          <input
+            value={userSearch}
+            onChange={(e) => { setUserSearch(e.target.value); setUserId(""); }}
+            placeholder="الاسم / الإيميل / الرقم"
+            className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3"
+          />
+          {userSearch && (users.data ?? []).length > 0 && !userId && (
+            <div className="mt-2 max-h-56 overflow-y-auto rounded-xl border border-border divide-y divide-border">
+              {(users.data ?? []).slice(0, 20).map((u) => (
+                <button key={u.id} type="button"
+                  onClick={() => { setUserId(u.id); setUserSearch(u.full_name || u.email || u.id); }}
+                  className="w-full text-right px-3 py-2 hover:bg-secondary/60 block">
+                  <p className="font-bold text-sm truncate">{u.full_name || "—"}</p>
+                  <p className="text-xs text-muted-foreground truncate">{u.email || "—"} {u.phone ? `• ${u.phone}` : ""}</p>
+                </button>
+              ))}
+            </div>
+          )}
+          {userId && <p className="text-xs text-gold mt-1">تم اختيار المستخدم ✓</p>}
+        </div>
+
+        <div>
+          <label className="text-xs font-bold mb-1 block">المنتج</label>
+          <select value={productId} onChange={(e) => setProductId(e.target.value)}
+            className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3">
+            <option value="">— اختر المنتج —</option>
+            {(products.data ?? []).map((p) => (
+              <option key={p.id} value={p.id}>{p.title} — EG {Number(p.price).toLocaleString()}</option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="text-xs font-bold mb-1 block">نسبة الخصم (%)</label>
+          <input type="number" min="0.01" max="100" step="0.01" value={percent}
+            onChange={(e) => setPercent(e.target.value)}
+            placeholder="مثال: 2"
+            className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3" />
+        </div>
+
+        <button disabled={!canSubmit || mAdd.isPending} onClick={() => mAdd.mutate()}
+          className="w-full rounded-xl bg-gold-gradient text-primary-foreground font-extrabold py-2.5 disabled:opacity-50">
+          {mAdd.isPending ? "..." : "حفظ الخصم"}
+        </button>
+        <p className="text-xs text-muted-foreground">ملاحظة: إذا كان للمستخدم خصم سابق على نفس المنتج، سيتم استبداله.</p>
+      </div>
+
+      <div>
+        <h3 className="font-extrabold text-gold-gradient mb-2">الخصومات الحالية</h3>
+        {discounts.isLoading && <p className="text-center py-6 text-muted-foreground">جاري التحميل...</p>}
+        {!discounts.isLoading && (discounts.data ?? []).length === 0 && (
+          <p className="text-center py-6 text-muted-foreground">لا توجد خصومات</p>
+        )}
+        <div className="space-y-2">
+          {(discounts.data ?? []).map((d) => (
+            <div key={d.id} className="rounded-2xl bg-card/70 border border-border p-3 flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="font-extrabold truncate text-sm">{d.profile?.full_name || d.profile?.email || d.user_id}</p>
+                <p className="text-xs text-muted-foreground truncate">{d.product?.title || d.product_id}</p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="rounded-lg bg-gold-gradient text-primary-foreground font-black px-3 py-1 text-sm">{Number(d.percent)}%</span>
+                <button onClick={() => mDel.mutate(d.id)} disabled={mDel.isPending}
+                  className="rounded-lg bg-destructive/20 text-destructive border border-destructive/40 px-2 py-1.5">
+                  <Trash2 className="size-4" />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
