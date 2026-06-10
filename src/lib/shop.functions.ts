@@ -95,10 +95,11 @@ export const purchaseProduct = createServerFn({ method: "POST" })
 export const listMyOrders = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { supabase } = context;
+    const { supabase, userId } = context;
     const { data, error } = await supabase
       .from("orders")
       .select("id, product_title, amount, status, game_user_id, created_at")
+      .eq("user_id", userId)
       .order("created_at", { ascending: false })
       .limit(100);
     if (error) { console.error("[db]", error); throw new Error("حدث خطأ، حاول مرة أخرى"); };
