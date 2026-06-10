@@ -458,24 +458,40 @@ export const adminUpsertDiscount = createServerFn({ method: "POST" })
     z.object({
       userId: z.string().uuid(),
       productId: z.string().uuid(),
-      percent: z.number().finite().gt(0).max(100),
+      // Strict bounds; multipleOf snaps to DB numeric(5,2) precision so a
+      // crafted client can't smuggle extra decimals or near-100 edge values.
+      percent: z.number().finite().gt(0).max(100).multipleOf(0.01),
     }).parse(input),
   )
   .handler(async ({ data, context }) => {
+    // Layer 1: super-admin gate (DB RPC + direct row lookup must agree).
     await assertSuperAdmin(context.userId);
+
+    // Layer 2: target existence checks — never trust client-supplied UUIDs.
     const [{ data: user }, { data: product }] = await Promise.all([
       supabaseAdmin.from("profiles").select("id").eq("id", data.userId).maybeSingle(),
       supabaseAdmin.from("products").select("id").eq("id", data.productId).maybeSingle(),
     ]);
     if (!user) throw new Error("المستخدم غير موجود");
     if (!product) throw new Error("المنتج غير موجود");
+
+    // Layer 3: normalize percent to DB precision (numeric(5,2)).
+    const percent = Math.round(data.percent * 100) / 100;
+    if (!(percent > 0 && percent <= 100)) throw new Error("نسبة غير صالحة");
+
+    // Layer 4: TOCTOU defense — re-verify super admin immediately before write.
+    await assertSuperAdmin(context.userId);
+
+    console.info("[adminUpsertDiscount] actor=%s target=%s product=%s percent=%s",
+      context.userId, data.userId, data.productId, percent);
+
     const { error } = await supabaseAdmin
       .from("user_discounts")
       .upsert(
-        { user_id: data.userId, product_id: data.productId, percent: data.percent, created_by: context.userId },
+        { user_id: data.userId, product_id: data.productId, percent, created_by: context.userId },
         { onConflict: "user_id,product_id" },
       );
-    if (error) { console.error("[db]", error); throw new Error("حدث خطأ، حاول مرة أخرى"); }
+    if (error) { console.error("[adminUpsertDiscount]", error); throw new Error("حدث خطأ، حاول مرة أخرى"); }
     return { ok: true };
   });
 
@@ -484,8 +500,27 @@ export const adminDeleteDiscount = createServerFn({ method: "POST" })
   .inputValidator((input) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     await assertSuperAdmin(context.userId);
-    const { error } = await supabaseAdmin.from("user_discounts").delete().eq("id", data.id);
-    if (error) { console.error("[db]", error); throw new Error("حدث خطأ، حاول مرة أخرى"); }
+
+    // Fetch the row first so we can log who/what was removed.
+    const { data: row } = await supabaseAdmin
+      .from("user_discounts")
+      .select("id, user_id, product_id, percent")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (!row) throw new Error("الخصم غير موجود");
+
+    // TOCTOU recheck right before the privileged delete.
+    await assertSuperAdmin(context.userId);
+
+    console.info("[adminDeleteDiscount] actor=%s removed user=%s product=%s percent=%s",
+      context.userId, row.user_id, row.product_id, row.percent);
+
+    const { error } = await supabaseAdmin
+      .from("user_discounts")
+      .delete()
+      .eq("id", data.id);
+    if (error) { console.error("[adminDeleteDiscount]", error); throw new Error("حدث خطأ، حاول مرة أخرى"); }
     return { ok: true };
   });
+
 
