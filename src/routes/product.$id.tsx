@@ -6,7 +6,7 @@ import { AppLayout } from "@/components/AppLayout";
 import { FramedImage } from "@/components/FramedImage";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { signBucketPath } from "@/lib/storage.server";
-import { purchaseProduct } from "@/lib/shop.functions";
+import { purchaseProduct, getMyProductDiscount } from "@/lib/shop.functions";
 import { getMyAccount } from "@/lib/account.functions";
 import { useAuth } from "@/hooks/useAuth";
 import { useState } from "react";
