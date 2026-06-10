@@ -123,11 +123,29 @@ function ProductPage() {
 
           {qtyEnabled ? (
             <p className="mt-6 text-lg font-bold text-gold">
-              EG {Number(product.price).toLocaleString()} <span className="text-sm text-muted-foreground">/ كل {unitSize.toLocaleString()} {unitLabel || "وحدة"}</span>
+              {discountPct > 0 && (
+                <span className="text-sm text-muted-foreground line-through mr-2">EG {Number(product.price).toLocaleString()}</span>
+              )}
+              EG {(discountPct > 0 ? Math.round(Number(product.price) * (1 - discountPct / 100) * 100) / 100 : Number(product.price)).toLocaleString()}
+              <span className="text-sm text-muted-foreground"> / كل {unitSize.toLocaleString()} {unitLabel || "وحدة"}</span>
+              {discountPct > 0 && (
+                <span className="ml-2 text-xs font-extrabold bg-gold-gradient text-primary-foreground rounded-full px-2 py-0.5">-{discountPct}%</span>
+              )}
             </p>
           ) : (
-            <p className="mt-6 text-4xl font-black text-gold">EG {Number(product.price).toLocaleString()}</p>
+            <div className="mt-6">
+              {discountPct > 0 && (
+                <p className="text-base text-muted-foreground line-through">EG {Number(product.price).toLocaleString()}</p>
+              )}
+              <p className="text-4xl font-black text-gold flex items-center gap-2">
+                EG {totalPrice.toLocaleString()}
+                {discountPct > 0 && (
+                  <span className="text-xs font-extrabold bg-gold-gradient text-primary-foreground rounded-full px-2 py-1">خصم -{discountPct}%</span>
+                )}
+              </p>
+            </div>
           )}
+
 
           {product.description && (
             <p className="mt-4 text-sm leading-relaxed whitespace-pre-line text-foreground/90">{product.description}</p>
