@@ -175,6 +175,9 @@ function ShopPage() {
               </div>
               <div className="px-4 pt-1 text-center">
                 <h3 className="text-sm font-extrabold text-gold-gradient line-clamp-1">{p.title}</h3>
+                {p.description && (
+                  <p className="mt-1 text-[11px] text-muted-foreground line-clamp-2 whitespace-pre-line">{p.description}</p>
+                )}
                 <p className="mt-1 text-lg font-black text-gold">EG {Number(p.price).toLocaleString()}</p>
               </div>
             </button>
