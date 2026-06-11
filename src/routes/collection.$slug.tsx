@@ -112,6 +112,9 @@ function CollectionPage() {
             <h3 className="text-xl font-black text-gold-gradient text-center">تأكيد الشراء</h3>
             <div className="mt-4 rounded-2xl bg-secondary/40 p-4 text-center">
               <p className="text-sm text-muted-foreground">{selected.title}</p>
+              {selected.description && (
+                <p className="mt-2 text-xs text-foreground/80 whitespace-pre-line text-right">{selected.description}</p>
+              )}
               {qtyEnabled ? (
                 <p className="text-base font-bold text-gold mt-1">EG {Number(selected.price).toLocaleString()} <span className="text-xs text-muted-foreground">/ كل {unitSize.toLocaleString()} {unitLabel || "وحدة"}</span></p>
               ) : (
