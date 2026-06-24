@@ -106,6 +106,34 @@ function ProfilePage() {
           </div>
 
           <div className="mt-6 pt-6 border-t border-border">
+            <div className="flex items-center justify-between bg-secondary/40 border border-border rounded-xl p-4 mb-4">
+              <div className="flex items-center gap-3">
+                <div className="size-10 rounded-full bg-gold/20 grid place-items-center">
+                  <DollarSign className="size-5 text-gold" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold">{t("عرض الأسعار", "Display currency")}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {rate
+                      ? t(`1 USD ≈ ${rate.toFixed(2)} EGP`, `1 USD ≈ ${rate.toFixed(2)} EGP`)
+                      : t("جارٍ تحميل سعر الصرف...", "Loading rate...")}
+                  </p>
+                </div>
+              </div>
+              <div className="inline-flex rounded-full bg-background border border-border p-1">
+                {(["EGP", "USD"] as Currency[]).map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setCurrency(c)}
+                    className={`px-3 py-1 text-xs font-bold rounded-full transition-colors ${currency === c ? "bg-gold-gradient text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                  >
+                    {c}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div className="bg-gradient-to-l from-gold-deep/20 to-gold/10 border border-gold/30 rounded-xl p-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="size-10 rounded-full bg-gold/20 grid place-items-center">
