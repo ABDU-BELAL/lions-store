@@ -96,10 +96,12 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <LanguageProvider>
-        <AuthProvider>
-          <Outlet />
-          <ToasterLocalized />
-        </AuthProvider>
+        <CurrencyProvider>
+          <AuthProvider>
+            <Outlet />
+            <ToasterLocalized />
+          </AuthProvider>
+        </CurrencyProvider>
       </LanguageProvider>
     </QueryClientProvider>
   );
