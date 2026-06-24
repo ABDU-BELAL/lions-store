@@ -6,7 +6,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { getMyAccount } from "@/lib/account.functions";
 import { useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { User, Mail, Phone, Wallet, Shield, CreditCard, Copy, ArrowRight } from "lucide-react";
+import { User, Mail, Phone, Wallet, Shield, Copy, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/profile")({
