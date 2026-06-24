@@ -20,6 +20,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const { lang, setLang, t, dir } = useLang();
   const getAccount = useServerFn(getMyAccount);
+  const { format } = useCurrency();
   const account = useQuery({
     queryKey: ["account", user?.id],
     queryFn: () => getAccount(),
