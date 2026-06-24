@@ -39,7 +39,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
     { to: "/search", label: t("بحث", "Search"), icon: Search },
   ] as const;
 
-  const currency = lang === "en" ? "EGP" : "EG";
+  
 
   return (
     <div dir={dir} className="min-h-screen pb-24">
