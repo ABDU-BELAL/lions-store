@@ -14,6 +14,7 @@ import logoAsset from "../assets/logo.jpeg.asset.json";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AuthProvider } from "@/hooks/useAuth";
 import { Toaster } from "sonner";
+import { LanguageProvider, useLang } from "@/i18n/LanguageProvider";
 
 function NotFoundComponent() {
   return (
