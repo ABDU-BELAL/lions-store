@@ -349,12 +349,11 @@ export const adminListUsers = createServerFn({ method: "GET" })
     await assertSuperAdmin(context.userId);
     let q = supabaseAdmin
       .from("profiles")
-      .select("id, full_name, phone, email, created_at")
+      .select("id, full_name, phone, email, custom_id, is_banned, created_at")
       .order("created_at", { ascending: false })
       .limit(200);
-    // Sanitize: strip PostgREST/SQL LIKE metacharacters to prevent filter injection
     const s = data.search?.replace(/[,()*:%_\\]/g, "").trim();
-    if (s) q = q.or(`email.ilike.%${s}%,full_name.ilike.%${s}%,phone.ilike.%${s}%`);
+    if (s) q = q.or(`email.ilike.%${s}%,full_name.ilike.%${s}%,phone.ilike.%${s}%,custom_id.ilike.%${s}%`);
     const { data: profiles, error } = await q;
     if (error) { console.error("[db]", error); throw new Error("حدث خطأ، حاول مرة أخرى"); }
     const ids = (profiles ?? []).map((p) => p.id);
@@ -364,6 +363,23 @@ export const adminListUsers = createServerFn({ method: "GET" })
       .in("user_id", ids.length ? ids : ["00000000-0000-0000-0000-000000000000"]);
     const map = new Map((wallets ?? []).map((w) => [w.user_id, Number(w.balance)]));
     return (profiles ?? []).map((p) => ({ ...p, balance: map.get(p.id) ?? 0 }));
+  });
+
+export const adminSetUserBanned = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z.object({ userId: z.string().uuid(), banned: z.boolean() }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    await assertSuperAdmin(context.userId);
+    if (data.userId === context.userId) throw new Error("لا تستطيع حظر نفسك");
+    const { error } = await supabaseAdmin
+      .from("profiles")
+      .update({ is_banned: data.banned })
+      .eq("id", data.userId);
+    if (error) { console.error("[adminSetUserBanned]", error); throw new Error("حدث خطأ، حاول مرة أخرى"); }
+    console.info("[adminSetUserBanned] actor=%s target=%s banned=%s", context.userId, data.userId, data.banned);
+    return { ok: true };
   });
 
 export const adminAdjustBalance = createServerFn({ method: "POST" })

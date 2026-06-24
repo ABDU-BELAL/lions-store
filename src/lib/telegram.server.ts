@@ -12,10 +12,7 @@ export function escapeTelegramHtml(input: unknown): string {
     .replace(/>/g, "&gt;");
 }
 
-export async function notifyTelegram(message: string): Promise<void> {
-  const token = process.env.TELEGRAM_BOT_TOKEN;
-  if (!token) return;
-
+async function getChatIds(): Promise<string[]> {
   const envIds = (process.env.TELEGRAM_CHAT_ID ?? "")
     .split(/[\s,;]+/)
     .map((s) => s.trim())
@@ -29,8 +26,13 @@ export async function notifyTelegram(message: string): Promise<void> {
   } catch (e) {
     console.error("Failed to load telegram_chats", e);
   }
+  return Array.from(new Set([...envIds, ...dbIds]));
+}
 
-  const chatIds = Array.from(new Set([...envIds, ...dbIds]));
+export async function notifyTelegram(message: string): Promise<void> {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  if (!token) return;
+  const chatIds = await getChatIds();
   if (chatIds.length === 0) return;
 
   await Promise.all(
@@ -51,3 +53,43 @@ export async function notifyTelegram(message: string): Promise<void> {
   );
 }
 
+/** Send a photo (downloaded from a URL) with caption to all configured chats. */
+export async function notifyTelegramPhoto(photoUrl: string, caption: string): Promise<void> {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  if (!token) return;
+  const chatIds = await getChatIds();
+  if (chatIds.length === 0) return;
+
+  // Download the image once and re-upload via multipart so private signed URLs work.
+  let blob: Blob | null = null;
+  try {
+    const r = await fetch(photoUrl);
+    if (r.ok) blob = await r.blob();
+  } catch (e) {
+    console.error("Failed to fetch photo for Telegram", e);
+  }
+
+  await Promise.all(
+    chatIds.map(async (chatId) => {
+      try {
+        if (blob) {
+          const form = new FormData();
+          form.append("chat_id", chatId);
+          form.append("caption", caption);
+          form.append("parse_mode", "HTML");
+          form.append("photo", blob, "receipt.jpg");
+          const res = await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
+            method: "POST",
+            body: form,
+          });
+          if (!res.ok) console.error("Telegram photo error", chatId, res.status, await res.text());
+        } else {
+          // Fallback: send caption only
+          await notifyTelegram(caption);
+        }
+      } catch (e) {
+        console.error("Telegram photo notify failed", chatId, e);
+      }
+    }),
+  );
+}

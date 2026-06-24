@@ -58,10 +58,11 @@ export const adminUpdatePaymentMethods = createServerFn({ method: "POST" })
 
 
 const createSchema = z.object({
-  amount: z.number().positive().max(1_000_000),
+  amount: z.number().min(100, "الحد الأدنى للشحن 100 جنيه").max(1_000_000),
   method: z.enum(["vodafone_cash", "instapay", "fawry", "binance"]),
   reference: z.string().trim().min(3).max(200),
   note: z.string().trim().max(500).optional(),
+  screenshot_path: z.string().trim().max(500).optional(),
 });
 
 export const createTopupRequest = createServerFn({ method: "POST" })
@@ -80,7 +81,7 @@ export const createTopupRequest = createServerFn({ method: "POST" })
       throw new Error("وسيلة الدفع هذه تحت الصيانة حاليًا، اختر طريقة أخرى");
     }
 
-    // Rate limit: max 5 topup requests per user per hour
+    // Rate limit
     await enforceRateLimit(`topup:${userId}`, 5, 3600, "لقد تجاوزت الحد المسموح به، يرجى المحاولة لاحقاً");
 
     // Block duplicate reference numbers globally
@@ -103,28 +104,47 @@ export const createTopupRequest = createServerFn({ method: "POST" })
         method: data.method,
         reference: refTrimmed,
         note: data.note ?? null,
+        screenshot_path: data.screenshot_path ?? null,
       })
       .select("id, amount, method, reference, created_at")
       .single();
 
     if (error) {
       console.error("[db]", error);
-      // 23505 = unique_violation (race with another insert hitting the unique index)
       if ((error as { code?: string }).code === "23505") {
         throw new Error("هذا الرقم المرجعي مستخدم من قبل");
       }
       throw new Error("حدث خطأ، حاول مرة أخرى");
     }
 
-    // Best-effort Telegram notification
-    const { data: profile } = await supabase.from("profiles").select("full_name, phone").eq("id", userId).maybeSingle();
-    notifyTelegram(
+    // Telegram notification (with screenshot if provided)
+    const { data: profile } = await supabase.from("profiles").select("full_name, phone, custom_id").eq("id", userId).maybeSingle();
+    const caption =
       `🔔 <b>طلب شحن جديد</b>\n` +
+      `🆔 ${escapeTelegramHtml(profile?.custom_id ?? "—")}\n` +
       `👤 ${escapeTelegramHtml(profile?.full_name || "بدون اسم")} (${escapeTelegramHtml(profile?.phone || "—")})\n` +
       `💰 المبلغ: <b>${escapeTelegramHtml(data.amount)} EGP</b>\n` +
       `💳 الطريقة: ${escapeTelegramHtml(data.method)}\n` +
-      `🔖 المرجع: ${escapeTelegramHtml(data.reference)}`,
-    ).catch(() => {});
+      `🔖 المرجع: ${escapeTelegramHtml(data.reference)}`;
+
+    if (data.screenshot_path) {
+      try {
+        const { data: signed } = await supabaseAdmin.storage
+          .from("topup-receipts")
+          .createSignedUrl(data.screenshot_path, 60 * 60);
+        if (signed?.signedUrl) {
+          const { notifyTelegramPhoto } = await import("./telegram.server");
+          notifyTelegramPhoto(signed.signedUrl, caption).catch(() => {});
+        } else {
+          notifyTelegram(caption).catch(() => {});
+        }
+      } catch (e) {
+        console.error("topup screenshot notify failed", e);
+        notifyTelegram(caption).catch(() => {});
+      }
+    } else {
+      notifyTelegram(caption).catch(() => {});
+    }
 
     return { ok: true, id: row.id };
   });
