@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getMyAccount } from "@/lib/account.functions";
 import { createTopupRequest, listMyTopups, getPaymentMethods } from "@/lib/topup.functions";
-import { supabase } from "@/integrations/supabase/client";
+import { uploadTopupReceipt } from "@/lib/topup-upload.functions";
 import { useEffect, useState } from "react";
 import { Wallet, Phone, Building2, Bitcoin, Clock, CheckCircle2, XCircle, Copy, ExternalLink, Upload } from "lucide-react";
 import { toast } from "sonner";
@@ -40,6 +40,7 @@ function TopupPage() {
   const qc = useQueryClient();
   const getAccount = useServerFn(getMyAccount);
   const createTopup = useServerFn(createTopupRequest);
+  const uploadReceipt = useServerFn(uploadTopupReceipt);
   const myTopups = useServerFn(listMyTopups);
   const fetchPaymentMethods = useServerFn(getPaymentMethods);
   const { t, lang } = useLang();
@@ -75,15 +76,20 @@ function TopupPage() {
       let screenshot_path: string | undefined;
       if (screenshot) {
         if (!user) throw new Error(t("سجل الدخول أولاً", "Sign in first"));
+        if (!screenshot.type.startsWith("image/")) {
+          throw new Error(t("الملف ليس صورة صالحة", "File is not a valid image"));
+        }
         setUploading(true);
-        const ext = (screenshot.name.split(".").pop() || "jpg").toLowerCase().slice(0, 5);
-        const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-        const { error: upErr } = await supabase.storage
-          .from("topup-receipts")
-          .upload(path, screenshot, { contentType: screenshot.type || "image/jpeg", upsert: false });
-        setUploading(false);
-        if (upErr) throw new Error(t("فشل رفع صورة الإيصال: ", "Receipt upload failed: ") + upErr.message);
-        screenshot_path = path;
+        try {
+          const fd = new FormData();
+          fd.append("file", screenshot);
+          const res = await uploadReceipt({ data: fd });
+          screenshot_path = res.path;
+        } catch (err) {
+          throw new Error(t("فشل رفع صورة الإيصال: ", "Receipt upload failed: ") + (err as Error).message);
+        } finally {
+          setUploading(false);
+        }
       }
       return createTopup({ data: { ...vars, screenshot_path } });
     },
@@ -206,9 +212,10 @@ function TopupPage() {
             <span className="text-sm text-muted-foreground truncate">
               {screenshot ? screenshot.name : t("اختر صورة الإيصال", "Choose receipt image")}
             </span>
-            <input type="file" accept="image/*" className="hidden"
+            <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden"
               onChange={(e) => {
                 const f = e.target.files?.[0] ?? null;
+                if (f && !f.type.startsWith("image/")) { toast.error(t("الملف ليس صورة صالحة", "File is not a valid image")); return; }
                 if (f && f.size > 5 * 1024 * 1024) { toast.error(t("حجم الصورة كبير، الحد الأقصى 5 ميجا", "Image too large — max 5MB")); return; }
                 setScreenshot(f);
               }} />
