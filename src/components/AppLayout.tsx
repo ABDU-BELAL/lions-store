@@ -10,6 +10,7 @@ import { getMyAccount } from "@/lib/account.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { ParticlesBackground } from "@/components/ParticlesBackground";
 import { useLang } from "@/i18n/LanguageProvider";
+import { useCurrency } from "@/i18n/CurrencyProvider";
 
 export function AppLayout({ children }: { children: ReactNode }) {
   const path = useRouterState({ select: (s) => s.location.pathname });
