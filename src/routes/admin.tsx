@@ -591,20 +591,21 @@ function BannersTab() {
   const upload = useServerFn(adminUploadBannerImage);
   const qc = useQueryClient();
   const { data } = useQuery({ queryKey: ["admin-banners"], queryFn: () => list() });
-  const [editing, setEditing] = useState<null | { id?: string; image_url: string; link_url: string; title: string; is_active: boolean; sort_order: number }>(null);
+  const [editing, setEditing] = useState<null | { id?: string; image_url: string; link_url: string; title: string; title_en: string; is_active: boolean; sort_order: number }>(null);
   const [uploading, setUploading] = useState(false);
 
-  const blank = () => ({ image_url: "", link_url: "", title: "", is_active: true, sort_order: 0 });
+  const blank = () => ({ image_url: "", link_url: "", title: "", title_en: "", is_active: true, sort_order: 0 });
 
   const save = useMutation({
     mutationFn: () => upsert({ data: { id: editing?.id, data: {
       image_url: editing!.image_url,
       link_url: editing!.link_url || null,
       title: editing!.title || null,
+      title_en: editing!.title_en.trim() || null,
       is_active: editing!.is_active,
       sort_order: editing!.sort_order,
     } } }),
-    onSuccess: () => { toast.success("تم الحفظ"); setEditing(null); qc.invalidateQueries({ queryKey: ["admin-banners"] }); qc.invalidateQueries({ queryKey: ["banners-active"] }); },
+    onSuccess: () => { toast.success("تم الحفظ / Saved"); setEditing(null); qc.invalidateQueries({ queryKey: ["admin-banners"] }); qc.invalidateQueries({ queryKey: ["banners-active"] }); },
     onError: (e: Error) => toast.error(e.message),
   });
 
