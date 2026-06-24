@@ -7,16 +7,15 @@ import { listShopProducts } from "@/lib/shop.functions";
 import { Search as SearchIcon } from "lucide-react";
 import { useMemo } from "react";
 import { z } from "zod";
+import { useLang, pickLocalized } from "@/i18n/LanguageProvider";
 
 const searchSchema = z.object({ q: z.string().optional().catch("") });
 
 export const Route = createFileRoute("/search")({
   head: () => ({
     meta: [
-      { title: "بحث — Lion Store" },
-      { name: "description", content: "ابحث عن لعبتك أو تطبيقك المفضل في متجر ليون ستور واطلب الشحن خلال ثواني بأفضل الأسعار." },
-      { property: "og:title", content: "بحث المنتجات — Lion Store" },
-      { property: "og:description", content: "ابحث عن أي لعبة أو تطبيق متاح للشحن." },
+      { title: "Search — Lion Store / بحث" },
+      { name: "description", content: "Search Lion Store for your favorite game or app." },
       { property: "og:url", content: "https://lions-stores.com/search" },
     ],
     links: [{ rel: "canonical", href: "https://lions-stores.com/search" }],
@@ -30,6 +29,7 @@ function SearchPage() {
   const navigate = useNavigate({ from: "/search" });
   const listFn = useServerFn(listShopProducts);
   const products = useQuery({ queryKey: ["shop-products"], queryFn: () => listFn() });
+  const { t, dir, lang } = useLang();
 
   const list = products.data ?? [];
   const results = useMemo(() => {
@@ -37,6 +37,7 @@ function SearchPage() {
     if (!query) return list;
     return list.filter((p) =>
       p.title.toLowerCase().includes(query) ||
+      ((p as { title_en?: string | null }).title_en ?? "").toLowerCase().includes(query) ||
       (p.description ?? "").toLowerCase().includes(query) ||
       (p.category ?? "").toLowerCase().includes(query),
     );
@@ -44,32 +45,35 @@ function SearchPage() {
 
   return (
     <AppLayout>
-      <h1 className="text-3xl font-black text-gold-gradient mb-5">بحث</h1>
+      <h1 className="text-3xl font-black text-gold-gradient mb-5">{t("بحث", "Search")}</h1>
       <div className="relative">
-        <SearchIcon className="absolute right-4 top-1/2 -translate-y-1/2 size-5 text-gold" />
+        <SearchIcon className={`absolute ${dir === "rtl" ? "right-4" : "left-4"} top-1/2 -translate-y-1/2 size-5 text-gold`} />
         <input
           value={q}
           onChange={(e) => navigate({ search: { q: e.target.value || undefined }, replace: true })}
-          placeholder="ابحث عن لعبة أو تطبيق..."
-          className="w-full rounded-full bg-secondary/60 border-gold pr-12 pl-4 py-3.5 text-base focus:outline-none focus:ring-2 focus:ring-gold/50"
+          placeholder={t("ابحث عن لعبة أو تطبيق...", "Search for a game or app...")}
+          className={`w-full rounded-full bg-secondary/60 border-gold py-3.5 text-base focus:outline-none focus:ring-2 focus:ring-gold/50 ${dir === "rtl" ? "pr-12 pl-4" : "pl-12 pr-4"}`}
           autoFocus
         />
       </div>
 
-      {products.isLoading && <p className="mt-8 text-center text-muted-foreground">جاري التحميل...</p>}
+      {products.isLoading && <p className="mt-8 text-center text-muted-foreground">{t("جاري التحميل...", "Loading...")}</p>}
 
       <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-        {results.map((p) => (
-          <ProductCard
-            key={p.id}
-            title={p.title}
-            image={p.image_url || "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=400&q=80"}
-            to="/shop"
-            search={{ q: p.title }}
-          />
-        ))}
+        {results.map((p) => {
+          const title = pickLocalized(p.title, (p as { title_en?: string | null }).title_en, lang);
+          return (
+            <ProductCard
+              key={p.id}
+              title={title}
+              image={p.image_url || "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=400&q=80"}
+              to="/shop"
+              search={{ q: title }}
+            />
+          );
+        })}
         {!products.isLoading && results.length === 0 && (
-          <p className="col-span-full text-center text-muted-foreground py-12">لا توجد نتائج</p>
+          <p className="col-span-full text-center text-muted-foreground py-12">{t("لا توجد نتائج", "No results")}</p>
         )}
       </div>
     </AppLayout>
