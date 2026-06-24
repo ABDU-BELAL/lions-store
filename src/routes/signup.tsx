@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import logo from "@/assets/logo.jpeg.asset.json";
 import { toast } from "sonner";
 import { useLang } from "@/i18n/LanguageProvider";
+import { useCurrency, type Currency } from "@/i18n/CurrencyProvider";
 
 export const Route = createFileRoute("/signup")({
   head: () => ({
