@@ -46,6 +46,8 @@ export const getCollectionBySlug = createServerFn({ method: "GET" })
 const collectionSchema = z.object({
   slug: z.string().trim().min(1).max(80).regex(/^[a-z0-9-]+$/i, "Slug: letters/numbers/dash only"),
   title: z.string().trim().min(1).max(120),
+  title_en: z.string().trim().max(120).optional().nullable(),
+  description_en: z.string().trim().max(2000).optional().nullable(),
   image_url: z.string().trim().max(1000).optional().nullable(),
   sort_order: z.number().int().optional(),
   is_active: z.boolean().optional(),
