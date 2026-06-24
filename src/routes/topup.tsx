@@ -132,11 +132,14 @@ function TopupPage() {
         <div className="flex-1">
           <p className="text-xs text-muted-foreground">رصيدك الحالي</p>
           <p dir="ltr" className="text-3xl font-black text-gold-gradient text-right">EG {Number(account.data?.balance ?? 0).toLocaleString()}</p>
+          {account.data?.profile?.custom_id && (
+            <p className="text-xs text-muted-foreground mt-1">رقم حسابك: <span dir="ltr" className="font-extrabold text-gold">#{account.data.profile.custom_id}</span></p>
+          )}
         </div>
       </div>
 
       <h1 className="mt-6 text-2xl md:text-3xl font-black text-gold-gradient">شحن الرصيد</h1>
-      <p className="text-muted-foreground text-sm mt-1">اختار طريقة الدفع، حوّل المبلغ، وارفع لنا رقم العملية. هنراجع الطلب يدويًا وننزّل الرصيد على محفظتك.</p>
+      <p className="text-muted-foreground text-sm mt-1">اختار طريقة الدفع، حوّل المبلغ، وارفع صورة الإيصال + رقم العملية. هنراجع الطلب يدويًا وننزّل الرصيد على محفظتك.</p>
 
       <div className="mt-5 grid grid-cols-3 gap-3">
         {methodMeta.map((m) => {
@@ -177,7 +180,7 @@ function TopupPage() {
               </a>
             )}
           </div>
-          <p className="text-xs text-muted-foreground mt-2">بعد التحويل، اكتب رقم العملية تحت وابعت الطلب.</p>
+          <p className="text-xs text-muted-foreground mt-2">بعد التحويل، ارفع صورة الإيصال واكتب رقم العملية وابعت الطلب.</p>
         </div>
       )}
 
@@ -187,21 +190,42 @@ function TopupPage() {
         className="mt-4 rounded-2xl bg-card/70 border border-border p-5 space-y-3"
       >
         <div>
-          <label className="text-xs font-bold mb-1 block">المبلغ (EGP)</label>
-          <input dir="ltr" type="number" min={10} max={1000000} required value={amount} onChange={(e) => setAmount(Number(e.target.value))} className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gold/50 text-right" />
+          <label className="text-xs font-bold mb-1 block">المبلغ (EGP) — الحد الأدنى 100</label>
+          <input dir="ltr" type="number" min={100} max={1000000} required value={amount} onChange={(e) => setAmount(Number(e.target.value))} className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gold/50 text-right" />
         </div>
         <div>
           <label className="text-xs font-bold mb-1 block">رقم العملية / المرجع</label>
           <input required minLength={3} maxLength={200} value={reference} onChange={(e) => setReference(e.target.value)} placeholder="مثلاً: TXN12345 أو 4 أرقام أخيرة من رقم المحول منه" className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gold/50" />
         </div>
+
+        <div>
+          <label className="text-xs font-bold mb-1 block">صورة إيصال التحويل (اختياري لكن يُفضّل)</label>
+          <label className="flex items-center justify-center gap-2 rounded-xl bg-secondary/60 border-2 border-dashed border-border px-4 py-4 cursor-pointer hover:border-gold/50 transition">
+            <Upload className="size-5 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground truncate">
+              {screenshot ? screenshot.name : "اختر صورة الإيصال"}
+            </span>
+            <input type="file" accept="image/*" className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0] ?? null;
+                if (f && f.size > 5 * 1024 * 1024) { toast.error("حجم الصورة كبير، الحد الأقصى 5 ميجا"); return; }
+                setScreenshot(f);
+              }} />
+          </label>
+          {screenshot && (
+            <button type="button" onClick={() => setScreenshot(null)} className="mt-1 text-xs text-destructive">إزالة الصورة</button>
+          )}
+        </div>
+
         <div>
           <label className="text-xs font-bold mb-1 block">ملاحظات (اختياري)</label>
           <textarea maxLength={500} value={note} onChange={(e) => setNote(e.target.value)} rows={2} className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gold/50 resize-none" />
         </div>
-        <button disabled={mutation.isPending || !activeEnabled} className="w-full rounded-xl bg-gold-gradient text-primary-foreground font-extrabold py-3 shadow-gold disabled:opacity-50">
-          {!activeEnabled ? "تحت الصيانة" : mutation.isPending ? "جاري الإرسال..." : "إرسال طلب الشحن"}
+        <button disabled={mutation.isPending || uploading || !activeEnabled || amount < 100} className="w-full rounded-xl bg-gold-gradient text-primary-foreground font-extrabold py-3 shadow-gold disabled:opacity-50">
+          {!activeEnabled ? "تحت الصيانة" : uploading ? "جاري رفع الصورة..." : mutation.isPending ? "جاري الإرسال..." : "إرسال طلب الشحن"}
         </button>
       </form>
+
 
       <h2 className="mt-8 text-xl font-extrabold text-gold-gradient">سجل طلبات الشحن</h2>
       <div className="mt-3 rounded-2xl overflow-hidden border border-border bg-card/70">
