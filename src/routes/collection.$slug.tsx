@@ -42,6 +42,7 @@ function CollectionPage() {
 
   const [selected, setSelected] = useState<ColProduct | null>(null);
   const [gameId, setGameId] = useState("");
+  const [idError, setIdError] = useState(false);
   const [quantity, setQuantity] = useState<string>("");
 
   const mutation = useMutation({
