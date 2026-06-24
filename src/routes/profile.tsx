@@ -113,7 +113,7 @@ function ProfilePage() {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">{t("رصيد المحفظة", "Wallet balance")}</p>
-                  <p className="text-xl font-bold text-gold">{currency} {balance.toLocaleString()}</p>
+                  <p className="text-xl font-bold text-gold">{format(balance)}</p>
                 </div>
               </div>
               <Link to="/topup" className="rounded-full bg-gold-gradient text-primary-foreground px-4 py-2 text-sm font-bold hover:opacity-90 transition-opacity">
