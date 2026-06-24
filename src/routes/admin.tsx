@@ -477,18 +477,21 @@ function CollectionsTab() {
   const del = useServerFn(adminDeleteCollection);
   const qc = useQueryClient();
   const { data = [] } = useQuery({ queryKey: ["admin-collections"], queryFn: () => list() });
-  type EditState = { id?: string; slug: string; title: string; image_url: string; sort_order: number; is_active: boolean; show_on_home: boolean };
+  type EditState = { id?: string; slug: string; title: string; title_en: string; description_en: string; image_url: string; sort_order: number; is_active: boolean; show_on_home: boolean };
   const [editing, setEditing] = useState<null | EditState>(null);
   const [manageId, setManageId] = useState<string | null>(null);
 
-  const blank = (): EditState => ({ slug: "", title: "", image_url: "", sort_order: 0, is_active: true, show_on_home: true });
+  const blank = (): EditState => ({ slug: "", title: "", title_en: "", description_en: "", image_url: "", sort_order: 0, is_active: true, show_on_home: true });
 
   const save = useMutation({
     mutationFn: () => upsert({ data: { id: editing?.id, data: {
-      slug: editing!.slug, title: editing!.title, image_url: editing!.image_url || null,
+      slug: editing!.slug, title: editing!.title,
+      title_en: editing!.title_en.trim() || null,
+      description_en: editing!.description_en.trim() || null,
+      image_url: editing!.image_url || null,
       sort_order: editing!.sort_order, is_active: editing!.is_active, show_on_home: editing!.show_on_home,
     } } }),
-    onSuccess: () => { toast.success("تم"); setEditing(null); qc.invalidateQueries({ queryKey: ["admin-collections"] }); qc.invalidateQueries({ queryKey: ["collections-active"] }); qc.invalidateQueries({ queryKey: ["home-collections"] }); },
+    onSuccess: () => { toast.success("تم / Saved"); setEditing(null); qc.invalidateQueries({ queryKey: ["admin-collections"] }); qc.invalidateQueries({ queryKey: ["collections-active"] }); qc.invalidateQueries({ queryKey: ["home-collections"] }); },
     onError: (e: Error) => toast.error(e.message),
   });
 
