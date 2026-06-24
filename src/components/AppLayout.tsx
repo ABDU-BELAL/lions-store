@@ -84,7 +84,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
           {user ? (
             <Link to="/topup" className="hidden md:flex items-center gap-2 rounded-full border-gold bg-gradient-to-l from-gold-deep/30 to-gold/10 px-3 py-2 text-sm font-bold">
-              <span className="text-gold-soft">{currency} {balance.toLocaleString()}</span>
+              <span className="text-gold-soft">{format(balance)}</span>
               <span className="grid place-items-center size-6 rounded-full bg-gold-gradient text-primary-foreground">
                 <Plus className="size-4" />
               </span>
