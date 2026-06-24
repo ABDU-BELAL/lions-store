@@ -25,6 +25,7 @@ function SignupPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { t, dir } = useLang();
+  const { currency, setCurrency, rate } = useCurrency();
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
