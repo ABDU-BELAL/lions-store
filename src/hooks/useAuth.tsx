@@ -3,6 +3,8 @@ import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "@tanstack/react-router";
+import { toast } from "sonner";
+import { getMyAccount } from "@/lib/account.functions";
 
 interface AuthState {
   user: User | null;
@@ -19,6 +21,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const qc = useQueryClient();
 
   useEffect(() => {
+    const checkBan = async () => {
+      try {
+        await getMyAccount();
+      } catch (e) {
+        const msg = (e as Error)?.message ?? "";
+        if (msg.includes("BANNED")) {
+          await supabase.auth.signOut();
+          toast.error("تم تعليق حسابك. تواصل مع الدعم.");
+        }
+      }
+    };
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, s) => {
       setSession(s);
       setLoading(false);
@@ -31,11 +45,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (event === "SIGNED_IN" || event === "USER_UPDATED") {
         router.invalidate();
         qc.invalidateQueries();
+        checkBan();
       }
     });
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
       setLoading(false);
+      if (data.session) checkBan();
     });
     return () => subscription.unsubscribe();
   }, [router, qc]);
