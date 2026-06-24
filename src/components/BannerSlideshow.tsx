@@ -19,7 +19,7 @@ export function BannerSlideshow() {
   }, [banners.length]);
 
   if (banners.length === 0) return null;
-  const current = banners[i % banners.length];
+  
 
   return (
     <section className="mt-6 relative">
