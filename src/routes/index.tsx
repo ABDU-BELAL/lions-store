@@ -58,23 +58,11 @@ export const Route = createFileRoute("/")({
   component: Home,
 });
 
-const navTiles: { to: "/shop" | "/categories" | "/payments"; label: string; icon: typeof ShoppingBag; active?: boolean }[] = [
-  { to: "/shop", label: "المتجر", icon: ShoppingBag, active: true },
-  { to: "/categories", label: "الأقسام", icon: LayoutGrid },
-  { to: "/payments", label: "طرق الدفع", icon: CreditCard },
-];
-
-const features = [
-  { icon: Headphones, title: "دعم فني متواصل", desc: "خدمة عملاء على مدار الساعة" },
-  { icon: Zap, title: "أسرع شحن", desc: "توصيل فوري خلال ثوانٍ" },
-  { icon: BadgePercent, title: "أسعار منافسة", desc: "أفضل الأسعار في السوق" },
-  { icon: ShieldCheck, title: "أمان وحماية", desc: "معاملات آمنة 100%" },
-];
-
 function Home() {
   const fetchProducts = useServerFn(listShopProducts);
   const fetchCollections = useServerFn(listActiveCollections);
   const fetchSettings = useServerFn(getHomeSettings);
+  const { t, lang } = useLang();
 
   const { data: products = [] } = useQuery({ queryKey: ["home-products"], queryFn: () => fetchProducts() });
   const { data: collections = [] } = useQuery({ queryKey: ["home-collections"], queryFn: () => fetchCollections() });
@@ -87,6 +75,19 @@ function Home() {
   const showFeatured = settings?.show_featured ?? true;
   const showOffers = settings?.show_offers ?? true;
   const showCollections = settings?.show_collections ?? true;
+
+  const navTiles: { to: "/shop" | "/categories" | "/payments"; label: string; icon: typeof ShoppingBag; active?: boolean }[] = [
+    { to: "/shop", label: t("المتجر", "Shop"), icon: ShoppingBag, active: true },
+    { to: "/categories", label: t("الأقسام", "Categories"), icon: LayoutGrid },
+    { to: "/payments", label: t("طرق الدفع", "Payment methods"), icon: CreditCard },
+  ];
+
+  const features = [
+    { icon: Headphones, title: t("دعم فني متواصل", "Always-on support"), desc: t("خدمة عملاء على مدار الساعة", "24/7 customer service") },
+    { icon: Zap, title: t("أسرع شحن", "Fastest top-ups"), desc: t("توصيل فوري خلال ثوانٍ", "Instant delivery in seconds") },
+    { icon: BadgePercent, title: t("أسعار منافسة", "Competitive prices"), desc: t("أفضل الأسعار في السوق", "Best prices on the market") },
+    { icon: ShieldCheck, title: t("أمان وحماية", "Safety & security"), desc: t("معاملات آمنة 100%", "100% secure transactions") },
+  ];
 
   return (
     <AppLayout>
