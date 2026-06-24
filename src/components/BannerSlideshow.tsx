@@ -3,11 +3,13 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { listActiveBanners } from "@/lib/banners.functions";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useLang, pickLocalized } from "@/i18n/LanguageProvider";
 
 export function BannerSlideshow() {
   const fn = useServerFn(listActiveBanners);
   const { data } = useQuery({ queryKey: ["banners-active"], queryFn: () => fn(), staleTime: 60_000 });
   const banners = data ?? [];
+  const { lang } = useLang();
   const [i, setI] = useState(0);
 
   useEffect(() => {
