@@ -158,12 +158,15 @@ function CollectionPage() {
                 <label className="text-xs font-bold mb-1 block">
                   {selected.category === "games" ? t("ID اللاعب", "Player ID") : t("ID الحساب / رقم التعريف", "Account ID")} <span className="text-destructive">*</span>
                 </label>
-                <input value={gameId} onChange={(e) => setGameId(e.target.value)} placeholder="123456789" className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3" />
+                <input value={gameId} onChange={(e) => { setGameId(e.target.value); if (idError) setIdError(false); }} placeholder="123456789" className={`w-full rounded-xl bg-secondary/60 border px-4 py-3 ${idError ? "border-destructive ring-1 ring-destructive" : "border-border"}`} />
+                {idError && (
+                  <p className="mt-1 text-xs font-semibold text-destructive">{t("الـ ID مفقود", "ID is missing")}</p>
+                )}
               </div>
               {balance < total ? (
                 <Link to="/topup" className="mt-5 w-full block text-center rounded-xl bg-gold-gradient text-primary-foreground font-extrabold py-3 shadow-gold">{t("اشحن رصيدك أولًا", "Top up your balance first")}</Link>
               ) : (
-                <button disabled={mutation.isPending || !qtyValid} onClick={() => { if (!gameId.trim()) { toast.error(t("من فضلك أدخل الـ ID أولًا", "Please enter the ID first")); return; } mutation.mutate({ productId: selected.id, gameUserId: gameId.trim(), quantity: qtyEnabled ? qtyNum : undefined }); }} className="mt-5 w-full rounded-xl bg-gold-gradient text-primary-foreground font-extrabold py-3 shadow-gold disabled:opacity-50">
+                <button disabled={mutation.isPending || !qtyValid} onClick={() => { if (!gameId.trim()) { setIdError(true); toast.error(t("الـ ID مفقود", "ID is missing")); return; } mutation.mutate({ productId: selected.id, gameUserId: gameId.trim(), quantity: qtyEnabled ? qtyNum : undefined }); }} className="mt-5 w-full rounded-xl bg-gold-gradient text-primary-foreground font-extrabold py-3 shadow-gold disabled:opacity-50">
                   {mutation.isPending ? "..." : qtyEnabled ? `${t("أكد الشراء", "Confirm")} — ${currency} ${total.toLocaleString()}` : t("أكد الشراء", "Confirm purchase")}
                 </button>
               )}
