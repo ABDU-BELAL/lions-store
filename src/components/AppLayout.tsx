@@ -104,6 +104,9 @@ export function AppLayout({ children }: { children: ReactNode }) {
                     <Shield className="size-4" /> لوحة الأدمن
                   </Link>
                 )}
+                <Link to="/profile" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 rounded-full bg-secondary/70 px-4 py-2 text-sm font-bold">
+                  <User className="size-4" /> الملف الشخصي
+                </Link>
                 <Link to="/about" onClick={() => setMenuOpen(false)} className="rounded-full bg-secondary/70 px-4 py-2 text-sm">من نحن</Link>
                 <button
                   onClick={async () => { await supabase.auth.signOut(); setMenuOpen(false); }}
