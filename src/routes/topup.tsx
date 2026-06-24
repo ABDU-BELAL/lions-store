@@ -40,6 +40,7 @@ function TopupPage() {
   const qc = useQueryClient();
   const getAccount = useServerFn(getMyAccount);
   const createTopup = useServerFn(createTopupRequest);
+  const uploadReceipt = useServerFn(uploadTopupReceipt);
   const myTopups = useServerFn(listMyTopups);
   const fetchPaymentMethods = useServerFn(getPaymentMethods);
   const { t, lang } = useLang();
