@@ -33,11 +33,11 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   const router = useRouter();
   useEffect(() => { reportLovableError(error, { boundary: "tanstack_root_error_component" }); }, [error]);
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4" dir="rtl">
+    <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
-        <h1 className="text-xl font-bold">حدث خطأ ما</h1>
-        <p className="mt-2 text-sm text-muted-foreground">يرجى المحاولة مرة أخرى.</p>
-        <button onClick={() => { router.invalidate(); reset(); }} className="mt-6 rounded-md bg-gold-gradient px-4 py-2 text-sm font-bold text-primary-foreground">إعادة المحاولة</button>
+        <h1 className="text-xl font-bold">Something went wrong — حدث خطأ ما</h1>
+        <p className="mt-2 text-sm text-muted-foreground">Please try again.</p>
+        <button onClick={() => { router.invalidate(); reset(); }} className="mt-6 rounded-md bg-gold-gradient px-4 py-2 text-sm font-bold text-primary-foreground">Retry</button>
       </div>
     </div>
   );
