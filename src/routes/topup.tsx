@@ -132,7 +132,7 @@ function TopupPage() {
         <div className="grid place-items-center size-14 rounded-2xl bg-gold-gradient text-primary-foreground"><Wallet className="size-7" /></div>
         <div className="flex-1">
           <p className="text-xs text-muted-foreground">{t("رصيدك الحالي", "Your current balance")}</p>
-          <p dir="ltr" className="text-3xl font-black text-gold-gradient">{currency} {Number(account.data?.balance ?? 0).toLocaleString()}</p>
+          <p dir="ltr" className="text-3xl font-black text-gold-gradient">{format(Number(account.data?.balance ?? 0))}</p>
           {account.data?.profile?.custom_id && (
             <p className="text-xs text-muted-foreground mt-1">{t("رقم حسابك:", "Your account ID:")} <span dir="ltr" className="font-extrabold text-gold">#{account.data.profile.custom_id}</span></p>
           )}
@@ -236,7 +236,7 @@ function TopupPage() {
               <div className="flex items-center gap-3">
                 <s.icon className={`size-6 ${s.color}`} />
                 <div>
-                  <p dir="ltr" className="font-extrabold">{currency} {Number(row.amount).toLocaleString()}</p>
+                  <p dir="ltr" className="font-extrabold">{format(Number(row.amount))}</p>
                   <p className="text-xs text-muted-foreground">{row.method} • {new Date(row.created_at).toLocaleString(locale)}</p>
                   {row.admin_note && <p className="text-xs text-gold mt-1">{t("ملاحظة:", "Note:")} {row.admin_note}</p>}
                 </div>

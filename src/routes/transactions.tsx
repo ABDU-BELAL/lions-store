@@ -104,7 +104,7 @@ function Transactions() {
                     </div>
                   </div>
                   <div className="shrink-0">
-                    <p dir="ltr" className="font-black text-gold-gradient">{currency} {Number(row.amount).toLocaleString()}</p>
+                    <p dir="ltr" className="font-black text-gold-gradient">{format(Number(row.amount))}</p>
                     <p className={`text-xs ${s.color}`}>{s.label}</p>
                   </div>
                 </div>
@@ -137,9 +137,9 @@ function Transactions() {
                 </div>
                 <div className="shrink-0">
                   <p dir="ltr" className={`font-black ${isNegative ? "text-destructive" : "text-emerald-400"}`}>
-                    {isNegative ? "" : "+"}{currency} {Number(row.amount).toLocaleString()}
+                    {isNegative ? "" : "+"}{format(Number(row.amount))}
                   </p>
-                  <p className="text-[11px] text-muted-foreground">{t("رصيد:", "Balance:")} {currency} {Number(row.balance_after).toLocaleString()}</p>
+                  <p className="text-[11px] text-muted-foreground">{t("رصيد:", "Balance:")} {format(Number(row.balance_after))}</p>
                 </div>
               </div>
             );

@@ -132,9 +132,9 @@ function ProductPage() {
           {qtyEnabled ? (
             <p className="mt-6 text-lg font-bold text-gold">
               {discountPct > 0 && (
-                <span className="text-sm text-muted-foreground line-through mr-2">{currency} {Number(p.price).toLocaleString()}</span>
+                <span className="text-sm text-muted-foreground line-through mr-2">{format(Number(p.price))}</span>
               )}
-              {currency} {(discountPct > 0 ? Math.round(Number(p.price) * (1 - discountPct / 100) * 100) / 100 : Number(p.price)).toLocaleString()}
+              {format((discountPct > 0 ? Math.round(Number(p.price) * (1 - discountPct / 100) * 100) / 100 : Number(p.price)))}
               <span className="text-sm text-muted-foreground"> / {t("كل", "per")} {unitSize.toLocaleString()} {unitLabel || t("وحدة", "unit")}</span>
               {discountPct > 0 && (
                 <span className="ml-2 text-xs font-extrabold bg-gold-gradient text-primary-foreground rounded-full px-2 py-0.5">-{discountPct}%</span>
@@ -143,10 +143,10 @@ function ProductPage() {
           ) : (
             <div className="mt-6">
               {discountPct > 0 && (
-                <p className="text-base text-muted-foreground line-through">{currency} {Number(p.price).toLocaleString()}</p>
+                <p className="text-base text-muted-foreground line-through">{format(Number(p.price))}</p>
               )}
               <p className="text-4xl font-black text-gold flex items-center gap-2">
-                {currency} {totalPrice.toLocaleString()}
+                {format(totalPrice)}
                 {discountPct > 0 && (
                   <span className="text-xs font-extrabold bg-gold-gradient text-primary-foreground rounded-full px-2 py-1">{t("خصم", "Discount")} -{discountPct}%</span>
                 )}
@@ -176,7 +176,7 @@ function ProductPage() {
               />
               <div className="mt-3 flex items-center justify-between rounded-xl bg-gold/10 border border-gold/30 p-3">
                 <span className="text-sm text-muted-foreground">{t("الإجمالي", "Total")}</span>
-                <span className="text-2xl font-black text-gold-gradient">{currency} {totalPrice.toLocaleString()}</span>
+                <span className="text-2xl font-black text-gold-gradient">{format(totalPrice)}</span>
               </div>
             </div>
           )}
@@ -184,7 +184,7 @@ function ProductPage() {
           {user && (
             <div className="mt-6 flex items-center justify-between text-sm rounded-xl bg-secondary/40 p-3">
               <span className="text-muted-foreground flex items-center gap-1"><Wallet className="size-4" />{t("رصيدك", "Your balance")}</span>
-              <span className="font-extrabold text-gold-gradient">{currency} {balance.toLocaleString()}</span>
+              <span className="font-extrabold text-gold-gradient">{format(balance)}</span>
             </div>
           )}
 
@@ -222,7 +222,7 @@ function ProductPage() {
               }}
               className="mt-6 w-full rounded-xl bg-gold-gradient text-primary-foreground font-extrabold py-3 shadow-gold disabled:opacity-50"
             >
-              {mutation.isPending ? "..." : qtyEnabled ? `${t("أكد الشراء", "Confirm")} — ${currency} ${totalPrice.toLocaleString()}` : t("أكد الشراء", "Confirm purchase")}
+              {mutation.isPending ? "..." : qtyEnabled ? `${t("أكد الشراء", "Confirm")} — ${format(totalPrice)}` : t("أكد الشراء", "Confirm purchase")}
             </button>
           )}
         </div>
