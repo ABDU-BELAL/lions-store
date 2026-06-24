@@ -1,5 +1,5 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { Home, ShoppingBag, Bell, Receipt, Search, Menu, Plus, LogIn, LogOut, Shield, Wallet } from "lucide-react";
+import { Home, ShoppingBag, Bell, Receipt, Search, Menu, Plus, LogIn, LogOut, Shield, Wallet, User } from "lucide-react";
 import type { ReactNode } from "react";
 import logo from "@/assets/logo.jpeg.asset.json";
 import { useState } from "react";
@@ -104,6 +104,9 @@ export function AppLayout({ children }: { children: ReactNode }) {
                     <Shield className="size-4" /> لوحة الأدمن
                   </Link>
                 )}
+                <Link to="/profile" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 rounded-full bg-secondary/70 px-4 py-2 text-sm font-bold">
+                  <User className="size-4" /> الملف الشخصي
+                </Link>
                 <Link to="/about" onClick={() => setMenuOpen(false)} className="rounded-full bg-secondary/70 px-4 py-2 text-sm">من نحن</Link>
                 <button
                   onClick={async () => { await supabase.auth.signOut(); setMenuOpen(false); }}
