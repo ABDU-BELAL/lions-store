@@ -9,6 +9,8 @@ import { useNavigate } from "@tanstack/react-router";
 import { User, Mail, Phone, Wallet, Shield, Copy, ArrowRight, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { useLang } from "@/i18n/LanguageProvider";
+import { useCurrency, type Currency } from "@/i18n/CurrencyProvider";
+import { DollarSign } from "lucide-react";
 
 export const Route = createFileRoute("/profile")({
   ssr: false,
