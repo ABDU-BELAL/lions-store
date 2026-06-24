@@ -5,7 +5,7 @@ export interface UserNotification {
   id: string;
   type: "order" | "topup";
   title: string;
-  description: string;
+  title_en?: string;
   status: string;
   created_at: string;
   amount?: number;
@@ -34,7 +34,7 @@ export const getMyNotifications = createServerFn({ method: "GET" })
       id: `order-${o.id}`,
       type: "order",
       title: `طلب: ${o.product_title}`,
-      description: statusLabel(o.status, "order"),
+      title_en: `Order: ${o.product_title}`,
       status: o.status,
       created_at: o.created_at,
       amount: Number(o.amount),
@@ -44,7 +44,7 @@ export const getMyNotifications = createServerFn({ method: "GET" })
       id: `topup-${t.id}`,
       type: "topup",
       title: `طلب شحن بقيمة ${Number(t.amount).toLocaleString()} EGP`,
-      description: statusLabel(t.status, "topup"),
+      title_en: `Top-up request: ${Number(t.amount).toLocaleString()} EGP`,
       status: t.status,
       created_at: t.created_at,
       amount: Number(t.amount),
@@ -54,16 +54,3 @@ export const getMyNotifications = createServerFn({ method: "GET" })
       (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
     );
   });
-
-function statusLabel(status: string, type: "order" | "topup") {
-  if (type === "order") {
-    if (status === "pending") return "قيد التنفيذ";
-    if (status === "completed") return "تم التنفيذ بنجاح";
-    if (status === "rejected") return "تم الرفض واسترداد المبلغ";
-    return status;
-  }
-  if (status === "pending") return "قيد المراجعة";
-  if (status === "approved") return "تم قبول الشحن";
-  if (status === "rejected") return "تم رفض الشحن";
-  return status;
-}
