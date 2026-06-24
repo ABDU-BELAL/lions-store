@@ -37,7 +37,8 @@ function ProfilePage() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const getAccount = useServerFn(getMyAccount);
-  const { t, dir, lang } = useLang();
+  const { t, dir } = useLang();
+  const { currency, setCurrency, rate, format } = useCurrency();
 
   useEffect(() => { if (!authLoading && !user) navigate({ to: "/login", replace: true }); }, [authLoading, user, navigate]);
 
@@ -47,7 +48,6 @@ function ProfilePage() {
   const balance = Number(account.data?.balance ?? 0);
   const isAdmin = account.data?.isAdmin ?? false;
   const isSuperAdmin = account.data?.isSuperAdmin ?? false;
-  const currency = lang === "en" ? "EGP" : "EG";
 
   const copyId = () => {
     if (profile?.custom_id) {
