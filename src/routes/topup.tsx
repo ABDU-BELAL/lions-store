@@ -76,15 +76,20 @@ function TopupPage() {
       let screenshot_path: string | undefined;
       if (screenshot) {
         if (!user) throw new Error(t("سجل الدخول أولاً", "Sign in first"));
+        if (!screenshot.type.startsWith("image/")) {
+          throw new Error(t("الملف ليس صورة صالحة", "File is not a valid image"));
+        }
         setUploading(true);
-        const ext = (screenshot.name.split(".").pop() || "jpg").toLowerCase().slice(0, 5);
-        const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-        const { error: upErr } = await supabase.storage
-          .from("topup-receipts")
-          .upload(path, screenshot, { contentType: screenshot.type || "image/jpeg", upsert: false });
-        setUploading(false);
-        if (upErr) throw new Error(t("فشل رفع صورة الإيصال: ", "Receipt upload failed: ") + upErr.message);
-        screenshot_path = path;
+        try {
+          const fd = new FormData();
+          fd.append("file", screenshot);
+          const res = await uploadReceipt({ data: fd });
+          screenshot_path = res.path;
+        } catch (err) {
+          throw new Error(t("فشل رفع صورة الإيصال: ", "Receipt upload failed: ") + (err as Error).message);
+        } finally {
+          setUploading(false);
+        }
       }
       return createTopup({ data: { ...vars, screenshot_path } });
     },
