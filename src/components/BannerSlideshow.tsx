@@ -76,7 +76,7 @@ export function BannerSlideshow() {
           </>
         )}
       </div>
-      <Wrap>{null}</Wrap>
+      
     </section>
   );
 }
