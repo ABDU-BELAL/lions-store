@@ -63,51 +63,87 @@ function CollectionPage() {
 
   const balance = Number(account.data?.balance ?? 0);
   const colTitle = pickLocalized(data.collection.title, (data.collection as { title_en?: string | null }).title_en, lang);
+  const children = (data as { children?: Array<{ id: string; slug: string; title: string; title_en: string | null; image_url: string | null }> }).children ?? [];
+  const parent = (data as { parent?: { slug: string; title: string; title_en: string | null } | null }).parent ?? null;
+  const hasChildren = children.length > 0;
 
   return (
     <AppLayout>
+      {/* Breadcrumb */}
+      <nav className="text-xs text-muted-foreground mb-3 flex items-center gap-1 flex-wrap">
+        <Link to="/categories" className="hover:text-gold">{t("الأقسام", "Categories")}</Link>
+        <span>›</span>
+        {parent && (
+          <>
+            <Link to="/collection/$slug" params={{ slug: parent.slug }} className="hover:text-gold">{pickLocalized(parent.title, parent.title_en, lang)}</Link>
+            <span>›</span>
+          </>
+        )}
+        <span className="text-foreground font-bold">{colTitle}</span>
+      </nav>
+
       <div className="rounded-3xl bg-dark-gradient border-gold p-6 md:p-8 shadow-card flex items-center gap-5">
         {data.collection.image_url && (
           <img src={data.collection.image_url} alt={colTitle} className="size-20 rounded-2xl object-cover ring-2 ring-gold/40" />
         )}
         <div>
           <h1 className="text-3xl md:text-4xl font-black text-gold-gradient">{colTitle}</h1>
-          <p className="text-sm text-muted-foreground mt-1">{data.products.length} {t("منتج", "product(s)")}</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            {hasChildren
+              ? `${children.length} ${t("قسم فرعي", "subcategory(ies)")}`
+              : `${data.products.length} ${t("منتج", "product(s)")}`}
+          </p>
         </div>
       </div>
 
-      {data.products.length === 0 && (
-        <div className="mt-10 text-center text-muted-foreground">
-          <ShoppingBag className="mx-auto size-12 mb-3 opacity-50" />
-          <p>{t("لا يوجد منتجات في هذا القسم بعد.", "No products in this category yet.")}</p>
+      {hasChildren ? (
+        <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+          {children.map((ch) => {
+            const chTitle = pickLocalized(ch.title, ch.title_en, lang);
+            return (
+              <Link key={ch.id} to="/collection/$slug" params={{ slug: ch.slug }} className="group rounded-2xl overflow-hidden bg-dark-gradient border border-gold/30 hover:border-gold/70 hover:shadow-gold transition text-center">
+                <FramedImage src={ch.image_url} alt={chTitle} />
+                <p className="font-extrabold text-sm p-3 text-gold-gradient">{chTitle}</p>
+              </Link>
+            );
+          })}
         </div>
+      ) : (
+        <>
+          {data.products.length === 0 && (
+            <div className="mt-10 text-center text-muted-foreground">
+              <ShoppingBag className="mx-auto size-12 mb-3 opacity-50" />
+              <p>{t("لا يوجد منتجات في هذا القسم بعد.", "No products in this category yet.")}</p>
+            </div>
+          )}
+
+          <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+            {data.products.map((p) => {
+              const pp = p as ColProduct;
+              const title = pickLocalized(pp.title, pp.title_en, lang);
+              const description = pickLocalized(pp.description, pp.description_en, lang);
+              return (
+                <button
+                  key={pp.id}
+                  onClick={() => { if (!user) { toast.error(t("سجّل دخول أولًا", "Sign in first")); return; } setSelected(pp); }}
+                  className="group relative rounded-2xl overflow-hidden bg-dark-gradient shadow-card border border-gold/20 transition-transform hover:-translate-y-1 hover:shadow-gold"
+                >
+                  {pp.is_offer && <span className={`absolute top-2 ${dir === "rtl" ? "right-2" : "left-2"} z-20 text-[10px] font-extrabold bg-destructive text-destructive-foreground rounded-full px-2 py-1`}>{t("عرض", "Offer")}</span>}
+                  <FramedImage src={pp.image_url} alt={title} />
+                  <div className="px-4 pb-4 pt-1 text-center">
+                    <h3 className="text-sm font-extrabold text-gold-gradient line-clamp-1">{title}</h3>
+                    {description && (
+                      <p className="mt-1 text-[11px] text-muted-foreground line-clamp-2 whitespace-pre-line">{description}</p>
+                    )}
+                    <p className="mt-1 text-lg font-black text-gold">{currency} {Number(pp.price).toLocaleString()}</p>
+                  </div>
+                  <div className="absolute inset-x-0 top-0 h-1 bg-gold-gradient opacity-80" />
+                </button>
+              );
+            })}
+          </div>
+        </>
       )}
-
-      <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-        {data.products.map((p) => {
-          const pp = p as ColProduct;
-          const title = pickLocalized(pp.title, pp.title_en, lang);
-          const description = pickLocalized(pp.description, pp.description_en, lang);
-          return (
-            <button
-              key={pp.id}
-              onClick={() => { if (!user) { toast.error(t("سجّل دخول أولًا", "Sign in first")); return; } setSelected(pp); }}
-              className="group relative rounded-2xl overflow-hidden bg-dark-gradient shadow-card border border-gold/20 transition-transform hover:-translate-y-1 hover:shadow-gold"
-            >
-              {pp.is_offer && <span className={`absolute top-2 ${dir === "rtl" ? "right-2" : "left-2"} z-20 text-[10px] font-extrabold bg-destructive text-destructive-foreground rounded-full px-2 py-1`}>{t("عرض", "Offer")}</span>}
-              <FramedImage src={pp.image_url} alt={title} />
-              <div className="px-4 pb-4 pt-1 text-center">
-                <h3 className="text-sm font-extrabold text-gold-gradient line-clamp-1">{title}</h3>
-                {description && (
-                  <p className="mt-1 text-[11px] text-muted-foreground line-clamp-2 whitespace-pre-line">{description}</p>
-                )}
-                <p className="mt-1 text-lg font-black text-gold">{currency} {Number(pp.price).toLocaleString()}</p>
-              </div>
-              <div className="absolute inset-x-0 top-0 h-1 bg-gold-gradient opacity-80" />
-            </button>
-          );
-        })}
-      </div>
 
       {selected && (() => {
         const qtyEnabled = !!selected.quantity_enabled;
