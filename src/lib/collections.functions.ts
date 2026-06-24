@@ -16,6 +16,7 @@ export const listActiveCollections = createServerFn({ method: "GET" }).handler(a
     .from("collections")
     .select("id, slug, title, title_en, image_url, sort_order, show_on_home")
     .eq("is_active", true)
+    .is("parent_id", null)
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: false });
   return signMany("products", data ?? []);
@@ -26,10 +27,32 @@ export const getCollectionBySlug = createServerFn({ method: "GET" })
   .handler(async ({ data }) => {
     const { data: col } = await supabaseAdmin
       .from("collections")
-      .select("id, slug, title, title_en, image_url, is_active")
+      .select("id, slug, title, title_en, image_url, is_active, parent_id")
       .eq("slug", data.slug)
       .maybeSingle();
     if (!col || !col.is_active) return null;
+
+    // Parent breadcrumb info
+    let parent: { slug: string; title: string; title_en: string | null } | null = null;
+    if (col.parent_id) {
+      const { data: p } = await supabaseAdmin
+        .from("collections")
+        .select("slug, title, title_en")
+        .eq("id", col.parent_id)
+        .maybeSingle();
+      if (p) parent = p as typeof parent;
+    }
+
+    // Child subcategories
+    const { data: childrenRaw } = await supabaseAdmin
+      .from("collections")
+      .select("id, slug, title, title_en, image_url, sort_order")
+      .eq("parent_id", col.id)
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: false });
+    const children = await signMany("products", childrenRaw ?? []);
+
     const { data: products } = await supabaseAdmin
       .from("products")
       .select("id, title, title_en, description, description_en, price, image_url, is_offer, category, sort_order, quantity_enabled, unit_size, unit_label, min_quantity, max_quantity")
@@ -39,7 +62,7 @@ export const getCollectionBySlug = createServerFn({ method: "GET" })
       .order("created_at", { ascending: false });
     const signedCol = { ...col, image_url: await signBucketPath("products", col.image_url) };
     const signedProducts = await signMany("products", products ?? []);
-    return { collection: signedCol, products: signedProducts };
+    return { collection: signedCol, parent, children, products: signedProducts };
   });
 
 // ------- Admin -------
