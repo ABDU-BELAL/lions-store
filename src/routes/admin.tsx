@@ -514,7 +514,7 @@ function CollectionsTab() {
             <p className="text-xs text-muted-foreground">/{c.slug} • {c.is_active ? "مفعّل" : "متوقف"}{c.show_on_home ? " • في الرئيسية" : ""}</p>
             <div className="mt-3 flex gap-2 flex-wrap">
               <button onClick={() => setManageId(c.id)} className="flex-1 rounded-lg bg-gold-gradient text-primary-foreground py-1.5 text-sm font-bold flex items-center justify-center gap-1"><Package className="size-4" /> المنتجات</button>
-              <button onClick={() => setEditing({ id: c.id, slug: c.slug, title: c.title, image_url: c.image_url ?? "", sort_order: c.sort_order, is_active: c.is_active, show_on_home: c.show_on_home })} className="rounded-lg bg-secondary px-3 py-1.5 text-sm font-bold">تعديل</button>
+              <button onClick={() => setEditing({ id: c.id, slug: c.slug, title: c.title, title_en: (c as { title_en?: string | null }).title_en ?? "", description_en: (c as { description_en?: string | null }).description_en ?? "", image_url: c.image_url ?? "", sort_order: c.sort_order, is_active: c.is_active, show_on_home: c.show_on_home })} className="rounded-lg bg-secondary px-3 py-1.5 text-sm font-bold">تعديل / Edit</button>
               <button onClick={() => confirm("متأكد؟") && remove.mutate(c.id)} className="rounded-lg bg-destructive text-white px-3 py-1.5 text-sm font-bold"><Trash2 className="size-4" /></button>
             </div>
           </div>
