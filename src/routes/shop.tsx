@@ -88,7 +88,7 @@ function ShopPage() {
 
   const balance = Number(account.data?.balance ?? 0);
   const allList = products.data ?? [];
-  const currency = lang === "en" ? "EGP" : "EG";
+  const { format } = useCurrency();
   const locale = lang === "en" ? "en-US" : "ar-EG";
 
   const list = useMemo(() => {
