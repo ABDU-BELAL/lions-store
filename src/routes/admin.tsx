@@ -526,7 +526,8 @@ function CollectionsTab() {
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm grid place-items-center p-4" onClick={() => setEditing(null)}>
           <form onClick={(e) => e.stopPropagation()} onSubmit={(e) => { e.preventDefault(); save.mutate(); }} className="w-full max-w-lg bg-card border-gold rounded-2xl p-5 space-y-3 max-h-[90vh] overflow-y-auto">
             <h3 className="text-xl font-extrabold text-gold-gradient flex items-center gap-2"><Layers className="size-5" /> {editing.id ? "تعديل قسم" : "قسم جديد"}</h3>
-            <input required placeholder="الاسم (مثال: ببجي موبايل)" value={editing.title} onChange={(e) => setEditing({ ...editing, title: e.target.value })} className="w-full rounded-xl bg-secondary px-3 py-2" />
+            <input required placeholder="الاسم بالعربية (Arabic title)" value={editing.title} onChange={(e) => setEditing({ ...editing, title: e.target.value })} className="w-full rounded-xl bg-secondary px-3 py-2" />
+            <input placeholder="English title (optional)" value={editing.title_en} onChange={(e) => setEditing({ ...editing, title_en: e.target.value })} dir="ltr" className="w-full rounded-xl bg-secondary px-3 py-2" />
             <input required placeholder="slug (مثال: pubg-mobile)" value={editing.slug} onChange={(e) => setEditing({ ...editing, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-") })} className="w-full rounded-xl bg-secondary px-3 py-2" dir="ltr" />
             <ImageUploadField value={editing.image_url} previewUrl={editing.image_url} onChange={(v) => setEditing({ ...editing, image_url: v })} label="صورة الزر" />
             <div className="flex items-center gap-4 text-sm flex-wrap">
