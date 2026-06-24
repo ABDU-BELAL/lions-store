@@ -110,11 +110,6 @@ function ProfilePage() {
           <div className="space-y-4">
             <InfoRow icon={Mail} label="البريد الإلكتروني" value={profile?.email || user?.email || "—"} />
             <InfoRow icon={Phone} label="رقم الهاتف" value={profile?.phone || "—"} />
-            <InfoRow
-              icon={CreditCard}
-              label="رقم الحساب"
-              value={user?.id ? `${user.id.slice(0, 8)}...${user.id.slice(-8)}` : "—"}
-            />
           </div>
 
           {/* Balance card */}
