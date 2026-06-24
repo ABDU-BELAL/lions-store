@@ -513,18 +513,23 @@ function CollectionsTab() {
       <button onClick={() => setEditing(blank())} className="mb-4 rounded-full bg-gold-gradient text-primary-foreground font-bold px-4 py-2 text-sm flex items-center gap-2"><Plus className="size-4" /> قسم جديد</button>
       <p className="text-xs text-muted-foreground mb-3">القسم هو زر مثل "ببجي موبايل" — افتحه لإضافة منتجاته (UC، عروض...).</p>
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        {data.map((c) => (
-          <div key={c.id} className="rounded-2xl bg-card/70 border border-border p-4">
-            {c.image_url && <img src={c.image_url} alt={c.title} className="aspect-video w-full object-cover rounded-xl mb-2" />}
-            <p className="font-extrabold">{c.title}</p>
-            <p className="text-xs text-muted-foreground">/{c.slug} • {c.is_active ? "مفعّل" : "متوقف"}{c.show_on_home ? " • في الرئيسية" : ""}</p>
-            <div className="mt-3 flex gap-2 flex-wrap">
-              <button onClick={() => setManageId(c.id)} className="flex-1 rounded-lg bg-gold-gradient text-primary-foreground py-1.5 text-sm font-bold flex items-center justify-center gap-1"><Package className="size-4" /> المنتجات</button>
-              <button onClick={() => setEditing({ id: c.id, slug: c.slug, title: c.title, title_en: (c as { title_en?: string | null }).title_en ?? "", description_en: (c as { description_en?: string | null }).description_en ?? "", image_url: c.image_url ?? "", sort_order: c.sort_order, is_active: c.is_active, show_on_home: c.show_on_home })} className="rounded-lg bg-secondary px-3 py-1.5 text-sm font-bold">تعديل / Edit</button>
-              <button onClick={() => confirm("متأكد؟") && remove.mutate(c.id)} className="rounded-lg bg-destructive text-white px-3 py-1.5 text-sm font-bold"><Trash2 className="size-4" /></button>
+        {data.map((c) => {
+          const cParentId = (c as { parent_id?: string | null }).parent_id ?? null;
+          const parentRow = cParentId ? byId.get(cParentId) : null;
+          return (
+            <div key={c.id} className={`rounded-2xl bg-card/70 border p-4 ${cParentId ? "border-gold/30 ms-4" : "border-border"}`}>
+              {c.image_url && <img src={c.image_url} alt={c.title} className="aspect-video w-full object-cover rounded-xl mb-2" />}
+              <p className="font-extrabold">{cParentId && <span className="text-gold/70 me-1">↳</span>}{c.title}</p>
+              <p className="text-xs text-muted-foreground">/{c.slug} • {c.is_active ? "مفعّل" : "متوقف"}{c.show_on_home && !cParentId ? " • في الرئيسية" : ""}</p>
+              {parentRow && <p className="text-[11px] text-gold/80 mt-0.5">↑ {parentRow.title}</p>}
+              <div className="mt-3 flex gap-2 flex-wrap">
+                <button onClick={() => setManageId(c.id)} className="flex-1 rounded-lg bg-gold-gradient text-primary-foreground py-1.5 text-sm font-bold flex items-center justify-center gap-1"><Package className="size-4" /> المنتجات</button>
+                <button onClick={() => setEditing({ id: c.id, slug: c.slug, title: c.title, title_en: (c as { title_en?: string | null }).title_en ?? "", description_en: (c as { description_en?: string | null }).description_en ?? "", image_url: c.image_url ?? "", sort_order: c.sort_order, is_active: c.is_active, show_on_home: c.show_on_home, parent_id: cParentId })} className="rounded-lg bg-secondary px-3 py-1.5 text-sm font-bold">تعديل / Edit</button>
+                <button onClick={() => confirm("متأكد؟") && remove.mutate(c.id)} className="rounded-lg bg-destructive text-white px-3 py-1.5 text-sm font-bold"><Trash2 className="size-4" /></button>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
         {data.length === 0 && <p className="col-span-full text-center py-8 text-muted-foreground">لا يوجد أقسام. ابدأ بإضافة قسم زي "ببجي موبايل".</p>}
       </div>
 
@@ -535,10 +540,20 @@ function CollectionsTab() {
             <input required placeholder="الاسم بالعربية (Arabic title)" value={editing.title} onChange={(e) => setEditing({ ...editing, title: e.target.value })} className="w-full rounded-xl bg-secondary px-3 py-2" />
             <input placeholder="English title (optional)" value={editing.title_en} onChange={(e) => setEditing({ ...editing, title_en: e.target.value })} dir="ltr" className="w-full rounded-xl bg-secondary px-3 py-2" />
             <input required placeholder="slug (مثال: pubg-mobile)" value={editing.slug} onChange={(e) => setEditing({ ...editing, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-") })} className="w-full rounded-xl bg-secondary px-3 py-2" dir="ltr" />
+            <div>
+              <label className="text-xs font-bold mb-1 block">القسم الأب / Parent category</label>
+              <select value={editing.parent_id ?? ""} onChange={(e) => setEditing({ ...editing, parent_id: e.target.value || null })} className="w-full rounded-xl bg-secondary px-3 py-2">
+                <option value="">— لا شيء (قسم رئيسي) / None (top-level)</option>
+                {parentOptions.filter((p) => p.id !== editing.id).map((p) => (
+                  <option key={p.id} value={p.id}>{p.title}</option>
+                ))}
+              </select>
+              <p className="text-[11px] text-muted-foreground mt-1">لو اخترت أبًا، هذا القسم يصبح فرعيًا تحته (مسموح بمستويين فقط).</p>
+            </div>
             <ImageUploadField value={editing.image_url} previewUrl={editing.image_url} onChange={(v) => setEditing({ ...editing, image_url: v })} label="صورة الزر" />
             <div className="flex items-center gap-4 text-sm flex-wrap">
               <label className="flex items-center gap-2"><input type="checkbox" checked={editing.is_active} onChange={(e) => setEditing({ ...editing, is_active: e.target.checked })} /> مفعّل</label>
-              <label className="flex items-center gap-2"><input type="checkbox" checked={editing.show_on_home} onChange={(e) => setEditing({ ...editing, show_on_home: e.target.checked })} /> في الرئيسية</label>
+              <label className="flex items-center gap-2"><input type="checkbox" checked={editing.show_on_home} onChange={(e) => setEditing({ ...editing, show_on_home: e.target.checked })} disabled={!!editing.parent_id} /> في الرئيسية</label>
               <input type="number" placeholder="الترتيب" value={editing.sort_order} onChange={(e) => setEditing({ ...editing, sort_order: Number(e.target.value) })} className="ml-auto w-20 rounded-xl bg-secondary px-3 py-2" />
             </div>
             <div className="flex gap-2">
