@@ -76,6 +76,7 @@ function ProductPage() {
   const description = pickLocalized(p.description, p.description_en, lang);
 
   const [gameId, setGameId] = useState("");
+  const [idError, setIdError] = useState(false);
   const qtyEnabled = !!p.quantity_enabled;
   const unitSize = Number(p.unit_size ?? 1) || 1;
   const unitLabel = p.unit_label ?? "";
