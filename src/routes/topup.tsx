@@ -212,9 +212,10 @@ function TopupPage() {
             <span className="text-sm text-muted-foreground truncate">
               {screenshot ? screenshot.name : t("اختر صورة الإيصال", "Choose receipt image")}
             </span>
-            <input type="file" accept="image/*" className="hidden"
+            <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden"
               onChange={(e) => {
                 const f = e.target.files?.[0] ?? null;
+                if (f && !f.type.startsWith("image/")) { toast.error(t("الملف ليس صورة صالحة", "File is not a valid image")); return; }
                 if (f && f.size > 5 * 1024 * 1024) { toast.error(t("حجم الصورة كبير، الحد الأقصى 5 ميجا", "Image too large — max 5MB")); return; }
                 setScreenshot(f);
               }} />
