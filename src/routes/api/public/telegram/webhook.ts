@@ -52,6 +52,21 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
           null;
 
         if (cmd === "/start" || cmd === "/register") {
+          const registerPassword = process.env.TELEGRAM_REGISTER_PASSWORD;
+          if (!registerPassword) {
+            await sendMessage(token, chat.id, "⚠️ Registration is disabled. The site owner must set TELEGRAM_REGISTER_PASSWORD.");
+            return Response.json({ ok: true });
+          }
+          const parts = text.split(/\s+/);
+          const provided = parts[1] ?? "";
+          if (!provided || !safeEqual(provided, registerPassword)) {
+            await sendMessage(
+              token,
+              chat.id,
+              "🔒 This bot is private. Usage: /start <password>",
+            );
+            return Response.json({ ok: true });
+          }
           const { error } = await supabaseAdmin
             .from("telegram_chats")
             .upsert({ chat_id: chatId, title }, { onConflict: "chat_id" });
