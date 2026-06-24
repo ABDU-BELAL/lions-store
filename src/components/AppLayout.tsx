@@ -10,6 +10,7 @@ import { getMyAccount } from "@/lib/account.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { ParticlesBackground } from "@/components/ParticlesBackground";
 import { useLang } from "@/i18n/LanguageProvider";
+import { useCurrency } from "@/i18n/CurrencyProvider";
 
 export function AppLayout({ children }: { children: ReactNode }) {
   const path = useRouterState({ select: (s) => s.location.pathname });
@@ -19,6 +20,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const { lang, setLang, t, dir } = useLang();
   const getAccount = useServerFn(getMyAccount);
+  const { format } = useCurrency();
   const account = useQuery({
     queryKey: ["account", user?.id],
     queryFn: () => getAccount(),
@@ -37,7 +39,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
     { to: "/search", label: t("بحث", "Search"), icon: Search },
   ] as const;
 
-  const currency = lang === "en" ? "EGP" : "EG";
+  
 
   return (
     <div dir={dir} className="min-h-screen pb-24">
@@ -82,7 +84,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
           {user ? (
             <Link to="/topup" className="hidden md:flex items-center gap-2 rounded-full border-gold bg-gradient-to-l from-gold-deep/30 to-gold/10 px-3 py-2 text-sm font-bold">
-              <span className="text-gold-soft">{currency} {balance.toLocaleString()}</span>
+              <span className="text-gold-soft">{format(balance)}</span>
               <span className="grid place-items-center size-6 rounded-full bg-gold-gradient text-primary-foreground">
                 <Plus className="size-4" />
               </span>
@@ -116,7 +118,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
             {user ? (
               <>
                 <Link to="/topup" onClick={() => setMenuOpen(false)} className="md:hidden flex items-center gap-2 rounded-full border-gold bg-gradient-to-l from-gold-deep/30 to-gold/10 px-3 py-2 text-sm font-bold">
-                  <span className="text-gold-soft">{currency} {balance.toLocaleString()}</span>
+                  <span className="text-gold-soft">{format(balance)}</span>
                   <Plus className="size-4 text-gold" />
                 </Link>
                 {isAdmin && (

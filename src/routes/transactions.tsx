@@ -8,6 +8,7 @@ import { listMyOrders } from "@/lib/shop.functions";
 import { listMyWalletTxns } from "@/lib/wallet.functions";
 import { useEffect, useState } from "react";
 import { useLang } from "@/i18n/LanguageProvider";
+import { useCurrency } from "@/i18n/CurrencyProvider";
 
 void Link;
 
@@ -40,6 +41,7 @@ function Transactions() {
   const fetchTxns = useServerFn(listMyWalletTxns);
   const [tab, setTab] = useState<"orders" | "wallet">("orders");
   const { t, lang } = useLang();
+  const { format } = useCurrency();
 
   useEffect(() => { if (!loading && !user) navigate({ to: "/login", replace: true }); }, [loading, user, navigate]);
 
@@ -62,8 +64,6 @@ function Transactions() {
     purchase: { label: t("شراء", "Purchase"), icon: ArrowUpCircle, color: "text-destructive" },
     adjustment: { label: t("تعديل", "Adjustment"), icon: Wallet, color: "text-gold" },
   } as const;
-
-  const currency = lang === "en" ? "EGP" : "EG";
   const locale = lang === "en" ? "en-US" : "ar-EG";
 
   return (
@@ -104,7 +104,7 @@ function Transactions() {
                     </div>
                   </div>
                   <div className="shrink-0">
-                    <p dir="ltr" className="font-black text-gold-gradient">{currency} {Number(row.amount).toLocaleString()}</p>
+                    <p dir="ltr" className="font-black text-gold-gradient">{format(Number(row.amount))}</p>
                     <p className={`text-xs ${s.color}`}>{s.label}</p>
                   </div>
                 </div>
@@ -137,9 +137,9 @@ function Transactions() {
                 </div>
                 <div className="shrink-0">
                   <p dir="ltr" className={`font-black ${isNegative ? "text-destructive" : "text-emerald-400"}`}>
-                    {isNegative ? "" : "+"}{currency} {Number(row.amount).toLocaleString()}
+                    {isNegative ? "" : "+"}{format(Number(row.amount))}
                   </p>
-                  <p className="text-[11px] text-muted-foreground">{t("رصيد:", "Balance:")} {currency} {Number(row.balance_after).toLocaleString()}</p>
+                  <p className="text-[11px] text-muted-foreground">{t("رصيد:", "Balance:")} {format(Number(row.balance_after))}</p>
                 </div>
               </div>
             );

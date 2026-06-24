@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import logo from "@/assets/logo.jpeg.asset.json";
 import { toast } from "sonner";
 import { useLang } from "@/i18n/LanguageProvider";
+import { useCurrency, type Currency } from "@/i18n/CurrencyProvider";
 
 export const Route = createFileRoute("/signup")({
   head: () => ({
@@ -24,6 +25,7 @@ function SignupPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { t, dir } = useLang();
+  const { currency, setCurrency, rate } = useCurrency();
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
@@ -81,6 +83,24 @@ function SignupPage() {
           <div>
             <label className="text-xs font-bold mb-1 block">{t("كلمة السر", "Password")}</label>
             <input type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gold/50" />
+          </div>
+          <div>
+            <label className="text-xs font-bold mb-1 block">{t("عرض الأسعار", "Display prices in")}</label>
+            <div className="inline-flex rounded-full bg-secondary/60 border border-border p-1 w-full">
+              {(["EGP", "USD"] as Currency[]).map((c) => (
+                <button
+                  type="button"
+                  key={c}
+                  onClick={() => setCurrency(c)}
+                  className={`flex-1 px-3 py-2 text-xs font-bold rounded-full transition-colors ${currency === c ? "bg-gold-gradient text-primary-foreground" : "text-muted-foreground"}`}
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
+            {rate && (
+              <p className="text-[11px] text-muted-foreground mt-1">{t(`1 USD ≈ ${rate.toFixed(2)} EGP`, `1 USD ≈ ${rate.toFixed(2)} EGP`)}</p>
+            )}
           </div>
           <button disabled={loading} className="w-full rounded-xl bg-gold-gradient text-primary-foreground font-extrabold py-3 shadow-gold disabled:opacity-50">
             {loading ? t("جاري إنشاء الحساب...", "Creating account...") : t("إنشاء الحساب", "Create account")}

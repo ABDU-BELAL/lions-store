@@ -15,6 +15,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AuthProvider } from "@/hooks/useAuth";
 import { Toaster } from "sonner";
 import { LanguageProvider, useLang } from "@/i18n/LanguageProvider";
+import { CurrencyProvider } from "@/i18n/CurrencyProvider";
 
 function NotFoundComponent() {
   return (
@@ -95,10 +96,12 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <LanguageProvider>
-        <AuthProvider>
-          <Outlet />
-          <ToasterLocalized />
-        </AuthProvider>
+        <CurrencyProvider>
+          <AuthProvider>
+            <Outlet />
+            <ToasterLocalized />
+          </AuthProvider>
+        </CurrencyProvider>
       </LanguageProvider>
     </QueryClientProvider>
   );

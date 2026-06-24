@@ -9,6 +9,8 @@ import { useNavigate } from "@tanstack/react-router";
 import { User, Mail, Phone, Wallet, Shield, Copy, ArrowRight, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { useLang } from "@/i18n/LanguageProvider";
+import { useCurrency, type Currency } from "@/i18n/CurrencyProvider";
+import { DollarSign } from "lucide-react";
 
 export const Route = createFileRoute("/profile")({
   ssr: false,
@@ -35,7 +37,8 @@ function ProfilePage() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const getAccount = useServerFn(getMyAccount);
-  const { t, dir, lang } = useLang();
+  const { t, dir } = useLang();
+  const { currency, setCurrency, rate, format } = useCurrency();
 
   useEffect(() => { if (!authLoading && !user) navigate({ to: "/login", replace: true }); }, [authLoading, user, navigate]);
 
@@ -45,7 +48,6 @@ function ProfilePage() {
   const balance = Number(account.data?.balance ?? 0);
   const isAdmin = account.data?.isAdmin ?? false;
   const isSuperAdmin = account.data?.isSuperAdmin ?? false;
-  const currency = lang === "en" ? "EGP" : "EG";
 
   const copyId = () => {
     if (profile?.custom_id) {
@@ -104,6 +106,34 @@ function ProfilePage() {
           </div>
 
           <div className="mt-6 pt-6 border-t border-border">
+            <div className="flex items-center justify-between bg-secondary/40 border border-border rounded-xl p-4 mb-4">
+              <div className="flex items-center gap-3">
+                <div className="size-10 rounded-full bg-gold/20 grid place-items-center">
+                  <DollarSign className="size-5 text-gold" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold">{t("عرض الأسعار", "Display currency")}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {rate
+                      ? t(`1 USD ≈ ${rate.toFixed(2)} EGP`, `1 USD ≈ ${rate.toFixed(2)} EGP`)
+                      : t("جارٍ تحميل سعر الصرف...", "Loading rate...")}
+                  </p>
+                </div>
+              </div>
+              <div className="inline-flex rounded-full bg-background border border-border p-1">
+                {(["EGP", "USD"] as Currency[]).map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setCurrency(c)}
+                    className={`px-3 py-1 text-xs font-bold rounded-full transition-colors ${currency === c ? "bg-gold-gradient text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                  >
+                    {c}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div className="bg-gradient-to-l from-gold-deep/20 to-gold/10 border border-gold/30 rounded-xl p-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="size-10 rounded-full bg-gold/20 grid place-items-center">
@@ -111,7 +141,7 @@ function ProfilePage() {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">{t("رصيد المحفظة", "Wallet balance")}</p>
-                  <p className="text-xl font-bold text-gold">{currency} {balance.toLocaleString()}</p>
+                  <p className="text-xl font-bold text-gold">{format(balance)}</p>
                 </div>
               </div>
               <Link to="/topup" className="rounded-full bg-gold-gradient text-primary-foreground px-4 py-2 text-sm font-bold hover:opacity-90 transition-opacity">

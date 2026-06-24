@@ -11,6 +11,7 @@ import proframe from "@/assets/proframe.png.asset.json";
 import { Wallet, X, ShoppingBag, Clock, CheckCircle2, XCircle, Search as SearchIcon } from "lucide-react";
 import { z } from "zod";
 import { useLang, pickLocalized } from "@/i18n/LanguageProvider";
+import { useCurrency } from "@/i18n/CurrencyProvider";
 
 const shopSearch = z.object({ q: z.string().optional().catch("") });
 
@@ -87,7 +88,7 @@ function ShopPage() {
 
   const balance = Number(account.data?.balance ?? 0);
   const allList = products.data ?? [];
-  const currency = lang === "en" ? "EGP" : "EG";
+  const { format } = useCurrency();
   const locale = lang === "en" ? "en-US" : "ar-EG";
 
   const list = useMemo(() => {
@@ -113,7 +114,7 @@ function ShopPage() {
             <Wallet className="size-5 text-gold" />
             <div>
               <p className="text-[10px] text-muted-foreground">{t("رصيدك", "Your balance")}</p>
-              <p className="text-sm font-black text-gold-gradient">{currency} {balance.toLocaleString()}</p>
+              <p className="text-sm font-black text-gold-gradient">{format(balance)}</p>
             </div>
           </Link>
         )}
@@ -185,7 +186,7 @@ function ShopPage() {
                   {description && (
                     <p className="mt-1 text-[11px] text-muted-foreground line-clamp-2 whitespace-pre-line">{description}</p>
                   )}
-                  <p className="mt-1 text-lg font-black text-gold">{currency} {Number(p.price).toLocaleString()}</p>
+                  <p className="mt-1 text-lg font-black text-gold">{format(Number(p.price))}</p>
                 </div>
               </button>
               <div className="px-4 pb-4 pt-2 text-center">
@@ -216,7 +217,7 @@ function ShopPage() {
                     </div>
                   </div>
                   <div>
-                    <p className="font-extrabold">{currency} {Number(o.amount).toLocaleString()}</p>
+                    <p className="font-extrabold">{format(Number(o.amount))}</p>
                     <p className={`text-xs font-bold ${s.color}`}>{s.label}</p>
                   </div>
                 </div>
@@ -256,16 +257,16 @@ function ShopPage() {
               )}
               {qtyEnabled ? (
                 <div className="mt-1">
-                  {discountPct > 0 && <p className="text-xs text-muted-foreground line-through">{currency} {baseUnitPrice.toLocaleString()}</p>}
+                  {discountPct > 0 && <p className="text-xs text-muted-foreground line-through">{format(baseUnitPrice)}</p>}
                   <p className="text-base font-bold text-gold">
-                    {currency} {discountedUnitPrice.toLocaleString()} <span className="text-xs text-muted-foreground">/ {t("كل", "per")} {unitSize.toLocaleString()} {unitLabel || t("وحدة", "unit")}</span>
+                    {format(discountedUnitPrice)} <span className="text-xs text-muted-foreground">/ {t("كل", "per")} {unitSize.toLocaleString()} {unitLabel || t("وحدة", "unit")}</span>
                   </p>
                   {discountPct > 0 && <p className="mt-1 text-xs font-extrabold text-gold-gradient">{t("خصم", "Discount")} {discountPct}%</p>}
                 </div>
               ) : (
                 <div className="mt-1">
-                  {discountPct > 0 && <p className="text-base text-muted-foreground line-through">{currency} {baseUnitPrice.toLocaleString()}</p>}
-                  <p className="text-3xl font-black text-gold">{currency} {total.toLocaleString()}</p>
+                  {discountPct > 0 && <p className="text-base text-muted-foreground line-through">{format(baseUnitPrice)}</p>}
+                  <p className="text-3xl font-black text-gold">{format(total)}</p>
                   {discountPct > 0 && <p className="mt-1 text-xs font-extrabold text-gold-gradient">{t("خصم", "Discount")} {discountPct}%</p>}
                 </div>
               )}
@@ -291,8 +292,8 @@ function ShopPage() {
                 <div className="mt-3 flex items-center justify-between rounded-xl bg-gold/10 border border-gold/30 p-3">
                   <span className="text-sm text-muted-foreground">{t("الإجمالي", "Total")}</span>
                   <span>
-                    {discountPct > 0 && <span className="block text-xs text-muted-foreground line-through">{currency} {baseTotal.toLocaleString()}</span>}
-                    <span className="block text-2xl font-black text-gold-gradient">{currency} {total.toLocaleString()}</span>
+                    {discountPct > 0 && <span className="block text-xs text-muted-foreground line-through">{format(baseTotal)}</span>}
+                    <span className="block text-2xl font-black text-gold-gradient">{format(total)}</span>
                   </span>
                 </div>
               </div>
@@ -300,12 +301,12 @@ function ShopPage() {
 
             <div className="mt-4 flex items-center justify-between text-sm">
               <span className="text-muted-foreground">{t("رصيدك الحالي", "Your balance")}</span>
-              <span className="font-extrabold text-gold-gradient">{currency} {balance.toLocaleString()}</span>
+              <span className="font-extrabold text-gold-gradient">{format(balance)}</span>
             </div>
             <div className="mt-1 flex items-center justify-between text-sm">
               <span className="text-muted-foreground">{t("الرصيد بعد الشراء", "Balance after purchase")}</span>
               <span className={`font-extrabold ${balance - total < 0 ? "text-destructive" : "text-emerald-400"}`}>
-                {currency} {(balance - total).toLocaleString()}
+                {format((balance - total))}
               </span>
             </div>
 
@@ -340,7 +341,7 @@ function ShopPage() {
                 }}
                 className="mt-5 w-full rounded-xl bg-gold-gradient text-primary-foreground font-extrabold py-3 shadow-gold disabled:opacity-50"
               >
-                {mutation.isPending ? t("جاري التنفيذ...", "Processing...") : qtyEnabled ? `${t("أكد الشراء", "Confirm")} — ${currency} ${total.toLocaleString()}` : t("أكد الشراء", "Confirm purchase")}
+                {mutation.isPending ? t("جاري التنفيذ...", "Processing...") : qtyEnabled ? `${t("أكد الشراء", "Confirm")} — ${format(total)}` : t("أكد الشراء", "Confirm purchase")}
               </button>
             )}
           </div>

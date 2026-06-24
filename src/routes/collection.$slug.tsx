@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { FramedImage } from "@/components/FramedImage";
 import { Wallet, X, ShoppingBag } from "lucide-react";
 import { useLang, pickLocalized } from "@/i18n/LanguageProvider";
+import { useCurrency } from "@/i18n/CurrencyProvider";
 
 export const Route = createFileRoute("/collection/$slug")({
   head: ({ params }) => ({ meta: [{ title: `${params.slug} — Lion Store` }] }),
@@ -33,6 +34,7 @@ function CollectionPage() {
   const accountFn = useServerFn(getMyAccount);
   const purchaseFn = useServerFn(purchaseProduct);
   const { t, lang, dir } = useLang();
+  const { format } = useCurrency();
 
   const { data, isLoading } = useQuery({
     queryKey: ["collection", slug],
@@ -55,8 +57,6 @@ function CollectionPage() {
     },
     onError: (e: Error) => toast.error(e.message.includes("Insufficient") ? t("رصيدك غير كافٍ.", "Insufficient balance.") : e.message),
   });
-
-  const currency = lang === "en" ? "EGP" : "EG";
 
   if (isLoading) return <AppLayout><p className="text-center py-12 text-muted-foreground">{t("جاري التحميل...", "Loading...")}</p></AppLayout>;
   if (!data) return <AppLayout><p className="text-center py-12 text-muted-foreground">{t("القسم غير موجود", "Category not found")}</p></AppLayout>;
@@ -135,7 +135,7 @@ function CollectionPage() {
                     {description && (
                       <p className="mt-1 text-[11px] text-muted-foreground line-clamp-2 whitespace-pre-line">{description}</p>
                     )}
-                    <p className="mt-1 text-lg font-black text-gold">{currency} {Number(pp.price).toLocaleString()}</p>
+                    <p className="mt-1 text-lg font-black text-gold">{format(Number(pp.price))}</p>
                   </div>
                   <div className="absolute inset-x-0 top-0 h-1 bg-gold-gradient opacity-80" />
                 </button>
@@ -167,9 +167,9 @@ function CollectionPage() {
                   <p className="mt-2 text-xs text-foreground/80 whitespace-pre-line">{selDesc}</p>
                 )}
                 {qtyEnabled ? (
-                  <p className="text-base font-bold text-gold mt-1">{currency} {Number(selected.price).toLocaleString()} <span className="text-xs text-muted-foreground">/ {t("كل", "per")} {unitSize.toLocaleString()} {unitLabel || t("وحدة", "unit")}</span></p>
+                  <p className="text-base font-bold text-gold mt-1">{format(Number(selected.price))} <span className="text-xs text-muted-foreground">/ {t("كل", "per")} {unitSize.toLocaleString()} {unitLabel || t("وحدة", "unit")}</span></p>
                 ) : (
-                  <p className="text-3xl font-black text-gold mt-1">{currency} {Number(selected.price).toLocaleString()}</p>
+                  <p className="text-3xl font-black text-gold mt-1">{format(Number(selected.price))}</p>
                 )}
               </div>
               {qtyEnabled && (
@@ -182,13 +182,13 @@ function CollectionPage() {
                   <input type="number" min={minQty ?? 1} max={maxQty ?? undefined} step="any" value={quantity} onChange={(e) => setQuantity(e.target.value)} placeholder={String(minQty ?? unitSize)} className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3" />
                   <div className="mt-3 flex items-center justify-between rounded-xl bg-gold/10 border border-gold/30 p-3">
                     <span className="text-sm text-muted-foreground">{t("الإجمالي", "Total")}</span>
-                    <span className="text-2xl font-black text-gold-gradient">{currency} {total.toLocaleString()}</span>
+                    <span className="text-2xl font-black text-gold-gradient">{format(total)}</span>
                   </div>
                 </div>
               )}
               <div className="mt-4 flex items-center justify-between text-sm">
                 <span className="text-muted-foreground flex items-center gap-1"><Wallet className="size-4" />{t("رصيدك", "Your balance")}</span>
-                <span className="font-extrabold text-gold-gradient">{currency} {balance.toLocaleString()}</span>
+                <span className="font-extrabold text-gold-gradient">{format(balance)}</span>
               </div>
               <div className="mt-4">
                 <label className="text-xs font-bold mb-1 block">
@@ -203,7 +203,7 @@ function CollectionPage() {
                 <Link to="/topup" className="mt-5 w-full block text-center rounded-xl bg-gold-gradient text-primary-foreground font-extrabold py-3 shadow-gold">{t("اشحن رصيدك أولًا", "Top up your balance first")}</Link>
               ) : (
                 <button disabled={mutation.isPending || !qtyValid} onClick={() => { if (!gameId.trim()) { setIdError(true); toast.error(t("الـ ID مفقود", "ID is missing")); return; } mutation.mutate({ productId: selected.id, gameUserId: gameId.trim(), quantity: qtyEnabled ? qtyNum : undefined }); }} className="mt-5 w-full rounded-xl bg-gold-gradient text-primary-foreground font-extrabold py-3 shadow-gold disabled:opacity-50">
-                  {mutation.isPending ? "..." : qtyEnabled ? `${t("أكد الشراء", "Confirm")} — ${currency} ${total.toLocaleString()}` : t("أكد الشراء", "Confirm purchase")}
+                  {mutation.isPending ? "..." : qtyEnabled ? `${t("أكد الشراء", "Confirm")} — ${format(total)}` : t("أكد الشراء", "Confirm purchase")}
                 </button>
               )}
             </div>
