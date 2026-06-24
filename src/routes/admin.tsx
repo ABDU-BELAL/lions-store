@@ -334,14 +334,18 @@ function ProductsTab({ initialCollectionId, onBack }: { initialCollectionId?: st
   const { data } = useQuery({ queryKey: ["admin-products"], queryFn: () => list() });
   const { data: collections = [] } = useQuery({ queryKey: ["admin-collections"], queryFn: () => colsList() });
   const [filter, setFilter] = useState<string>(initialCollectionId ?? "");
-  type EditState = { id?: string; title: string; description: string; image_url: string; category: string; price: number; is_active: boolean; is_offer: boolean; sort_order: number; collection_id: string | null; quantity_enabled: boolean; unit_size: number; unit_label: string; min_quantity: string; max_quantity: string };
+  type EditState = { id?: string; title: string; title_en: string; description: string; description_en: string; image_url: string; category: string; price: number; is_active: boolean; is_offer: boolean; sort_order: number; collection_id: string | null; quantity_enabled: boolean; unit_size: number; unit_label: string; min_quantity: string; max_quantity: string };
   const [editing, setEditing] = useState<null | EditState>(null);
 
-  const blank = (): EditState => ({ title: "", description: "", image_url: "", category: "games", price: 0, is_active: true, is_offer: false, sort_order: 0, collection_id: filter || null, quantity_enabled: false, unit_size: 1, unit_label: "", min_quantity: "", max_quantity: "" });
+  const blank = (): EditState => ({ title: "", title_en: "", description: "", description_en: "", image_url: "", category: "games", price: 0, is_active: true, is_offer: false, sort_order: 0, collection_id: filter || null, quantity_enabled: false, unit_size: 1, unit_label: "", min_quantity: "", max_quantity: "" });
 
   const save = useMutation({
     mutationFn: () => upsert({ data: { id: editing?.id, data: {
-      title: editing!.title, description: editing!.description || undefined, image_url: editing!.image_url || undefined,
+      title: editing!.title,
+      title_en: editing!.title_en.trim() || null,
+      description: editing!.description || undefined,
+      description_en: editing!.description_en.trim() || null,
+      image_url: editing!.image_url || undefined,
       category: editing!.category, price: editing!.price, is_active: editing!.is_active, is_offer: editing!.is_offer, sort_order: editing!.sort_order,
       collection_id: editing!.collection_id || null,
       quantity_enabled: editing!.quantity_enabled,
@@ -350,7 +354,7 @@ function ProductsTab({ initialCollectionId, onBack }: { initialCollectionId?: st
       min_quantity: editing!.quantity_enabled && editing!.min_quantity ? Number(editing!.min_quantity) : null,
       max_quantity: editing!.quantity_enabled && editing!.max_quantity ? Number(editing!.max_quantity) : null,
     } } }),
-    onSuccess: () => { toast.success("تم الحفظ"); setEditing(null); qc.invalidateQueries({ queryKey: ["admin-products"] }); },
+    onSuccess: () => { toast.success("تم الحفظ / Saved"); setEditing(null); qc.invalidateQueries({ queryKey: ["admin-products"] }); },
     onError: (e: Error) => toast.error(e.message),
   });
 
