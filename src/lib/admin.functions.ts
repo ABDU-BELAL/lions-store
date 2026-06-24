@@ -124,7 +124,9 @@ export const decideTopup = createServerFn({ method: "POST" })
 // -------- Products CRUD --------
 const productSchema = z.object({
   title: z.string().trim().min(1).max(120),
+  title_en: z.string().trim().max(120).optional().nullable(),
   description: z.string().trim().max(1000).optional(),
+  description_en: z.string().trim().max(1000).optional().nullable(),
   image_url: z.string().trim().max(1000).optional(),
   category: z.string().trim().min(1).max(60),
   price: z.number().min(0).max(1_000_000),
