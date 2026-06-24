@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { FramedImage } from "@/components/FramedImage";
 import { Wallet, X, ShoppingBag } from "lucide-react";
 import { useLang, pickLocalized } from "@/i18n/LanguageProvider";
+import { useCurrency } from "@/i18n/CurrencyProvider";
 
 export const Route = createFileRoute("/collection/$slug")({
   head: ({ params }) => ({ meta: [{ title: `${params.slug} — Lion Store` }] }),
@@ -33,6 +34,7 @@ function CollectionPage() {
   const accountFn = useServerFn(getMyAccount);
   const purchaseFn = useServerFn(purchaseProduct);
   const { t, lang, dir } = useLang();
+  const { format } = useCurrency();
 
   const { data, isLoading } = useQuery({
     queryKey: ["collection", slug],
@@ -55,8 +57,6 @@ function CollectionPage() {
     },
     onError: (e: Error) => toast.error(e.message.includes("Insufficient") ? t("رصيدك غير كافٍ.", "Insufficient balance.") : e.message),
   });
-
-  const currency = lang === "en" ? "EGP" : "EG";
 
   if (isLoading) return <AppLayout><p className="text-center py-12 text-muted-foreground">{t("جاري التحميل...", "Loading...")}</p></AppLayout>;
   if (!data) return <AppLayout><p className="text-center py-12 text-muted-foreground">{t("القسم غير موجود", "Category not found")}</p></AppLayout>;

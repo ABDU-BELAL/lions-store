@@ -13,6 +13,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Wallet, ArrowRight, ArrowLeft } from "lucide-react";
 import { useLang, pickLocalized } from "@/i18n/LanguageProvider";
+import { useCurrency } from "@/i18n/CurrencyProvider";
 
 export const getProductById = createServerFn({ method: "GET" })
   .inputValidator((i) => z.object({ id: z.string().uuid() }).parse(i))
@@ -62,6 +63,7 @@ function ProductPage() {
   const purchaseFn = useServerFn(purchaseProduct);
   const discountFn = useServerFn(getMyProductDiscount);
   const { t, lang, dir } = useLang();
+  const { format } = useCurrency();
 
   const account = useQuery({ queryKey: ["account"], queryFn: () => accountFn(), enabled: !!user });
   const discountQ = useQuery({
@@ -87,8 +89,6 @@ function ProductPage() {
   const basePrice = qtyEnabled ? Math.round((qtyNum / unitSize) * Number(p.price) * 100) / 100 : Number(p.price);
   const totalPrice = discountPct > 0 ? Math.round(basePrice * (1 - discountPct / 100) * 100) / 100 : basePrice;
   const qtyValid = !qtyEnabled || (qtyNum > 0 && (minQty == null || qtyNum >= minQty) && (maxQty == null || qtyNum <= maxQty));
-
-  const currency = lang === "en" ? "EGP" : "EG";
   const BackArrow = dir === "rtl" ? ArrowRight : ArrowLeft;
 
   const mutation = useMutation({

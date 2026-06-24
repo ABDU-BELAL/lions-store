@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 import { Wallet, Phone, Building2, Bitcoin, Clock, CheckCircle2, XCircle, Copy, ExternalLink, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { useLang } from "@/i18n/LanguageProvider";
+import { useCurrency } from "@/i18n/CurrencyProvider";
 
 export const Route = createFileRoute("/topup")({
   ssr: false,
@@ -42,6 +43,7 @@ function TopupPage() {
   const myTopups = useServerFn(listMyTopups);
   const fetchPaymentMethods = useServerFn(getPaymentMethods);
   const { t, lang } = useLang();
+  const { format } = useCurrency();
 
   useEffect(() => { if (!authLoading && !user) navigate({ to: "/login", replace: true }); }, [authLoading, user, navigate]);
 
@@ -118,7 +120,6 @@ function TopupPage() {
   const activeAccount = accountFor(method);
   const activeLink = method === "instapay" ? pm?.instapay_link : "";
   const activeEnabled = enabledFor(method);
-  const currency = lang === "en" ? "EGP" : "EG";
   const locale = lang === "en" ? "en-US" : "ar-EG";
 
   const copyAccount = () => {
