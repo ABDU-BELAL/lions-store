@@ -6,7 +6,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { getMyAccount } from "@/lib/account.functions";
 import { useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { User, Mail, Phone, Wallet, Shield, CreditCard, Copy, ArrowRight } from "lucide-react";
+import { User, Mail, Phone, Wallet, Shield, Copy, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/profile")({
@@ -110,11 +110,6 @@ function ProfilePage() {
           <div className="space-y-4">
             <InfoRow icon={Mail} label="البريد الإلكتروني" value={profile?.email || user?.email || "—"} />
             <InfoRow icon={Phone} label="رقم الهاتف" value={profile?.phone || "—"} />
-            <InfoRow
-              icon={CreditCard}
-              label="رقم الحساب"
-              value={user?.id ? `${user.id.slice(0, 8)}...${user.id.slice(-8)}` : "—"}
-            />
           </div>
 
           {/* Balance card */}
