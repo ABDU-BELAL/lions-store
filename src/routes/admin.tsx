@@ -9,7 +9,7 @@ import {
   adminListProducts, adminUpsertProduct, adminDeleteProduct,
   listAdmins, grantAdmin, revokeAdmin, claimSuperAdmin,
   verifyAdminAccess, adminListOrders, decideOrder,
-  adminListUsers, adminAdjustBalance,
+  adminListUsers, adminAdjustBalance, adminSetUserBanned,
   adminListDiscounts, adminUpsertDiscount, adminDeleteDiscount,
 } from "@/lib/admin.functions";
 
@@ -801,6 +801,7 @@ function PaymentMethodsTab() {
 function UsersTab() {
   const list = useServerFn(adminListUsers);
   const adjust = useServerFn(adminAdjustBalance);
+  const setBanned = useServerFn(adminSetUserBanned);
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
   const [editing, setEditing] = useState<null | { id: string; name: string; balance: number }>(null);
@@ -824,13 +825,22 @@ function UsersTab() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const banMutation = useMutation({
+    mutationFn: (vars: { userId: string; banned: boolean }) => setBanned({ data: vars }),
+    onSuccess: (_d, vars) => {
+      toast.success(vars.banned ? "تم حظر المستخدم" : "تم إلغاء الحظر");
+      qc.invalidateQueries({ queryKey: ["admin-users"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   return (
     <div>
       <div className="mb-4">
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="ابحث بالاسم أو الإيميل أو الرقم..."
+          placeholder="ابحث بالاسم / الإيميل / الرقم / رقم الحساب..."
           className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3"
         />
       </div>
@@ -840,18 +850,34 @@ function UsersTab() {
       <div className="space-y-3">
         {(data ?? []).length === 0 && !isLoading && <p className="text-center py-8 text-muted-foreground">لا يوجد مستخدمين</p>}
         {(data ?? []).map((u) => (
-          <div key={u.id} className="rounded-2xl bg-card/70 border border-border p-4 flex flex-wrap items-center justify-between gap-3">
+          <div key={u.id} className={`rounded-2xl bg-card/70 border p-4 flex flex-wrap items-center justify-between gap-3 ${u.is_banned ? "border-destructive/60" : "border-border"}`}>
             <div className="min-w-0">
-              <p className="font-extrabold truncate">{u.full_name || "—"}</p>
+              <div className="flex items-center gap-2 flex-wrap">
+                <p className="font-extrabold truncate">{u.full_name || "—"}</p>
+                {u.custom_id && <span dir="ltr" className="text-[10px] font-bold bg-gold/20 text-gold border border-gold/40 rounded-full px-2 py-0.5">#{u.custom_id}</span>}
+                {u.is_banned && <span className="text-[10px] font-extrabold bg-destructive/20 text-destructive border border-destructive/50 rounded-full px-2 py-0.5">محظور</span>}
+              </div>
               <p className="text-xs text-muted-foreground truncate">{u.email || "—"} {u.phone ? `• ${u.phone}` : ""}</p>
               <p className="mt-1 text-lg font-black text-gold-gradient">EG {Number(u.balance).toLocaleString()}</p>
             </div>
-            <button
-              onClick={() => { setEditing({ id: u.id, name: u.full_name || u.email || u.id, balance: Number(u.balance) }); setAmount(String(u.balance)); setMode("set"); }}
-              className="rounded-lg bg-gold-gradient text-primary-foreground font-bold px-4 py-2 text-sm flex items-center gap-1"
-            >
-              <Wallet className="size-4" /> تعديل الرصيد
-            </button>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <button
+                onClick={() => { setEditing({ id: u.id, name: u.full_name || u.email || u.id, balance: Number(u.balance) }); setAmount(String(u.balance)); setMode("set"); }}
+                className="rounded-lg bg-gold-gradient text-primary-foreground font-bold px-4 py-2 text-sm flex items-center gap-1"
+              >
+                <Wallet className="size-4" /> تعديل الرصيد
+              </button>
+              <button
+                disabled={banMutation.isPending}
+                onClick={() => {
+                  const confirmMsg = u.is_banned ? "إلغاء حظر هذا المستخدم؟" : "تأكيد حظر هذا المستخدم؟ لن يقدر يدخل ولا يشتري.";
+                  if (confirm(confirmMsg)) banMutation.mutate({ userId: u.id, banned: !u.is_banned });
+                }}
+                className={`rounded-lg font-bold px-4 py-2 text-sm border ${u.is_banned ? "bg-emerald-600/20 text-emerald-400 border-emerald-500/40" : "bg-destructive/20 text-destructive border-destructive/50"} disabled:opacity-50`}
+              >
+                {u.is_banned ? "إلغاء الحظر" : "حظر"}
+              </button>
+            </div>
           </div>
         ))}
       </div>
