@@ -85,14 +85,21 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
+function ToasterLocalized() {
+  const { dir } = useLang();
+  return <Toaster position="top-center" richColors theme="dark" dir={dir} />;
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <Outlet />
-        <Toaster position="top-center" richColors theme="dark" dir="rtl" />
-      </AuthProvider>
+      <LanguageProvider>
+        <AuthProvider>
+          <Outlet />
+          <ToasterLocalized />
+        </AuthProvider>
+      </LanguageProvider>
     </QueryClientProvider>
   );
 }
