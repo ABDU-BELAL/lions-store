@@ -76,6 +76,7 @@ function ProductPage() {
   const description = pickLocalized(p.description, p.description_en, lang);
 
   const [gameId, setGameId] = useState("");
+  const [idError, setIdError] = useState(false);
   const qtyEnabled = !!p.quantity_enabled;
   const unitSize = Number(p.unit_size ?? 1) || 1;
   const unitLabel = p.unit_label ?? "";
@@ -194,10 +195,13 @@ function ProductPage() {
               </label>
               <input
                 value={gameId}
-                onChange={(e) => setGameId(e.target.value)}
+                onChange={(e) => { setGameId(e.target.value); if (idError) setIdError(false); }}
                 placeholder="123456789"
-                className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3"
+                className={`w-full rounded-xl bg-secondary/60 border px-4 py-3 ${idError ? "border-destructive ring-1 ring-destructive" : "border-border"}`}
               />
+              {idError && (
+                <p className="mt-1 text-xs font-semibold text-destructive">{t("الـ ID مفقود", "ID is missing")}</p>
+              )}
             </div>
           )}
 
@@ -213,7 +217,7 @@ function ProductPage() {
             <button
               disabled={mutation.isPending || !qtyValid}
               onClick={() => {
-                if (!gameId.trim()) { toast.error(t("من فضلك أدخل الـ ID أولًا", "Please enter the ID first")); return; }
+                if (!gameId.trim()) { setIdError(true); toast.error(t("الـ ID مفقود", "ID is missing")); return; }
                 mutation.mutate({ productId: p.id, gameUserId: gameId.trim(), quantity: qtyEnabled ? qtyNum : undefined });
               }}
               className="mt-6 w-full rounded-xl bg-gold-gradient text-primary-foreground font-extrabold py-3 shadow-gold disabled:opacity-50"
