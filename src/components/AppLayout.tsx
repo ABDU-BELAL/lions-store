@@ -1,5 +1,5 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { Home, ShoppingBag, Bell, Receipt, Search, Menu, Plus, LogIn, LogOut, Shield, Wallet, User, Languages } from "lucide-react";
+import { Home, ShoppingBag, Receipt, Search, Menu, Plus, LogIn, LogOut, Shield, Wallet, User, Languages } from "lucide-react";
 import type { ReactNode } from "react";
 import logo from "@/assets/logo.jpeg.asset.json";
 import { useState } from "react";
