@@ -23,6 +23,7 @@ export type Database = {
           link_url: string | null
           sort_order: number
           title: string | null
+          title_en: string | null
           updated_at: string
         }
         Insert: {
@@ -33,6 +34,7 @@ export type Database = {
           link_url?: string | null
           sort_order?: number
           title?: string | null
+          title_en?: string | null
           updated_at?: string
         }
         Update: {
@@ -43,6 +45,7 @@ export type Database = {
           link_url?: string | null
           sort_order?: number
           title?: string | null
+          title_en?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -50,6 +53,7 @@ export type Database = {
       collections: {
         Row: {
           created_at: string
+          description_en: string | null
           id: string
           image_url: string | null
           is_active: boolean
@@ -57,10 +61,12 @@ export type Database = {
           slug: string
           sort_order: number
           title: string
+          title_en: string | null
           updated_at: string
         }
         Insert: {
           created_at?: string
+          description_en?: string | null
           id?: string
           image_url?: string | null
           is_active?: boolean
@@ -68,10 +74,12 @@ export type Database = {
           slug: string
           sort_order?: number
           title: string
+          title_en?: string | null
           updated_at?: string
         }
         Update: {
           created_at?: string
+          description_en?: string | null
           id?: string
           image_url?: string | null
           is_active?: boolean
@@ -79,6 +87,7 @@ export type Database = {
           slug?: string
           sort_order?: number
           title?: string
+          title_en?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -133,6 +142,7 @@ export type Database = {
           collection_id: string | null
           created_at: string
           description: string | null
+          description_en: string | null
           id: string
           image_url: string | null
           is_active: boolean
@@ -143,6 +153,7 @@ export type Database = {
           quantity_enabled: boolean
           sort_order: number
           title: string
+          title_en: string | null
           unit_label: string | null
           unit_size: number
           updated_at: string
@@ -152,6 +163,7 @@ export type Database = {
           collection_id?: string | null
           created_at?: string
           description?: string | null
+          description_en?: string | null
           id?: string
           image_url?: string | null
           is_active?: boolean
@@ -162,6 +174,7 @@ export type Database = {
           quantity_enabled?: boolean
           sort_order?: number
           title: string
+          title_en?: string | null
           unit_label?: string | null
           unit_size?: number
           updated_at?: string
@@ -171,6 +184,7 @@ export type Database = {
           collection_id?: string | null
           created_at?: string
           description?: string | null
+          description_en?: string | null
           id?: string
           image_url?: string | null
           is_active?: boolean
@@ -181,6 +195,7 @@ export type Database = {
           quantity_enabled?: boolean
           sort_order?: number
           title?: string
+          title_en?: string | null
           unit_label?: string | null
           unit_size?: number
           updated_at?: string
