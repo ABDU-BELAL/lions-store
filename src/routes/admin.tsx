@@ -553,7 +553,7 @@ function CollectionsTab() {
             <ImageUploadField value={editing.image_url} previewUrl={editing.image_url} onChange={(v) => setEditing({ ...editing, image_url: v })} label="صورة الزر" />
             <div className="flex items-center gap-4 text-sm flex-wrap">
               <label className="flex items-center gap-2"><input type="checkbox" checked={editing.is_active} onChange={(e) => setEditing({ ...editing, is_active: e.target.checked })} /> مفعّل</label>
-              <label className="flex items-center gap-2"><input type="checkbox" checked={editing.show_on_home} onChange={(e) => setEditing({ ...editing, show_on_home: e.target.checked })} disabled={!!editing.parent_id} /> في الرئيسية</label>
+              <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={!!editing.show_on_home} onChange={(e) => setEditing({ ...editing, show_on_home: e.target.checked })} /> في الرئيسية / Show on home</label>
               <input type="number" placeholder="الترتيب" value={editing.sort_order} onChange={(e) => setEditing({ ...editing, sort_order: Number(e.target.value) })} className="ml-auto w-20 rounded-xl bg-secondary px-3 py-2" />
             </div>
             <div className="flex gap-2">
