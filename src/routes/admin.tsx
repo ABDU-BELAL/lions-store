@@ -334,14 +334,18 @@ function ProductsTab({ initialCollectionId, onBack }: { initialCollectionId?: st
   const { data } = useQuery({ queryKey: ["admin-products"], queryFn: () => list() });
   const { data: collections = [] } = useQuery({ queryKey: ["admin-collections"], queryFn: () => colsList() });
   const [filter, setFilter] = useState<string>(initialCollectionId ?? "");
-  type EditState = { id?: string; title: string; description: string; image_url: string; category: string; price: number; is_active: boolean; is_offer: boolean; sort_order: number; collection_id: string | null; quantity_enabled: boolean; unit_size: number; unit_label: string; min_quantity: string; max_quantity: string };
+  type EditState = { id?: string; title: string; title_en: string; description: string; description_en: string; image_url: string; category: string; price: number; is_active: boolean; is_offer: boolean; sort_order: number; collection_id: string | null; quantity_enabled: boolean; unit_size: number; unit_label: string; min_quantity: string; max_quantity: string };
   const [editing, setEditing] = useState<null | EditState>(null);
 
-  const blank = (): EditState => ({ title: "", description: "", image_url: "", category: "games", price: 0, is_active: true, is_offer: false, sort_order: 0, collection_id: filter || null, quantity_enabled: false, unit_size: 1, unit_label: "", min_quantity: "", max_quantity: "" });
+  const blank = (): EditState => ({ title: "", title_en: "", description: "", description_en: "", image_url: "", category: "games", price: 0, is_active: true, is_offer: false, sort_order: 0, collection_id: filter || null, quantity_enabled: false, unit_size: 1, unit_label: "", min_quantity: "", max_quantity: "" });
 
   const save = useMutation({
     mutationFn: () => upsert({ data: { id: editing?.id, data: {
-      title: editing!.title, description: editing!.description || undefined, image_url: editing!.image_url || undefined,
+      title: editing!.title,
+      title_en: editing!.title_en.trim() || null,
+      description: editing!.description || undefined,
+      description_en: editing!.description_en.trim() || null,
+      image_url: editing!.image_url || undefined,
       category: editing!.category, price: editing!.price, is_active: editing!.is_active, is_offer: editing!.is_offer, sort_order: editing!.sort_order,
       collection_id: editing!.collection_id || null,
       quantity_enabled: editing!.quantity_enabled,
@@ -350,7 +354,7 @@ function ProductsTab({ initialCollectionId, onBack }: { initialCollectionId?: st
       min_quantity: editing!.quantity_enabled && editing!.min_quantity ? Number(editing!.min_quantity) : null,
       max_quantity: editing!.quantity_enabled && editing!.max_quantity ? Number(editing!.max_quantity) : null,
     } } }),
-    onSuccess: () => { toast.success("تم الحفظ"); setEditing(null); qc.invalidateQueries({ queryKey: ["admin-products"] }); },
+    onSuccess: () => { toast.success("تم الحفظ / Saved"); setEditing(null); qc.invalidateQueries({ queryKey: ["admin-products"] }); },
     onError: (e: Error) => toast.error(e.message),
   });
 
@@ -390,7 +394,7 @@ function ProductsTab({ initialCollectionId, onBack }: { initialCollectionId?: st
             <p className="text-xs text-muted-foreground">{p.category} • {p.is_active ? "مفعّل" : "متوقف"}{p.is_offer ? " • عرض" : ""}</p>
             <p className="mt-1 font-black text-gold-gradient">EG {Number(p.price).toLocaleString()}</p>
             <div className="mt-3 flex gap-2">
-              <button onClick={() => setEditing({ id: p.id, title: p.title, description: p.description ?? "", image_url: p.image_url ?? "", category: p.category, price: Number(p.price), is_active: p.is_active, is_offer: p.is_offer, sort_order: p.sort_order, collection_id: p.collection_id ?? null, quantity_enabled: (p as any).quantity_enabled ?? false, unit_size: Number((p as any).unit_size ?? 1), unit_label: (p as any).unit_label ?? "", min_quantity: (p as any).min_quantity != null ? String((p as any).min_quantity) : "", max_quantity: (p as any).max_quantity != null ? String((p as any).max_quantity) : "" })} className="flex-1 rounded-lg bg-secondary py-1.5 text-sm font-bold">تعديل</button>
+              <button onClick={() => setEditing({ id: p.id, title: p.title, title_en: (p as { title_en?: string | null }).title_en ?? "", description: p.description ?? "", description_en: (p as { description_en?: string | null }).description_en ?? "", image_url: p.image_url ?? "", category: p.category, price: Number(p.price), is_active: p.is_active, is_offer: p.is_offer, sort_order: p.sort_order, collection_id: p.collection_id ?? null, quantity_enabled: (p as { quantity_enabled?: boolean }).quantity_enabled ?? false, unit_size: Number((p as { unit_size?: number }).unit_size ?? 1), unit_label: (p as { unit_label?: string | null }).unit_label ?? "", min_quantity: (p as { min_quantity?: number | null }).min_quantity != null ? String((p as { min_quantity?: number | null }).min_quantity) : "", max_quantity: (p as { max_quantity?: number | null }).max_quantity != null ? String((p as { max_quantity?: number | null }).max_quantity) : "" })} className="flex-1 rounded-lg bg-secondary py-1.5 text-sm font-bold">تعديل / Edit</button>
               <button onClick={() => confirm("متأكد؟") && remove.mutate(p.id)} className="rounded-lg bg-destructive text-white px-3 py-1.5 text-sm font-bold"><Trash2 className="size-4" /></button>
             </div>
           </div>
@@ -401,9 +405,11 @@ function ProductsTab({ initialCollectionId, onBack }: { initialCollectionId?: st
       {editing && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm grid place-items-center p-4" onClick={() => setEditing(null)}>
           <form onClick={(e) => e.stopPropagation()} onSubmit={(e) => { e.preventDefault(); save.mutate(); }} className="w-full max-w-lg bg-card border-gold rounded-2xl p-5 space-y-3 max-h-[90vh] overflow-y-auto">
-            <h3 className="text-xl font-extrabold text-gold-gradient">{editing.id ? "تعديل منتج" : "منتج جديد"}</h3>
-            <input required placeholder="الاسم (مثال: 60 UC ببجي)" value={editing.title} onChange={(e) => setEditing({ ...editing, title: e.target.value })} className="w-full rounded-xl bg-secondary px-3 py-2" />
-            <textarea placeholder="الوصف" value={editing.description} onChange={(e) => setEditing({ ...editing, description: e.target.value })} rows={2} className="w-full rounded-xl bg-secondary px-3 py-2" />
+            <h3 className="text-xl font-extrabold text-gold-gradient">{editing.id ? "تعديل منتج / Edit product" : "منتج جديد / New product"}</h3>
+            <input required placeholder="الاسم بالعربية (Arabic title)" value={editing.title} onChange={(e) => setEditing({ ...editing, title: e.target.value })} className="w-full rounded-xl bg-secondary px-3 py-2" />
+            <input placeholder="English title (optional)" value={editing.title_en} onChange={(e) => setEditing({ ...editing, title_en: e.target.value })} dir="ltr" className="w-full rounded-xl bg-secondary px-3 py-2" />
+            <textarea placeholder="الوصف بالعربية (Arabic description)" value={editing.description} onChange={(e) => setEditing({ ...editing, description: e.target.value })} rows={2} className="w-full rounded-xl bg-secondary px-3 py-2" />
+            <textarea placeholder="English description (optional)" value={editing.description_en} onChange={(e) => setEditing({ ...editing, description_en: e.target.value })} dir="ltr" rows={2} className="w-full rounded-xl bg-secondary px-3 py-2" />
             <ImageUploadField value={editing.image_url} previewUrl={editing.image_url} onChange={(v) => setEditing({ ...editing, image_url: v })} />
             <div className="grid grid-cols-2 gap-2">
               <select value={editing.collection_id ?? ""} onChange={(e) => setEditing({ ...editing, collection_id: e.target.value || null })} className="rounded-xl bg-secondary px-3 py-2">
@@ -471,18 +477,21 @@ function CollectionsTab() {
   const del = useServerFn(adminDeleteCollection);
   const qc = useQueryClient();
   const { data = [] } = useQuery({ queryKey: ["admin-collections"], queryFn: () => list() });
-  type EditState = { id?: string; slug: string; title: string; image_url: string; sort_order: number; is_active: boolean; show_on_home: boolean };
+  type EditState = { id?: string; slug: string; title: string; title_en: string; description_en: string; image_url: string; sort_order: number; is_active: boolean; show_on_home: boolean };
   const [editing, setEditing] = useState<null | EditState>(null);
   const [manageId, setManageId] = useState<string | null>(null);
 
-  const blank = (): EditState => ({ slug: "", title: "", image_url: "", sort_order: 0, is_active: true, show_on_home: true });
+  const blank = (): EditState => ({ slug: "", title: "", title_en: "", description_en: "", image_url: "", sort_order: 0, is_active: true, show_on_home: true });
 
   const save = useMutation({
     mutationFn: () => upsert({ data: { id: editing?.id, data: {
-      slug: editing!.slug, title: editing!.title, image_url: editing!.image_url || null,
+      slug: editing!.slug, title: editing!.title,
+      title_en: editing!.title_en.trim() || null,
+      description_en: editing!.description_en.trim() || null,
+      image_url: editing!.image_url || null,
       sort_order: editing!.sort_order, is_active: editing!.is_active, show_on_home: editing!.show_on_home,
     } } }),
-    onSuccess: () => { toast.success("تم"); setEditing(null); qc.invalidateQueries({ queryKey: ["admin-collections"] }); qc.invalidateQueries({ queryKey: ["collections-active"] }); qc.invalidateQueries({ queryKey: ["home-collections"] }); },
+    onSuccess: () => { toast.success("تم / Saved"); setEditing(null); qc.invalidateQueries({ queryKey: ["admin-collections"] }); qc.invalidateQueries({ queryKey: ["collections-active"] }); qc.invalidateQueries({ queryKey: ["home-collections"] }); },
     onError: (e: Error) => toast.error(e.message),
   });
 
@@ -505,7 +514,7 @@ function CollectionsTab() {
             <p className="text-xs text-muted-foreground">/{c.slug} • {c.is_active ? "مفعّل" : "متوقف"}{c.show_on_home ? " • في الرئيسية" : ""}</p>
             <div className="mt-3 flex gap-2 flex-wrap">
               <button onClick={() => setManageId(c.id)} className="flex-1 rounded-lg bg-gold-gradient text-primary-foreground py-1.5 text-sm font-bold flex items-center justify-center gap-1"><Package className="size-4" /> المنتجات</button>
-              <button onClick={() => setEditing({ id: c.id, slug: c.slug, title: c.title, image_url: c.image_url ?? "", sort_order: c.sort_order, is_active: c.is_active, show_on_home: c.show_on_home })} className="rounded-lg bg-secondary px-3 py-1.5 text-sm font-bold">تعديل</button>
+              <button onClick={() => setEditing({ id: c.id, slug: c.slug, title: c.title, title_en: (c as { title_en?: string | null }).title_en ?? "", description_en: (c as { description_en?: string | null }).description_en ?? "", image_url: c.image_url ?? "", sort_order: c.sort_order, is_active: c.is_active, show_on_home: c.show_on_home })} className="rounded-lg bg-secondary px-3 py-1.5 text-sm font-bold">تعديل / Edit</button>
               <button onClick={() => confirm("متأكد؟") && remove.mutate(c.id)} className="rounded-lg bg-destructive text-white px-3 py-1.5 text-sm font-bold"><Trash2 className="size-4" /></button>
             </div>
           </div>
@@ -517,7 +526,8 @@ function CollectionsTab() {
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm grid place-items-center p-4" onClick={() => setEditing(null)}>
           <form onClick={(e) => e.stopPropagation()} onSubmit={(e) => { e.preventDefault(); save.mutate(); }} className="w-full max-w-lg bg-card border-gold rounded-2xl p-5 space-y-3 max-h-[90vh] overflow-y-auto">
             <h3 className="text-xl font-extrabold text-gold-gradient flex items-center gap-2"><Layers className="size-5" /> {editing.id ? "تعديل قسم" : "قسم جديد"}</h3>
-            <input required placeholder="الاسم (مثال: ببجي موبايل)" value={editing.title} onChange={(e) => setEditing({ ...editing, title: e.target.value })} className="w-full rounded-xl bg-secondary px-3 py-2" />
+            <input required placeholder="الاسم بالعربية (Arabic title)" value={editing.title} onChange={(e) => setEditing({ ...editing, title: e.target.value })} className="w-full rounded-xl bg-secondary px-3 py-2" />
+            <input placeholder="English title (optional)" value={editing.title_en} onChange={(e) => setEditing({ ...editing, title_en: e.target.value })} dir="ltr" className="w-full rounded-xl bg-secondary px-3 py-2" />
             <input required placeholder="slug (مثال: pubg-mobile)" value={editing.slug} onChange={(e) => setEditing({ ...editing, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-") })} className="w-full rounded-xl bg-secondary px-3 py-2" dir="ltr" />
             <ImageUploadField value={editing.image_url} previewUrl={editing.image_url} onChange={(v) => setEditing({ ...editing, image_url: v })} label="صورة الزر" />
             <div className="flex items-center gap-4 text-sm flex-wrap">
@@ -581,20 +591,21 @@ function BannersTab() {
   const upload = useServerFn(adminUploadBannerImage);
   const qc = useQueryClient();
   const { data } = useQuery({ queryKey: ["admin-banners"], queryFn: () => list() });
-  const [editing, setEditing] = useState<null | { id?: string; image_url: string; link_url: string; title: string; is_active: boolean; sort_order: number }>(null);
+  const [editing, setEditing] = useState<null | { id?: string; image_url: string; link_url: string; title: string; title_en: string; is_active: boolean; sort_order: number }>(null);
   const [uploading, setUploading] = useState(false);
 
-  const blank = () => ({ image_url: "", link_url: "", title: "", is_active: true, sort_order: 0 });
+  const blank = () => ({ image_url: "", link_url: "", title: "", title_en: "", is_active: true, sort_order: 0 });
 
   const save = useMutation({
     mutationFn: () => upsert({ data: { id: editing?.id, data: {
       image_url: editing!.image_url,
       link_url: editing!.link_url || null,
       title: editing!.title || null,
+      title_en: editing!.title_en.trim() || null,
       is_active: editing!.is_active,
       sort_order: editing!.sort_order,
     } } }),
-    onSuccess: () => { toast.success("تم الحفظ"); setEditing(null); qc.invalidateQueries({ queryKey: ["admin-banners"] }); qc.invalidateQueries({ queryKey: ["banners-active"] }); },
+    onSuccess: () => { toast.success("تم الحفظ / Saved"); setEditing(null); qc.invalidateQueries({ queryKey: ["admin-banners"] }); qc.invalidateQueries({ queryKey: ["banners-active"] }); },
     onError: (e: Error) => toast.error(e.message),
   });
 
@@ -630,7 +641,7 @@ function BannersTab() {
             <p className="text-xs text-muted-foreground truncate">{b.link_url || "بدون رابط"}</p>
             <p className="text-xs text-muted-foreground">ترتيب: {b.sort_order} • {b.is_active ? "مفعّل" : "متوقف"}</p>
             <div className="mt-3 flex gap-2">
-              <button onClick={() => setEditing({ id: b.id, image_url: b.image_url.startsWith("http") ? "" : b.image_url, link_url: b.link_url ?? "", title: b.title ?? "", is_active: b.is_active, sort_order: b.sort_order })} className="flex-1 rounded-lg bg-secondary py-1.5 text-sm font-bold">تعديل</button>
+              <button onClick={() => setEditing({ id: b.id, image_url: b.image_url.startsWith("http") ? "" : b.image_url, link_url: b.link_url ?? "", title: b.title ?? "", title_en: (b as { title_en?: string | null }).title_en ?? "", is_active: b.is_active, sort_order: b.sort_order })} className="flex-1 rounded-lg bg-secondary py-1.5 text-sm font-bold">تعديل / Edit</button>
               <button onClick={() => confirm("متأكد؟") && remove.mutate({ id: b.id })} className="rounded-lg bg-destructive text-white px-3 py-1.5 text-sm font-bold"><Trash2 className="size-4" /></button>
             </div>
           </div>
@@ -662,7 +673,9 @@ function BannersTab() {
               </div>
             )}
 
-            <input placeholder="العنوان (اختياري)" value={editing.title} onChange={(e) => setEditing({ ...editing, title: e.target.value })} className="w-full rounded-xl bg-secondary px-3 py-2" />
+            
+            <input placeholder="العنوان بالعربية (اختياري)" value={editing.title} onChange={(e) => setEditing({ ...editing, title: e.target.value })} className="w-full rounded-xl bg-secondary px-3 py-2" />
+            <input placeholder="English title (optional)" value={editing.title_en} onChange={(e) => setEditing({ ...editing, title_en: e.target.value })} dir="ltr" className="w-full rounded-xl bg-secondary px-3 py-2" />
             <input placeholder="الرابط عند الضغط (اختياري)" value={editing.link_url} onChange={(e) => setEditing({ ...editing, link_url: e.target.value })} className="w-full rounded-xl bg-secondary px-3 py-2" />
             <div className="flex items-center gap-4 text-sm">
               <label className="flex items-center gap-2"><input type="checkbox" checked={editing.is_active} onChange={(e) => setEditing({ ...editing, is_active: e.target.checked })} /> مفعّل</label>

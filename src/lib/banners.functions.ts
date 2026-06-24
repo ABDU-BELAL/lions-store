@@ -27,7 +27,7 @@ async function withSignedUrl<T extends { image_url: string }>(rows: T[]): Promis
 export const listActiveBanners = createServerFn({ method: "GET" }).handler(async () => {
   const { data, error } = await supabaseAdmin
     .from("banners")
-    .select("id, image_url, link_url, title, sort_order")
+    .select("id, image_url, link_url, title, title_en, sort_order")
     .eq("is_active", true)
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: false });
@@ -58,6 +58,7 @@ const upsertSchema = z.object({
       .optional()
       .nullable(),
     title: z.string().trim().max(120).optional().nullable(),
+    title_en: z.string().trim().max(120).optional().nullable(),
     is_active: z.boolean().optional(),
     sort_order: z.number().int().optional(),
   }),

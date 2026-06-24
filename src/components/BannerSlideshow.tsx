@@ -3,11 +3,13 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { listActiveBanners } from "@/lib/banners.functions";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useLang, pickLocalized } from "@/i18n/LanguageProvider";
 
 export function BannerSlideshow() {
   const fn = useServerFn(listActiveBanners);
   const { data } = useQuery({ queryKey: ["banners-active"], queryFn: () => fn(), staleTime: 60_000 });
   const banners = data ?? [];
+  const { lang } = useLang();
   const [i, setI] = useState(0);
 
   useEffect(() => {
@@ -17,37 +19,33 @@ export function BannerSlideshow() {
   }, [banners.length]);
 
   if (banners.length === 0) return null;
-  const current = banners[i % banners.length];
-
-  const Wrap = ({ children }: { children: React.ReactNode }) =>
-    current.link_url ? (
-      <a href={current.link_url} target="_blank" rel="noreferrer" className="block">{children}</a>
-    ) : (
-      <div>{children}</div>
-    );
+  
 
   return (
     <section className="mt-6 relative">
       <div className="relative overflow-hidden rounded-3xl border-gold shadow-card bg-dark-gradient aspect-[16/6] md:aspect-[16/5]">
-        {banners.map((b, idx) => (
-          <div
-            key={b.id}
-            className={`absolute inset-0 transition-opacity duration-700 ${idx === i ? "opacity-100" : "opacity-0 pointer-events-none"}`}
-          >
-            {b.link_url ? (
-              <a href={b.link_url} target="_blank" rel="noreferrer" className="block size-full">
-                <img src={b.image_url} alt={b.title ?? "banner"} className="size-full object-cover" loading="lazy" />
-              </a>
-            ) : (
-              <img src={b.image_url} alt={b.title ?? "banner"} className="size-full object-cover" loading="lazy" />
-            )}
-            {b.title && (
-              <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/70 to-transparent p-4">
-                <p className="text-gold-soft font-extrabold text-base md:text-lg">{b.title}</p>
-              </div>
-            )}
-          </div>
-        ))}
+        {banners.map((b, idx) => {
+          const title = pickLocalized(b.title, (b as { title_en?: string | null }).title_en, lang);
+          return (
+            <div
+              key={b.id}
+              className={`absolute inset-0 transition-opacity duration-700 ${idx === i ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+            >
+              {b.link_url ? (
+                <a href={b.link_url} target="_blank" rel="noreferrer" className="block size-full">
+                  <img src={b.image_url} alt={title || "banner"} className="size-full object-cover" loading="lazy" />
+                </a>
+              ) : (
+                <img src={b.image_url} alt={title || "banner"} className="size-full object-cover" loading="lazy" />
+              )}
+              {title && (
+                <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/70 to-transparent p-4">
+                  <p className="text-gold-soft font-extrabold text-base md:text-lg">{title}</p>
+                </div>
+              )}
+            </div>
+          );
+        })}
 
         {banners.length > 1 && (
           <>
@@ -78,7 +76,7 @@ export function BannerSlideshow() {
           </>
         )}
       </div>
-      <Wrap>{null}</Wrap>
+      
     </section>
   );
 }

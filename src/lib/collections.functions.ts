@@ -14,7 +14,7 @@ async function assertAdmin(userId: string) {
 export const listActiveCollections = createServerFn({ method: "GET" }).handler(async () => {
   const { data } = await supabaseAdmin
     .from("collections")
-    .select("id, slug, title, image_url, sort_order, show_on_home")
+    .select("id, slug, title, title_en, image_url, sort_order, show_on_home")
     .eq("is_active", true)
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: false });
@@ -26,13 +26,13 @@ export const getCollectionBySlug = createServerFn({ method: "GET" })
   .handler(async ({ data }) => {
     const { data: col } = await supabaseAdmin
       .from("collections")
-      .select("id, slug, title, image_url, is_active")
+      .select("id, slug, title, title_en, image_url, is_active")
       .eq("slug", data.slug)
       .maybeSingle();
     if (!col || !col.is_active) return null;
     const { data: products } = await supabaseAdmin
       .from("products")
-      .select("id, title, description, price, image_url, is_offer, category, sort_order, quantity_enabled, unit_size, unit_label, min_quantity, max_quantity")
+      .select("id, title, title_en, description, description_en, price, image_url, is_offer, category, sort_order, quantity_enabled, unit_size, unit_label, min_quantity, max_quantity")
       .eq("collection_id", col.id)
       .eq("is_active", true)
       .order("sort_order", { ascending: true })
@@ -46,6 +46,8 @@ export const getCollectionBySlug = createServerFn({ method: "GET" })
 const collectionSchema = z.object({
   slug: z.string().trim().min(1).max(80).regex(/^[a-z0-9-]+$/i, "Slug: letters/numbers/dash only"),
   title: z.string().trim().min(1).max(120),
+  title_en: z.string().trim().max(120).optional().nullable(),
+  description_en: z.string().trim().max(2000).optional().nullable(),
   image_url: z.string().trim().max(1000).optional().nullable(),
   sort_order: z.number().int().optional(),
   is_active: z.boolean().optional(),

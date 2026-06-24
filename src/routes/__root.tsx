@@ -14,15 +14,16 @@ import logoAsset from "../assets/logo.jpeg.asset.json";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AuthProvider } from "@/hooks/useAuth";
 import { Toaster } from "sonner";
+import { LanguageProvider, useLang } from "@/i18n/LanguageProvider";
 
 function NotFoundComponent() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4" dir="rtl">
+    <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-7xl font-bold text-gold-gradient">404</h1>
-        <h2 className="mt-4 text-xl font-semibold">الصفحة غير موجودة</h2>
-        <p className="mt-2 text-sm text-muted-foreground">الصفحة التي تبحث عنها غير متوفرة.</p>
-        <a href="/" className="mt-6 inline-flex rounded-md bg-gold-gradient px-4 py-2 text-sm font-bold text-primary-foreground">العودة للرئيسية</a>
+        <h2 className="mt-4 text-xl font-semibold">Page not found — الصفحة غير موجودة</h2>
+        <p className="mt-2 text-sm text-muted-foreground">The page you are looking for is unavailable.</p>
+        <a href="/" className="mt-6 inline-flex rounded-md bg-gold-gradient px-4 py-2 text-sm font-bold text-primary-foreground">Back to home</a>
       </div>
     </div>
   );
@@ -32,11 +33,11 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   const router = useRouter();
   useEffect(() => { reportLovableError(error, { boundary: "tanstack_root_error_component" }); }, [error]);
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4" dir="rtl">
+    <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
-        <h1 className="text-xl font-bold">حدث خطأ ما</h1>
-        <p className="mt-2 text-sm text-muted-foreground">يرجى المحاولة مرة أخرى.</p>
-        <button onClick={() => { router.invalidate(); reset(); }} className="mt-6 rounded-md bg-gold-gradient px-4 py-2 text-sm font-bold text-primary-foreground">إعادة المحاولة</button>
+        <h1 className="text-xl font-bold">Something went wrong — حدث خطأ ما</h1>
+        <p className="mt-2 text-sm text-muted-foreground">Please try again.</p>
+        <button onClick={() => { router.invalidate(); reset(); }} className="mt-6 rounded-md bg-gold-gradient px-4 py-2 text-sm font-bold text-primary-foreground">Retry</button>
       </div>
     </div>
   );
@@ -84,14 +85,21 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
+function ToasterLocalized() {
+  const { dir } = useLang();
+  return <Toaster position="top-center" richColors theme="dark" dir={dir} />;
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <Outlet />
-        <Toaster position="top-center" richColors theme="dark" dir="rtl" />
-      </AuthProvider>
+      <LanguageProvider>
+        <AuthProvider>
+          <Outlet />
+          <ToasterLocalized />
+        </AuthProvider>
+      </LanguageProvider>
     </QueryClientProvider>
   );
 }
