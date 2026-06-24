@@ -132,17 +132,20 @@ function Home() {
         <>
           <div className="mt-8 flex items-center justify-between">
             <h2 className="text-xl md:text-2xl font-extrabold text-gold-gradient flex items-center gap-2">
-              <Gamepad2 className="size-5 text-gold" /> الأقسام
+              <Gamepad2 className="size-5 text-gold" /> {t("الأقسام", "Categories")}
             </h2>
-            <Link to="/categories" className="text-sm text-gold hover:underline">عرض الكل</Link>
+            <Link to="/categories" className="text-sm text-gold hover:underline">{t("عرض الكل", "See all")}</Link>
           </div>
           <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
-            {homeCollections.map((c) => (
-              <Link key={c.id} to="/collection/$slug" params={{ slug: c.slug }} className="group rounded-2xl overflow-hidden bg-dark-gradient border border-gold/30 hover:border-gold/70 hover:shadow-gold transition">
-                <FramedImage src={c.image_url} alt={c.title} />
-                <p className="font-extrabold text-center p-3 text-gold-gradient">{c.title}</p>
-              </Link>
-            ))}
+            {homeCollections.map((c) => {
+              const title = pickLocalized(c.title, (c as { title_en?: string | null }).title_en, lang);
+              return (
+                <Link key={c.id} to="/collection/$slug" params={{ slug: c.slug }} className="group rounded-2xl overflow-hidden bg-dark-gradient border border-gold/30 hover:border-gold/70 hover:shadow-gold transition">
+                  <FramedImage src={c.image_url} alt={title} />
+                  <p className="font-extrabold text-center p-3 text-gold-gradient">{title}</p>
+                </Link>
+              );
+            })}
           </div>
         </>
       )}
@@ -151,25 +154,31 @@ function Home() {
         <>
           <div className="mt-8 flex items-center justify-between">
             <h2 className="text-xl md:text-2xl font-extrabold text-gold-gradient flex items-center gap-2">
-              <Gamepad2 className="size-5 text-gold" /> الألعاب والتطبيقات
+              <Gamepad2 className="size-5 text-gold" /> {t("الألعاب والتطبيقات", "Games & apps")}
             </h2>
-            <Link to="/shop" className="text-sm text-gold hover:underline">عرض الكل</Link>
+            <Link to="/shop" className="text-sm text-gold hover:underline">{t("عرض الكل", "See all")}</Link>
           </div>
           <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
-            {featured.map((p) => (
-              <ProductCard key={p.id} title={p.title} image={p.image_url || logo.url} to="/shop" search={{ q: p.title }} />
-            ))}
+            {featured.map((p) => {
+              const title = pickLocalized(p.title, (p as { title_en?: string | null }).title_en, lang);
+              return (
+                <ProductCard key={p.id} title={title} image={p.image_url || logo.url} to="/shop" search={{ q: title }} />
+              );
+            })}
           </div>
         </>
       )}
 
       {showOffers && offerItems.length > 0 && (
         <div className="mt-8">
-          <h2 className="text-xl font-extrabold text-gold-gradient flex items-center gap-2"><Tag className="size-5 text-gold" /> أبرز العروض</h2>
+          <h2 className="text-xl font-extrabold text-gold-gradient flex items-center gap-2"><Tag className="size-5 text-gold" /> {t("أبرز العروض", "Top offers")}</h2>
           <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
-            {offerItems.map((o) => (
-              <ProductCard key={o.id} title={o.title} image={o.image_url || logo.url} to="/shop" search={{ q: o.title }} />
-            ))}
+            {offerItems.map((o) => {
+              const title = pickLocalized(o.title, (o as { title_en?: string | null }).title_en, lang);
+              return (
+                <ProductCard key={o.id} title={title} image={o.image_url || logo.url} to="/shop" search={{ q: title }} />
+              );
+            })}
           </div>
         </div>
       )}
