@@ -67,13 +67,29 @@ function TopupPage() {
   const [amount, setAmount] = useState<number>(100);
   const [reference, setReference] = useState("");
   const [note, setNote] = useState("");
+  const [screenshot, setScreenshot] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   const mutation = useMutation({
-    mutationFn: (vars: { amount: number; method: typeof method; reference: string; note?: string }) =>
-      createTopup({ data: vars }),
+    mutationFn: async (vars: { amount: number; method: typeof method; reference: string; note?: string }) => {
+      let screenshot_path: string | undefined;
+      if (screenshot) {
+        if (!user) throw new Error("سجل الدخول أولاً");
+        setUploading(true);
+        const ext = (screenshot.name.split(".").pop() || "jpg").toLowerCase().slice(0, 5);
+        const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+        const { error: upErr } = await supabase.storage
+          .from("topup-receipts")
+          .upload(path, screenshot, { contentType: screenshot.type || "image/jpeg", upsert: false });
+        setUploading(false);
+        if (upErr) throw new Error("فشل رفع صورة الإيصال: " + upErr.message);
+        screenshot_path = path;
+      }
+      return createTopup({ data: { ...vars, screenshot_path } });
+    },
     onSuccess: () => {
       toast.success("تم إرسال طلب الشحن! هيتم مراجعته خلال دقائق.");
-      setReference(""); setNote("");
+      setReference(""); setNote(""); setScreenshot(null);
       qc.invalidateQueries({ queryKey: ["my-topups"] });
     },
     onError: (e: Error) => toast.error(e.message),
