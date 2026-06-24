@@ -198,25 +198,34 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string
+          custom_id: string | null
           email: string | null
           full_name: string
           id: string
+          is_banned: boolean
+          notified_at: string | null
           phone: string
           updated_at: string
         }
         Insert: {
           created_at?: string
+          custom_id?: string | null
           email?: string | null
           full_name?: string
           id: string
+          is_banned?: boolean
+          notified_at?: string | null
           phone?: string
           updated_at?: string
         }
         Update: {
           created_at?: string
+          custom_id?: string | null
           email?: string | null
           full_name?: string
           id?: string
+          is_banned?: boolean
+          notified_at?: string | null
           phone?: string
           updated_at?: string
         }
@@ -287,6 +296,7 @@ export type Database = {
           processed_at: string | null
           processed_by: string | null
           reference: string
+          screenshot_path: string | null
           status: Database["public"]["Enums"]["topup_status"]
           user_id: string
         }
@@ -300,6 +310,7 @@ export type Database = {
           processed_at?: string | null
           processed_by?: string | null
           reference?: string
+          screenshot_path?: string | null
           status?: Database["public"]["Enums"]["topup_status"]
           user_id: string
         }
@@ -313,6 +324,7 @@ export type Database = {
           processed_at?: string | null
           processed_by?: string | null
           reference?: string
+          screenshot_path?: string | null
           status?: Database["public"]["Enums"]["topup_status"]
           user_id?: string
         }
@@ -447,6 +459,7 @@ export type Database = {
         }
         Returns: number
       }
+      gen_custom_id: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -455,6 +468,7 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_banned: { Args: { _user_id: string }; Returns: boolean }
       process_purchase:
         | {
             Args: {
