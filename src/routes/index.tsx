@@ -9,6 +9,7 @@ import { listShopProducts } from "@/lib/shop.functions";
 import { listActiveCollections, getHomeSettings } from "@/lib/collections.functions";
 import logo from "@/assets/logo.jpeg.asset.json";
 import { ShoppingBag, LayoutGrid, CreditCard, Tag, Headphones, Zap, ShieldCheck, BadgePercent, Gamepad2 } from "lucide-react";
+import { useLang, pickLocalized } from "@/i18n/LanguageProvider";
 
 export const Route = createFileRoute("/")({
   head: () => ({
