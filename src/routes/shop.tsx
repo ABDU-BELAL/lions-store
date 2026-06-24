@@ -11,6 +11,7 @@ import proframe from "@/assets/proframe.png.asset.json";
 import { Wallet, X, ShoppingBag, Clock, CheckCircle2, XCircle, Search as SearchIcon } from "lucide-react";
 import { z } from "zod";
 import { useLang, pickLocalized } from "@/i18n/LanguageProvider";
+import { useCurrency } from "@/i18n/CurrencyProvider";
 
 const shopSearch = z.object({ q: z.string().optional().catch("") });
 
