@@ -34,7 +34,7 @@ export const getMyProductDiscount = createServerFn({ method: "GET" })
 
 const purchaseSchema = z.object({
   productId: z.string().uuid(),
-  gameUserId: z.string().trim().min(1).max(120).optional(),
+  gameUserId: z.string().trim().min(1, "ID is missing").max(120),
   quantity: z.number().positive().max(1_000_000_000).optional(),
 });
 
