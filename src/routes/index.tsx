@@ -96,14 +96,14 @@ function Home() {
       <section className="relative overflow-hidden rounded-3xl bg-dark-gradient border-gold shadow-card p-4 sm:p-6 md:p-10">
         <div className="absolute inset-0 opacity-30 bg-[radial-gradient(circle_at_50%_50%,_oklch(0.7_0.18_75_/_50%),_transparent_60%)]" />
         <div className="relative grid md:grid-cols-2 gap-4 sm:gap-6 items-center">
-          <div className="text-right min-w-0">
-            <h1 className="text-2xl sm:text-3xl md:text-6xl font-black text-gold-gradient leading-tight break-words">LION STORE — شحن ألعاب وتطبيقات</h1>
-            <p className="mt-3 text-base sm:text-lg md:text-xl font-bold text-gold-soft">ملك الشحن — أفضل الأسعار</p>
-            <p className="mt-2 text-xs sm:text-sm md:text-base text-muted-foreground max-w-md md:mr-0 mr-auto">
-              أمانك يهمنا. تأكد دائمًا من التواصل عبر أرقامنا الرسمية وتجنب أي وسيط أو مصادر غير موثوقة.
+          <div className="min-w-0">
+            <h1 className="text-2xl sm:text-3xl md:text-6xl font-black text-gold-gradient leading-tight break-words">{t("LION STORE — شحن ألعاب وتطبيقات", "LION STORE — Game & app top-ups")}</h1>
+            <p className="mt-3 text-base sm:text-lg md:text-xl font-bold text-gold-soft">{t("ملك الشحن — أفضل الأسعار", "The top-up king — best prices")}</p>
+            <p className="mt-2 text-xs sm:text-sm md:text-base text-muted-foreground max-w-md">
+              {t("أمانك يهمنا. تأكد دائمًا من التواصل عبر أرقامنا الرسمية وتجنب أي وسيط أو مصادر غير موثوقة.", "Your safety matters. Always contact us through our official numbers and avoid any unverified middlemen.")}
             </p>
             <div className="mt-5 flex flex-wrap gap-3">
-              <Link to="/shop" className="rounded-full bg-gold-gradient text-primary-foreground font-extrabold px-6 py-2.5 shadow-gold">تسوق الآن</Link>
+              <Link to="/shop" className="rounded-full bg-gold-gradient text-primary-foreground font-extrabold px-6 py-2.5 shadow-gold">{t("تسوق الآن", "Shop now")}</Link>
             </div>
           </div>
           <div className="flex justify-center">
