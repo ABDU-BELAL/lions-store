@@ -75,6 +75,7 @@ const collectionSchema = z.object({
   sort_order: z.number().int().optional(),
   is_active: z.boolean().optional(),
   show_on_home: z.boolean().optional(),
+  parent_id: z.string().uuid().nullable().optional(),
 });
 
 export const adminListCollections = createServerFn({ method: "GET" })
@@ -90,11 +91,36 @@ export const adminUpsertCollection = createServerFn({ method: "POST" })
   .inputValidator((input) => z.object({ id: z.string().uuid().optional(), data: collectionSchema }).parse(input))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId);
+    const payload = data.data;
+
+    // Validate parent_id: not self, max 2 levels, parent must exist
+    if (payload.parent_id) {
+      if (data.id && payload.parent_id === data.id) {
+        throw new Error("لا يمكن أن يكون القسم أبًا لنفسه / A category cannot be its own parent");
+      }
+      const { data: parent } = await supabaseAdmin
+        .from("collections")
+        .select("id, parent_id")
+        .eq("id", payload.parent_id)
+        .maybeSingle();
+      if (!parent) throw new Error("القسم الأب غير موجود / Parent not found");
+      if (parent.parent_id) throw new Error("مسموح بمستويين فقط / Only two levels allowed");
+
+      // If editing an existing parent that already has children, it cannot become a child
+      if (data.id) {
+        const { count } = await supabaseAdmin
+          .from("collections")
+          .select("id", { count: "exact", head: true })
+          .eq("parent_id", data.id);
+        if ((count ?? 0) > 0) throw new Error("هذا القسم له أقسام فرعية ولا يمكن جعله فرعيًا / This category has children and can't become a child");
+      }
+    }
+
     if (data.id) {
-      const { error } = await supabaseAdmin.from("collections").update(data.data).eq("id", data.id);
+      const { error } = await supabaseAdmin.from("collections").update(payload).eq("id", data.id);
       if (error) { console.error("[db]", error); throw new Error("حدث خطأ، حاول مرة أخرى"); };
     } else {
-      const { error } = await supabaseAdmin.from("collections").insert(data.data);
+      const { error } = await supabaseAdmin.from("collections").insert(payload);
       if (error) { console.error("[db]", error); throw new Error("حدث خطأ، حاول مرة أخرى"); };
     }
     return { ok: true };
