@@ -27,7 +27,7 @@ async function withSignedUrl<T extends { image_url: string }>(rows: T[]): Promis
 export const listActiveBanners = createServerFn({ method: "GET" }).handler(async () => {
   const { data, error } = await supabaseAdmin
     .from("banners")
-    .select("id, image_url, link_url, title, sort_order")
+    .select("id, image_url, link_url, title, title_en, sort_order")
     .eq("is_active", true)
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: false });
