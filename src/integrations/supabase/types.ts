@@ -57,6 +57,7 @@ export type Database = {
           id: string
           image_url: string | null
           is_active: boolean
+          parent_id: string | null
           show_on_home: boolean
           slug: string
           sort_order: number
@@ -70,6 +71,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_active?: boolean
+          parent_id?: string | null
           show_on_home?: boolean
           slug: string
           sort_order?: number
@@ -83,6 +85,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_active?: boolean
+          parent_id?: string | null
           show_on_home?: boolean
           slug?: string
           sort_order?: number
@@ -90,7 +93,15 @@ export type Database = {
           title_en?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "collections_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "collections"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       orders: {
         Row: {

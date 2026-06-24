@@ -1,44 +1,45 @@
-## Bilingual Site (Arabic + English)
+## Goal
+Let each collection have child collections (subcategories). Each subcategory has its own page, its own products, and full admin CRUD with AR + EN names — same as top-level collections.
 
-A language toggle in the header switches the entire site between Arabic (RTL) and English (LTR). Selection is saved per device (localStorage) so users keep their choice.
+Example: **PUBG** (parent) → **UC**, **Royal Pass** (children, each with its own products).
 
-### What gets translated
+## Database
+Single migration on `public.collections`:
+- Add `parent_id uuid REFERENCES public.collections(id) ON DELETE CASCADE` (nullable).
+- Add index on `parent_id`.
+- Existing rows stay top-level (`parent_id = NULL`). No data loss.
 
-**1. All UI text** — every page, button, label, error, badge, menu, footer link:
-- Header / bottom nav / menu / WhatsApp tooltip
-- Home, Shop, Categories, Search, Product page, Collection page
-- Top-up flow + receipt upload + status
-- Transactions, Notifications, Profile
-- Login, Signup, Forgot password, Reset password
-- About, Privacy, Terms, Payments
-- Admin panel (all tabs: products, collections, banners, orders, top-ups, users, settings)
-- All toasts and error messages
+## Backend (`src/lib/collections.functions.ts`)
+- `listActiveCollections` → keep current behavior (returns only top-level: `parent_id IS NULL`) so the home/Categories page is unchanged.
+- `getCollectionBySlug` → also fetch children. Response shape:
+  ```
+  { collection, children: [...], products: [...] }
+  ```
+  If `children.length > 0`, the page renders children. Otherwise it renders products (current behavior).
+- `adminListCollections` → return all rows including `parent_id` so admin can see/manage both levels.
+- `adminUpsertCollection` → accept optional `parent_id` (uuid or null). Validation:
+  - A collection can't be its own parent.
+  - Only 2 levels: a child cannot itself be a parent (reject if `parent_id` points to a row that already has a parent).
+- `adminDeleteCollection` → unchanged; DB cascade removes children.
 
-**2. Product & collection content** — names AND descriptions:
-- Add `title_en` and `description_en` columns to `products`
-- Add `title_en` and `description_en` columns to `collections`
-- Add `title_en` to `banners` (optional caption)
-- When language = EN, show the English value; fall back to Arabic if the English field is empty
-- Admin product/collection/banner editors get a second tab "English" with the EN fields
+## Frontend
 
-**3. Layout direction**
-- Arabic → `dir="rtl"`, fonts and spacing as today
-- English → `dir="ltr"`, mirrored layout automatically
+**Collection page `/collection/$slug`** (`src/routes/collection.$slug.tsx`):
+- If the collection has children → render a grid of child cards (image + AR/EN title), each linking to `/collection/<childSlug>`. Hide the products grid and purchase modal.
+- If no children → current product grid + purchase flow (unchanged).
+- Breadcrumb at top: `Categories › Parent › Current` (uses parent info when present).
 
-**4. Numbers & currency**
-- Arabic: "EG 1,250" with Arabic-Indic option later if requested
-- English: "EGP 1,250"
+**Categories page `/categories`**: unchanged — still lists top-level only.
 
-### What stays the same
-- Brand name "LION STORE" / "Lion Store" — kept in Latin in both languages
-- User-entered data (their full name, game IDs, custom_id, phone) is never translated
-- Telegram notifications stay in Arabic (admin-facing)
+**Admin dashboard** (`src/routes/admin.tsx`, collections section):
+- Add a "Parent category" dropdown in the collection editor (options = all top-level collections, plus "— None (top-level)"). AR + EN title fields already exist.
+- In the collections list, group children visually under their parent (indent + small "↳" marker) and show a "Parent: X" label.
+- Product editor unchanged — products still pick a single `collection_id` (now typically a leaf/child collection, but parent-level still allowed for backward compat).
 
-### Technical notes
-- New `src/i18n/` folder with `ar.ts` and `en.ts` dictionaries, a `LanguageProvider`, and a `useT()` hook
-- `<html lang>` and `<body dir>` switched at the root route
-- Migration adds the new columns, backfills `title_en := title` so nothing breaks before admin fills them in
-- Default language stays Arabic for first-time visitors
+## i18n
+All new admin labels and the breadcrumb use `useLang()` with AR + EN strings (e.g. "القسم الأب" / "Parent category", "أقسام فرعية" / "Subcategories").
 
-### Out of scope (per your earlier message)
-- Auto-fulfillment API framework — you'll tell me when to start
+## Out of scope
+- Deeper nesting (3+ levels) — blocked by validation.
+- Moving existing products between collections in bulk — admin still edits one product at a time.
+- Auto-fulfillment API (waiting for your go-ahead).
