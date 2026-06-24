@@ -40,7 +40,7 @@ export const getCollectionBySlug = createServerFn({ method: "GET" })
         .select("slug, title, title_en")
         .eq("id", col.parent_id)
         .maybeSingle();
-      if (p) parent = p as typeof parent;
+      if (p) parent = p as { slug: string; title: string; title_en: string | null };
     }
 
     // Child subcategories
