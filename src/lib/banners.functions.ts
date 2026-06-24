@@ -58,6 +58,7 @@ const upsertSchema = z.object({
       .optional()
       .nullable(),
     title: z.string().trim().max(120).optional().nullable(),
+    title_en: z.string().trim().max(120).optional().nullable(),
     is_active: z.boolean().optional(),
     sort_order: z.number().int().optional(),
   }),
