@@ -596,7 +596,13 @@ export const adminSetProductProvider = createServerFn({ method: "POST" })
     }
 
     // Sync min/max qty from Brand1 so customer purchases match provider limits.
-    const updates: Record<string, unknown> = {
+    const updates: {
+      provider: "brand1" | null;
+      provider_product_id: string | null;
+      auto_fulfill_enabled: boolean;
+      min_quantity?: number;
+      max_quantity?: number;
+    } = {
       provider: data.provider,
       provider_product_id: data.providerProductId,
       auto_fulfill_enabled: data.autoFulfillEnabled,
