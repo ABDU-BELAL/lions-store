@@ -91,27 +91,40 @@ export async function notifyTelegramPhoto(photoUrl: string, caption: string): Pr
     console.error("Failed to fetch photo for Telegram", e);
   }
 
-  await Promise.all(
-    chatIds.map(async (chatId) => {
-      try {
-        if (blob) {
-          const form = new FormData();
-          form.append("chat_id", chatId);
-          form.append("caption", caption);
-          form.append("parse_mode", "HTML");
-          form.append("photo", blob, "receipt.jpg");
-          const res = await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
-            method: "POST",
-            body: form,
-          });
-          if (!res.ok) console.error("Telegram photo error", chatId, res.status, await res.text());
-        } else {
-          // Fallback: send caption only
-          await notifyTelegram(caption);
-        }
-      } catch (e) {
-        console.error("Telegram photo notify failed", chatId, e);
-      }
-    }),
-  );
+  if (!blob) {
+    await notifyTelegram(caption);
+    return;
+  }
+
+  await Promise.all(chatIds.map((chatId) => sendPhotoWithMigration(token, chatId, blob, caption)));
+}
+
+async function sendPhotoWithMigration(token: string, chatId: string, blob: Blob, caption: string): Promise<void> {
+  try {
+    const form = new FormData();
+    form.append("chat_id", chatId);
+    form.append("caption", caption);
+    form.append("parse_mode", "HTML");
+    form.append("photo", blob, "receipt.jpg");
+    const res = await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, { method: "POST", body: form });
+    if (res.ok) return;
+
+    const body = await res.json().catch(() => ({}));
+    const newId = body?.parameters?.migrate_to_chat_id;
+    if (newId) {
+      await persistMigratedChat(String(newId));
+      const retryForm = new FormData();
+      retryForm.append("chat_id", String(newId));
+      retryForm.append("caption", caption);
+      retryForm.append("parse_mode", "HTML");
+      retryForm.append("photo", blob, "receipt.jpg");
+      const retry = await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, { method: "POST", body: retryForm });
+      if (!retry.ok) console.error("Telegram photo error after migrate", newId, retry.status, await retry.text());
+      return;
+    }
+
+    console.error("Telegram photo error", chatId, res.status, JSON.stringify(body));
+  } catch (e) {
+    console.error("Telegram photo notify failed", chatId, e);
+  }
 }

@@ -112,11 +112,11 @@ export const decideTopup = createServerFn({ method: "POST" })
       }
     }
 
-    notifyTelegram(
+    await notifyTelegram(
       data.decision === "approved"
         ? `✅ تم قبول طلب شحن بقيمة ${escapeTelegramHtml(claimed.amount)} EGP`
         : `❌ تم رفض طلب شحن بقيمة ${escapeTelegramHtml(claimed.amount)} EGP`,
-    ).catch(() => {});
+    ).catch((err) => console.error("topup decision telegram notify failed", err));
 
     return { ok: true };
   });
