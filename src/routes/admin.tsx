@@ -344,22 +344,49 @@ function ProductsTab({ initialCollectionId, onBack }: { initialCollectionId?: st
   const blank = (): EditState => ({ title: "", title_en: "", description: "", description_en: "", image_url: "", category: "games", price: 0, is_active: true, is_offer: false, sort_order: 0, collection_id: filter || null, quantity_enabled: false, unit_size: 1, unit_label: "", min_quantity: "", max_quantity: "", provider: "", provider_product_id: "", auto_fulfill_enabled: false });
 
   const save = useMutation({
-    mutationFn: () => upsert({ data: { id: editing?.id, data: {
-      title: editing!.title,
-      title_en: editing!.title_en.trim() || null,
-      description: editing!.description || undefined,
-      description_en: editing!.description_en.trim() || null,
-      image_url: editing!.image_url || undefined,
-      category: editing!.category, price: editing!.price, is_active: editing!.is_active, is_offer: editing!.is_offer, sort_order: editing!.sort_order,
-      collection_id: editing!.collection_id || null,
-      quantity_enabled: editing!.quantity_enabled,
-      unit_size: editing!.quantity_enabled ? Number(editing!.unit_size) || 1 : 1,
-      unit_label: editing!.quantity_enabled ? (editing!.unit_label.trim() || null) : null,
-      min_quantity: editing!.quantity_enabled && editing!.min_quantity ? Number(editing!.min_quantity) : null,
-      max_quantity: editing!.quantity_enabled && editing!.max_quantity ? Number(editing!.max_quantity) : null,
-    } } }),
+    mutationFn: async () => {
+      await upsert({ data: { id: editing?.id, data: {
+        title: editing!.title,
+        title_en: editing!.title_en.trim() || null,
+        description: editing!.description || undefined,
+        description_en: editing!.description_en.trim() || null,
+        image_url: editing!.image_url || undefined,
+        category: editing!.category, price: editing!.price, is_active: editing!.is_active, is_offer: editing!.is_offer, sort_order: editing!.sort_order,
+        collection_id: editing!.collection_id || null,
+        quantity_enabled: editing!.quantity_enabled,
+        unit_size: editing!.quantity_enabled ? Number(editing!.unit_size) || 1 : 1,
+        unit_label: editing!.quantity_enabled ? (editing!.unit_label.trim() || null) : null,
+        min_quantity: editing!.quantity_enabled && editing!.min_quantity ? Number(editing!.min_quantity) : null,
+        max_quantity: editing!.quantity_enabled && editing!.max_quantity ? Number(editing!.max_quantity) : null,
+      } } });
+      // Save provider mapping only for already-existing products.
+      if (editing?.id) {
+        await setProvider({ data: {
+          productId: editing.id,
+          provider: editing.provider || null,
+          providerProductId: editing.provider_product_id.trim() || null,
+          autoFulfillEnabled: editing.auto_fulfill_enabled,
+        } });
+      }
+    },
     onSuccess: () => { toast.success("تم الحفظ / Saved"); setEditing(null); qc.invalidateQueries({ queryKey: ["admin-products"] }); },
     onError: (e: Error) => toast.error(e.message),
+  });
+
+  const testConn = useMutation({
+    mutationFn: () => testBrand1({ data: undefined }),
+    onSuccess: (r) => {
+      if (r.ok) toast.success("اتصال Brand1 يعمل ✓");
+      else toast.error("فشل الاتصال: " + (r.error ?? "تأكد من السماح لكل الـ IPs في لوحة المزود"));
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const brand1Products = useQuery({
+    queryKey: ["brand1-products"],
+    queryFn: () => listBrand1(),
+    enabled: !!editing?.id,
+    staleTime: 5 * 60_000,
   });
 
 
