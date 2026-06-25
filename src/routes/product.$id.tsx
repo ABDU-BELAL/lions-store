@@ -73,7 +73,7 @@ export const Route = createFileRoute("/product/$id")({
 });
 
 function ProductPage() {
-  const product = Route.useLoaderData();
+  const product = Route.useLoaderData() as Product;
   const { user } = useAuth();
   const navigate = useNavigate();
   const qc = useQueryClient();
@@ -91,7 +91,7 @@ function ProductPage() {
   });
   const discountPct = Number(discountQ.data?.percent ?? 0);
 
-  const p = product as typeof product & { title_en?: string | null; description_en?: string | null; quantity_enabled?: boolean; unit_size?: number; unit_label?: string | null; min_quantity?: number | null; max_quantity?: number | null };
+  const p = product;
   const title = pickLocalized(p.title, p.title_en, lang);
   const description = pickLocalized(p.description, p.description_en, lang);
 
