@@ -36,21 +36,43 @@ export async function notifyTelegram(message: string): Promise<void> {
   if (chatIds.length === 0) return;
 
   await Promise.all(
-    chatIds.map(async (chatId) => {
-      try {
-        const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ chat_id: chatId, text: message, parse_mode: "HTML" }),
-        });
-        if (!res.ok) {
-          console.error("Telegram error", chatId, res.status, await res.text());
-        }
-      } catch (e) {
-        console.error("Telegram notify failed", chatId, e);
-      }
-    }),
+    chatIds.map((chatId) => sendWithMigration(token, chatId, message)),
   );
+}
+
+async function sendWithMigration(token: string, chatId: string, message: string): Promise<void> {
+  try {
+    const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: chatId, text: message, parse_mode: "HTML" }),
+    });
+    if (res.ok) return;
+    const body = await res.json().catch(() => ({}));
+    const newId = body?.parameters?.migrate_to_chat_id;
+    if (newId) {
+      await persistMigratedChat(String(newId));
+      const r2 = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chat_id: String(newId), text: message, parse_mode: "HTML" }),
+      });
+      if (!r2.ok) console.error("Telegram error after migrate", newId, r2.status, await r2.text());
+      return;
+    }
+    console.error("Telegram error", chatId, res.status, JSON.stringify(body));
+  } catch (e) {
+    console.error("Telegram notify failed", chatId, e);
+  }
+}
+
+async function persistMigratedChat(newId: string): Promise<void> {
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin.from("telegram_chats").upsert({ chat_id: newId }, { onConflict: "chat_id" });
+  } catch (e) {
+    console.error("Failed to persist migrated chat", e);
+  }
 }
 
 /** Send a photo (downloaded from a URL) with caption to all configured chats. */
