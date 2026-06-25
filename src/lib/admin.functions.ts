@@ -594,13 +594,27 @@ export const adminSetProductProvider = createServerFn({ method: "POST" })
     if (data.autoFulfillEnabled && (!data.provider || !data.providerProductId)) {
       throw new Error("لتفعيل التنفيذ التلقائي، اختر المزود ورقم المنتج لديه");
     }
+
+    // Sync min/max qty from Brand1 so customer purchases match provider limits.
+    const updates: Record<string, unknown> = {
+      provider: data.provider,
+      provider_product_id: data.providerProductId,
+      auto_fulfill_enabled: data.autoFulfillEnabled,
+    };
+    if (data.provider === "brand1" && data.providerProductId) {
+      try {
+        const { brand1GetProduct } = await import("./brand1.server");
+        const p = await brand1GetProduct(data.providerProductId);
+        if (p?.qty_min != null) updates.min_quantity = p.qty_min;
+        if (p?.qty_max != null) updates.max_quantity = p.qty_max;
+      } catch (e) {
+        console.error("[adminSetProductProvider] qty sync failed", e);
+      }
+    }
+
     const { error } = await supabaseAdmin
       .from("products")
-      .update({
-        provider: data.provider,
-        provider_product_id: data.providerProductId,
-        auto_fulfill_enabled: data.autoFulfillEnabled,
-      })
+      .update(updates)
       .eq("id", data.productId);
     if (error) { console.error("[adminSetProductProvider]", error); throw new Error("حدث خطأ"); }
     return { ok: true };
