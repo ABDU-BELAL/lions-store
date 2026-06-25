@@ -134,16 +134,16 @@ export const createTopupRequest = createServerFn({ method: "POST" })
           .createSignedUrl(data.screenshot_path, 60 * 60);
         if (signed?.signedUrl) {
           const { notifyTelegramPhoto } = await import("./telegram.server");
-          notifyTelegramPhoto(signed.signedUrl, caption).catch(() => {});
+          await notifyTelegramPhoto(signed.signedUrl, caption);
         } else {
-          notifyTelegram(caption).catch(() => {});
+          await notifyTelegram(caption);
         }
       } catch (e) {
         console.error("topup screenshot notify failed", e);
-        notifyTelegram(caption).catch(() => {});
+        await notifyTelegram(caption).catch((err) => console.error("topup telegram fallback failed", err));
       }
     } else {
-      notifyTelegram(caption).catch(() => {});
+      await notifyTelegram(caption).catch((err) => console.error("topup telegram notify failed", err));
     }
 
     return { ok: true, id: row.id };
