@@ -11,6 +11,7 @@ import {
   verifyAdminAccess, adminListOrders, decideOrder,
   adminListUsers, adminAdjustBalance, adminSetUserBanned,
   adminListDiscounts, adminUpsertDiscount, adminDeleteDiscount,
+  adminBrand1TestConnection, adminBrand1ListProducts, adminSetProductProvider,
 } from "@/lib/admin.functions";
 
 
@@ -330,32 +331,62 @@ function ProductsTab({ initialCollectionId, onBack }: { initialCollectionId?: st
   const upsert = useServerFn(adminUpsertProduct);
   const del = useServerFn(adminDeleteProduct);
   const colsList = useServerFn(adminListCollections);
+  const testBrand1 = useServerFn(adminBrand1TestConnection);
+  const listBrand1 = useServerFn(adminBrand1ListProducts);
+  const setProvider = useServerFn(adminSetProductProvider);
   const qc = useQueryClient();
   const { data } = useQuery({ queryKey: ["admin-products"], queryFn: () => list() });
   const { data: collections = [] } = useQuery({ queryKey: ["admin-collections"], queryFn: () => colsList() });
   const [filter, setFilter] = useState<string>(initialCollectionId ?? "");
-  type EditState = { id?: string; title: string; title_en: string; description: string; description_en: string; image_url: string; category: string; price: number; is_active: boolean; is_offer: boolean; sort_order: number; collection_id: string | null; quantity_enabled: boolean; unit_size: number; unit_label: string; min_quantity: string; max_quantity: string };
+  type EditState = { id?: string; title: string; title_en: string; description: string; description_en: string; image_url: string; category: string; price: number; is_active: boolean; is_offer: boolean; sort_order: number; collection_id: string | null; quantity_enabled: boolean; unit_size: number; unit_label: string; min_quantity: string; max_quantity: string; provider: "" | "brand1"; provider_product_id: string; auto_fulfill_enabled: boolean };
   const [editing, setEditing] = useState<null | EditState>(null);
 
-  const blank = (): EditState => ({ title: "", title_en: "", description: "", description_en: "", image_url: "", category: "games", price: 0, is_active: true, is_offer: false, sort_order: 0, collection_id: filter || null, quantity_enabled: false, unit_size: 1, unit_label: "", min_quantity: "", max_quantity: "" });
+  const blank = (): EditState => ({ title: "", title_en: "", description: "", description_en: "", image_url: "", category: "games", price: 0, is_active: true, is_offer: false, sort_order: 0, collection_id: filter || null, quantity_enabled: false, unit_size: 1, unit_label: "", min_quantity: "", max_quantity: "", provider: "", provider_product_id: "", auto_fulfill_enabled: false });
 
   const save = useMutation({
-    mutationFn: () => upsert({ data: { id: editing?.id, data: {
-      title: editing!.title,
-      title_en: editing!.title_en.trim() || null,
-      description: editing!.description || undefined,
-      description_en: editing!.description_en.trim() || null,
-      image_url: editing!.image_url || undefined,
-      category: editing!.category, price: editing!.price, is_active: editing!.is_active, is_offer: editing!.is_offer, sort_order: editing!.sort_order,
-      collection_id: editing!.collection_id || null,
-      quantity_enabled: editing!.quantity_enabled,
-      unit_size: editing!.quantity_enabled ? Number(editing!.unit_size) || 1 : 1,
-      unit_label: editing!.quantity_enabled ? (editing!.unit_label.trim() || null) : null,
-      min_quantity: editing!.quantity_enabled && editing!.min_quantity ? Number(editing!.min_quantity) : null,
-      max_quantity: editing!.quantity_enabled && editing!.max_quantity ? Number(editing!.max_quantity) : null,
-    } } }),
+    mutationFn: async () => {
+      await upsert({ data: { id: editing?.id, data: {
+        title: editing!.title,
+        title_en: editing!.title_en.trim() || null,
+        description: editing!.description || undefined,
+        description_en: editing!.description_en.trim() || null,
+        image_url: editing!.image_url || undefined,
+        category: editing!.category, price: editing!.price, is_active: editing!.is_active, is_offer: editing!.is_offer, sort_order: editing!.sort_order,
+        collection_id: editing!.collection_id || null,
+        quantity_enabled: editing!.quantity_enabled,
+        unit_size: editing!.quantity_enabled ? Number(editing!.unit_size) || 1 : 1,
+        unit_label: editing!.quantity_enabled ? (editing!.unit_label.trim() || null) : null,
+        min_quantity: editing!.quantity_enabled && editing!.min_quantity ? Number(editing!.min_quantity) : null,
+        max_quantity: editing!.quantity_enabled && editing!.max_quantity ? Number(editing!.max_quantity) : null,
+      } } });
+      // Save provider mapping only for already-existing products.
+      if (editing?.id) {
+        await setProvider({ data: {
+          productId: editing.id,
+          provider: editing.provider || null,
+          providerProductId: editing.provider_product_id.trim() || null,
+          autoFulfillEnabled: editing.auto_fulfill_enabled,
+        } });
+      }
+    },
     onSuccess: () => { toast.success("تم الحفظ / Saved"); setEditing(null); qc.invalidateQueries({ queryKey: ["admin-products"] }); },
     onError: (e: Error) => toast.error(e.message),
+  });
+
+  const testConn = useMutation({
+    mutationFn: () => testBrand1({ data: undefined }),
+    onSuccess: (r) => {
+      if (r.ok) toast.success("اتصال Brand1 يعمل ✓");
+      else toast.error("فشل الاتصال: " + (r.error ?? "تأكد من السماح لكل الـ IPs في لوحة المزود"));
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const brand1Products = useQuery({
+    queryKey: ["brand1-products"],
+    queryFn: () => listBrand1(),
+    enabled: !!editing?.id,
+    staleTime: 5 * 60_000,
   });
 
 
@@ -379,6 +410,9 @@ function ProductsTab({ initialCollectionId, onBack }: { initialCollectionId?: st
       )}
       <div className="flex items-center gap-2 mb-4 flex-wrap">
         <button onClick={() => setEditing(blank())} className="rounded-full bg-gold-gradient text-primary-foreground font-bold px-4 py-2 text-sm flex items-center gap-2"><Plus className="size-4" /> منتج جديد</button>
+        <button onClick={() => testConn.mutate()} disabled={testConn.isPending} className="rounded-full bg-secondary border border-border px-4 py-2 text-sm font-bold">
+          {testConn.isPending ? "..." : "اختبار اتصال Brand1"}
+        </button>
         {!initialCollectionId && (
           <select value={filter} onChange={(e) => setFilter(e.target.value)} className="rounded-full bg-secondary border border-border px-3 py-2 text-sm">
             <option value="">كل المنتجات</option>
@@ -394,7 +428,7 @@ function ProductsTab({ initialCollectionId, onBack }: { initialCollectionId?: st
             <p className="text-xs text-muted-foreground">{p.category} • {p.is_active ? "مفعّل" : "متوقف"}{p.is_offer ? " • عرض" : ""}</p>
             <p className="mt-1 font-black text-gold-gradient">EG {Number(p.price).toLocaleString()}</p>
             <div className="mt-3 flex gap-2">
-              <button onClick={() => setEditing({ id: p.id, title: p.title, title_en: (p as { title_en?: string | null }).title_en ?? "", description: p.description ?? "", description_en: (p as { description_en?: string | null }).description_en ?? "", image_url: p.image_url ?? "", category: p.category, price: Number(p.price), is_active: p.is_active, is_offer: p.is_offer, sort_order: p.sort_order, collection_id: p.collection_id ?? null, quantity_enabled: (p as { quantity_enabled?: boolean }).quantity_enabled ?? false, unit_size: Number((p as { unit_size?: number }).unit_size ?? 1), unit_label: (p as { unit_label?: string | null }).unit_label ?? "", min_quantity: (p as { min_quantity?: number | null }).min_quantity != null ? String((p as { min_quantity?: number | null }).min_quantity) : "", max_quantity: (p as { max_quantity?: number | null }).max_quantity != null ? String((p as { max_quantity?: number | null }).max_quantity) : "" })} className="flex-1 rounded-lg bg-secondary py-1.5 text-sm font-bold">تعديل / Edit</button>
+              <button onClick={() => setEditing({ id: p.id, title: p.title, title_en: (p as { title_en?: string | null }).title_en ?? "", description: p.description ?? "", description_en: (p as { description_en?: string | null }).description_en ?? "", image_url: p.image_url ?? "", category: p.category, price: Number(p.price), is_active: p.is_active, is_offer: p.is_offer, sort_order: p.sort_order, collection_id: p.collection_id ?? null, quantity_enabled: (p as { quantity_enabled?: boolean }).quantity_enabled ?? false, unit_size: Number((p as { unit_size?: number }).unit_size ?? 1), unit_label: (p as { unit_label?: string | null }).unit_label ?? "", min_quantity: (p as { min_quantity?: number | null }).min_quantity != null ? String((p as { min_quantity?: number | null }).min_quantity) : "", max_quantity: (p as { max_quantity?: number | null }).max_quantity != null ? String((p as { max_quantity?: number | null }).max_quantity) : "", provider: ((p as { provider?: string | null }).provider === "brand1" ? "brand1" : ""), provider_product_id: (p as { provider_product_id?: string | null }).provider_product_id ?? "", auto_fulfill_enabled: (p as { auto_fulfill_enabled?: boolean }).auto_fulfill_enabled ?? false })} className="flex-1 rounded-lg bg-secondary py-1.5 text-sm font-bold">تعديل / Edit</button>
               <button onClick={() => confirm("متأكد؟") && remove.mutate(p.id)} className="rounded-lg bg-destructive text-white px-3 py-1.5 text-sm font-bold"><Trash2 className="size-4" /></button>
             </div>
           </div>
@@ -459,6 +493,54 @@ function ProductsTab({ initialCollectionId, onBack }: { initialCollectionId?: st
               <label className="flex items-center gap-2"><input type="checkbox" checked={editing.is_offer} onChange={(e) => setEditing({ ...editing, is_offer: e.target.checked })} /> عرض</label>
               <input type="number" placeholder="الترتيب" value={editing.sort_order} onChange={(e) => setEditing({ ...editing, sort_order: Number(e.target.value) })} className="ml-auto w-20 rounded-xl bg-secondary px-3 py-2" />
             </div>
+
+            {editing.id ? (
+              <div className="rounded-xl border border-gold/40 bg-gold/5 p-3 space-y-2">
+                <p className="text-sm font-extrabold text-gold-gradient">⚡ التنفيذ التلقائي / Auto-fulfillment</p>
+                <p className="text-[11px] text-muted-foreground">يربط المنتج بمزود API. عند الشراء يتم تنفيذ الطلب تلقائياً. لو فشل أو انتظر +20 دقيقة، يتم استرداد الرصيد للعميل تلقائياً.</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <select value={editing.provider} onChange={(e) => setEditing({ ...editing, provider: e.target.value as "" | "brand1" })} className="rounded-xl bg-secondary px-3 py-2 text-sm">
+                    <option value="">بدون مزود</option>
+                    <option value="brand1">Brand1 Card</option>
+                  </select>
+                  <label className="flex items-center gap-2 text-sm font-bold rounded-xl bg-secondary px-3 py-2">
+                    <input type="checkbox" checked={editing.auto_fulfill_enabled} onChange={(e) => setEditing({ ...editing, auto_fulfill_enabled: e.target.checked })} />
+                    تفعيل
+                  </label>
+                </div>
+                {editing.provider === "brand1" && (
+                  <>
+                    {brand1Products.isLoading && <p className="text-xs text-muted-foreground">جاري تحميل منتجات Brand1...</p>}
+                    {brand1Products.data && !brand1Products.data.ok && (
+                      <p className="text-xs text-destructive">تعذر جلب المنتجات: {brand1Products.data.error ?? "تأكد من السماح لكل الـ IPs في لوحة Brand1"}</p>
+                    )}
+                    {brand1Products.data?.ok && (
+                      <select
+                        value={editing.provider_product_id}
+                        onChange={(e) => setEditing({ ...editing, provider_product_id: e.target.value })}
+                        className="w-full rounded-xl bg-secondary px-3 py-2 text-sm"
+                      >
+                        <option value="">— اختر منتج Brand1 —</option>
+                        {brand1Products.data.products.map((bp) => (
+                          <option key={bp.id} value={bp.id}>
+                            #{bp.id} • {bp.name} {bp.price ? `($${bp.price})` : ""}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                    <input
+                      placeholder="أو اكتب الـ ID يدوياً"
+                      dir="ltr"
+                      value={editing.provider_product_id}
+                      onChange={(e) => setEditing({ ...editing, provider_product_id: e.target.value })}
+                      className="w-full rounded-xl bg-secondary px-3 py-2 text-sm"
+                    />
+                  </>
+                )}
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground">احفظ المنتج أولاً ثم افتحه لإعداد التنفيذ التلقائي.</p>
+            )}
 
             <div className="flex gap-2">
               <button type="button" onClick={() => setEditing(null)} className="flex-1 rounded-xl bg-secondary py-2 font-bold">إلغاء</button>

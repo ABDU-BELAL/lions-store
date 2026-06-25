@@ -541,4 +541,70 @@ export const adminDeleteDiscount = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+// -------- Brand1 auto-fulfillment (admin) --------
+const providerEnum = z.enum(["brand1"]);
+
+export const adminBrand1TestConnection = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context.userId);
+    const { brand1Profile } = await import("./brand1.server");
+    try {
+      const profile = await brand1Profile();
+      return { ok: true as const, profileJson: JSON.stringify(profile) };
+    } catch (e) {
+      return { ok: false as const, error: e instanceof Error ? e.message : "Unknown error" };
+    }
+  });
+
+export const adminBrand1ListProducts = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context.userId);
+    const { brand1ListProducts } = await import("./brand1.server");
+    try {
+      const products = await brand1ListProducts();
+      return {
+        ok: true as const,
+        products: products.map((p) => ({
+          id: String(p.id),
+          name: String(p.name ?? ""),
+          price: p.price != null ? String(p.price) : "",
+          categoryName: p.category_name ? String(p.category_name) : "",
+        })),
+      };
+    } catch (e) {
+      return { ok: false as const, products: [], error: e instanceof Error ? e.message : "Unknown error" };
+    }
+  });
+
+export const adminSetProductProvider = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z.object({
+      productId: z.string().uuid(),
+      provider: providerEnum.nullable(),
+      providerProductId: z.string().trim().max(120).nullable(),
+      autoFulfillEnabled: z.boolean(),
+    }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+    // Enforce: if auto-fulfill on, both provider and providerProductId must be set.
+    if (data.autoFulfillEnabled && (!data.provider || !data.providerProductId)) {
+      throw new Error("لتفعيل التنفيذ التلقائي، اختر المزود ورقم المنتج لديه");
+    }
+    const { error } = await supabaseAdmin
+      .from("products")
+      .update({
+        provider: data.provider,
+        provider_product_id: data.providerProductId,
+        auto_fulfill_enabled: data.autoFulfillEnabled,
+      })
+      .eq("id", data.productId);
+    if (error) { console.error("[adminSetProductProvider]", error); throw new Error("حدث خطأ"); }
+    return { ok: true };
+  });
+
+
 

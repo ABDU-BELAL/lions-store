@@ -111,6 +111,14 @@ export type Database = {
           id: string
           product_id: string | null
           product_title: string
+          provider: string | null
+          provider_attempts: number
+          provider_last_checked_at: string | null
+          provider_order_id: string | null
+          provider_reply: Json | null
+          provider_started_at: string | null
+          provider_status: string | null
+          provider_uuid: string | null
           quantity: number | null
           status: string
           user_id: string
@@ -122,6 +130,14 @@ export type Database = {
           id?: string
           product_id?: string | null
           product_title: string
+          provider?: string | null
+          provider_attempts?: number
+          provider_last_checked_at?: string | null
+          provider_order_id?: string | null
+          provider_reply?: Json | null
+          provider_started_at?: string | null
+          provider_status?: string | null
+          provider_uuid?: string | null
           quantity?: number | null
           status?: string
           user_id: string
@@ -133,6 +149,14 @@ export type Database = {
           id?: string
           product_id?: string | null
           product_title?: string
+          provider?: string | null
+          provider_attempts?: number
+          provider_last_checked_at?: string | null
+          provider_order_id?: string | null
+          provider_reply?: Json | null
+          provider_started_at?: string | null
+          provider_status?: string | null
+          provider_uuid?: string | null
           quantity?: number | null
           status?: string
           user_id?: string
@@ -149,6 +173,7 @@ export type Database = {
       }
       products: {
         Row: {
+          auto_fulfill_enabled: boolean
           category: string
           collection_id: string | null
           created_at: string
@@ -161,6 +186,8 @@ export type Database = {
           max_quantity: number | null
           min_quantity: number | null
           price: number
+          provider: string | null
+          provider_product_id: string | null
           quantity_enabled: boolean
           sort_order: number
           title: string
@@ -170,6 +197,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          auto_fulfill_enabled?: boolean
           category?: string
           collection_id?: string | null
           created_at?: string
@@ -182,6 +210,8 @@ export type Database = {
           max_quantity?: number | null
           min_quantity?: number | null
           price: number
+          provider?: string | null
+          provider_product_id?: string | null
           quantity_enabled?: boolean
           sort_order?: number
           title: string
@@ -191,6 +221,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          auto_fulfill_enabled?: boolean
           category?: string
           collection_id?: string | null
           created_at?: string
@@ -203,6 +234,8 @@ export type Database = {
           max_quantity?: number | null
           min_quantity?: number | null
           price?: number
+          provider?: string | null
+          provider_product_id?: string | null
           quantity_enabled?: boolean
           sort_order?: number
           title?: string
