@@ -115,6 +115,7 @@ function ProductPage() {
       toast.success(t("تم إرسال الطلب!", "Order placed!"));
       qc.invalidateQueries({ queryKey: ["account"] });
       qc.invalidateQueries({ queryKey: ["my-orders"] });
+      qc.invalidateQueries({ queryKey: ["my-notifications", user?.id] });
       navigate({ to: "/transactions" });
     },
     onError: (e: Error) =>
