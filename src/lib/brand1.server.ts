@@ -35,6 +35,9 @@ export interface Brand1ProductSummary {
   price?: number | string;
   category_id?: number | string;
   category_name?: string;
+  qty_min?: number;
+  qty_max?: number;
+  product_type?: string;
 }
 
 export async function brand1Profile() {
