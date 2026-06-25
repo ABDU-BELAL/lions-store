@@ -551,9 +551,9 @@ export const adminBrand1TestConnection = createServerFn({ method: "POST" })
     const { brand1Profile } = await import("./brand1.server");
     try {
       const profile = await brand1Profile();
-      return { ok: true, profile };
+      return { ok: true as const, profileJson: JSON.stringify(profile) };
     } catch (e) {
-      return { ok: false, error: e instanceof Error ? e.message : "Unknown error" };
+      return { ok: false as const, error: e instanceof Error ? e.message : "Unknown error" };
     }
   });
 
@@ -564,9 +564,17 @@ export const adminBrand1ListProducts = createServerFn({ method: "GET" })
     const { brand1ListProducts } = await import("./brand1.server");
     try {
       const products = await brand1ListProducts();
-      return { ok: true, products };
+      return {
+        ok: true as const,
+        products: products.map((p) => ({
+          id: String(p.id),
+          name: String(p.name ?? ""),
+          price: p.price != null ? String(p.price) : "",
+          categoryName: p.category_name ? String(p.category_name) : "",
+        })),
+      };
     } catch (e) {
-      return { ok: false, products: [], error: e instanceof Error ? e.message : "Unknown error" };
+      return { ok: false as const, products: [], error: e instanceof Error ? e.message : "Unknown error" };
     }
   });
 
