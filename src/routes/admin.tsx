@@ -494,6 +494,54 @@ function ProductsTab({ initialCollectionId, onBack }: { initialCollectionId?: st
               <input type="number" placeholder="الترتيب" value={editing.sort_order} onChange={(e) => setEditing({ ...editing, sort_order: Number(e.target.value) })} className="ml-auto w-20 rounded-xl bg-secondary px-3 py-2" />
             </div>
 
+            {editing.id ? (
+              <div className="rounded-xl border border-gold/40 bg-gold/5 p-3 space-y-2">
+                <p className="text-sm font-extrabold text-gold-gradient">⚡ التنفيذ التلقائي / Auto-fulfillment</p>
+                <p className="text-[11px] text-muted-foreground">يربط المنتج بمزود API. عند الشراء يتم تنفيذ الطلب تلقائياً. لو فشل أو انتظر +20 دقيقة، يتم استرداد الرصيد للعميل تلقائياً.</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <select value={editing.provider} onChange={(e) => setEditing({ ...editing, provider: e.target.value as "" | "brand1" })} className="rounded-xl bg-secondary px-3 py-2 text-sm">
+                    <option value="">بدون مزود</option>
+                    <option value="brand1">Brand1 Card</option>
+                  </select>
+                  <label className="flex items-center gap-2 text-sm font-bold rounded-xl bg-secondary px-3 py-2">
+                    <input type="checkbox" checked={editing.auto_fulfill_enabled} onChange={(e) => setEditing({ ...editing, auto_fulfill_enabled: e.target.checked })} />
+                    تفعيل
+                  </label>
+                </div>
+                {editing.provider === "brand1" && (
+                  <>
+                    {brand1Products.isLoading && <p className="text-xs text-muted-foreground">جاري تحميل منتجات Brand1...</p>}
+                    {brand1Products.data && !brand1Products.data.ok && (
+                      <p className="text-xs text-destructive">تعذر جلب المنتجات: {brand1Products.data.error ?? "تأكد من السماح لكل الـ IPs في لوحة Brand1"}</p>
+                    )}
+                    {brand1Products.data?.ok && (
+                      <select
+                        value={editing.provider_product_id}
+                        onChange={(e) => setEditing({ ...editing, provider_product_id: e.target.value })}
+                        className="w-full rounded-xl bg-secondary px-3 py-2 text-sm"
+                      >
+                        <option value="">— اختر منتج Brand1 —</option>
+                        {brand1Products.data.products.map((bp) => (
+                          <option key={bp.id} value={bp.id}>
+                            #{bp.id} • {bp.name} {bp.price ? `($${bp.price})` : ""}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                    <input
+                      placeholder="أو اكتب الـ ID يدوياً"
+                      dir="ltr"
+                      value={editing.provider_product_id}
+                      onChange={(e) => setEditing({ ...editing, provider_product_id: e.target.value })}
+                      className="w-full rounded-xl bg-secondary px-3 py-2 text-sm"
+                    />
+                  </>
+                )}
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground">احفظ المنتج أولاً ثم افتحه لإعداد التنفيذ التلقائي.</p>
+            )}
+
             <div className="flex gap-2">
               <button type="button" onClick={() => setEditing(null)} className="flex-1 rounded-xl bg-secondary py-2 font-bold">إلغاء</button>
               <button disabled={save.isPending} className="flex-1 rounded-xl bg-gold-gradient text-primary-foreground font-extrabold py-2">حفظ</button>
