@@ -331,6 +331,9 @@ function ProductsTab({ initialCollectionId, onBack }: { initialCollectionId?: st
   const upsert = useServerFn(adminUpsertProduct);
   const del = useServerFn(adminDeleteProduct);
   const colsList = useServerFn(adminListCollections);
+  const testBrand1 = useServerFn(adminBrand1TestConnection);
+  const listBrand1 = useServerFn(adminBrand1ListProducts);
+  const setProvider = useServerFn(adminSetProductProvider);
   const qc = useQueryClient();
   const { data } = useQuery({ queryKey: ["admin-products"], queryFn: () => list() });
   const { data: collections = [] } = useQuery({ queryKey: ["admin-collections"], queryFn: () => colsList() });
