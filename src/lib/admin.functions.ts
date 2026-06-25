@@ -537,6 +537,9 @@ export const adminDeleteDiscount = createServerFn({ method: "POST" })
       .from("user_discounts")
       .delete()
       .eq("id", data.id);
+    if (error) { console.error("[adminDeleteDiscount]", error); throw new Error("حدث خطأ، حاول مرة أخرى"); }
+    return { ok: true };
+  });
 
 // -------- Brand1 auto-fulfillment (admin) --------
 const providerEnum = z.enum(["brand1"]);
