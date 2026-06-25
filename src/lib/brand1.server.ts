@@ -35,6 +35,9 @@ export interface Brand1ProductSummary {
   price?: number | string;
   category_id?: number | string;
   category_name?: string;
+  qty_min?: number;
+  qty_max?: number;
+  product_type?: string;
 }
 
 export async function brand1Profile() {
@@ -57,14 +60,27 @@ export async function brand1ListProducts(): Promise<Brand1ProductSummary[]> {
   }
   return arr.map((p) => {
     const o = p as Record<string, unknown>;
+    const qv = (o.qty_values ?? {}) as { min?: string | number; max?: string | number };
+    const toNum = (v: unknown) => {
+      const n = typeof v === "number" ? v : Number(v);
+      return Number.isFinite(n) ? n : undefined;
+    };
     return {
       id: (o.id as number | string) ?? "",
       name: String(o.name ?? o.category_name ?? `#${o.id}`),
       price: o.price as number | string | undefined,
       category_id: o.parent_id as number | string | undefined,
       category_name: o.category_name as string | undefined,
+      qty_min: toNum(qv.min),
+      qty_max: toNum(qv.max),
+      product_type: o.product_type as string | undefined,
     };
   }).filter((p) => p.id !== "");
+}
+
+export async function brand1GetProduct(providerProductId: string): Promise<Brand1ProductSummary | null> {
+  const all = await brand1ListProducts();
+  return all.find((p) => String(p.id) === String(providerProductId)) ?? null;
 }
 
 export interface Brand1NewOrderResult {
