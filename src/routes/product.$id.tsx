@@ -15,9 +15,27 @@ import { Wallet, ArrowRight, ArrowLeft } from "lucide-react";
 import { useLang, pickLocalized } from "@/i18n/LanguageProvider";
 import { useCurrency } from "@/i18n/CurrencyProvider";
 
+export type Product = {
+  id: string;
+  title: string;
+  title_en: string | null;
+  description: string | null;
+  description_en: string | null;
+  category: string;
+  price: number;
+  image_url: string;
+  is_offer: boolean;
+  collection_id: string | null;
+  quantity_enabled: boolean;
+  unit_size: number;
+  unit_label: string | null;
+  min_quantity: number | null;
+  max_quantity: number | null;
+};
+
 export const getProductById = createServerFn({ method: "GET" })
   .inputValidator((i) => z.object({ id: z.string().uuid() }).parse(i))
-  .handler(async ({ data }) => {
+  .handler(async ({ data }): Promise<Product | null> => {
     const { data: product, error } = await supabaseAdmin
       .from("products")
       .select("id, title, title_en, description, description_en, category, price, image_url, is_offer, collection_id, quantity_enabled, unit_size, unit_label, min_quantity, max_quantity")
@@ -26,7 +44,7 @@ export const getProductById = createServerFn({ method: "GET" })
       .maybeSingle();
     if (error) { console.error("[db]", error); throw new Error("حدث خطأ، حاول مرة أخرى"); }
     if (!product) return null;
-    return { ...product, image_url: await signBucketPath("products", product.image_url) };
+    return { ...product, image_url: await signBucketPath("products", product.image_url) } as Product;
   });
 
 export const Route = createFileRoute("/product/$id")({
@@ -55,7 +73,7 @@ export const Route = createFileRoute("/product/$id")({
 });
 
 function ProductPage() {
-  const product = Route.useLoaderData();
+  const product = Route.useLoaderData() as Product;
   const { user } = useAuth();
   const navigate = useNavigate();
   const qc = useQueryClient();
@@ -73,7 +91,7 @@ function ProductPage() {
   });
   const discountPct = Number(discountQ.data?.percent ?? 0);
 
-  const p = product as typeof product & { title_en?: string | null; description_en?: string | null; quantity_enabled?: boolean; unit_size?: number; unit_label?: string | null; min_quantity?: number | null; max_quantity?: number | null };
+  const p = product;
   const title = pickLocalized(p.title, p.title_en, lang);
   const description = pickLocalized(p.description, p.description_en, lang);
 
@@ -97,6 +115,7 @@ function ProductPage() {
       toast.success(t("تم إرسال الطلب!", "Order placed!"));
       qc.invalidateQueries({ queryKey: ["account"] });
       qc.invalidateQueries({ queryKey: ["my-orders"] });
+      qc.invalidateQueries({ queryKey: ["my-notifications", user?.id] });
       navigate({ to: "/transactions" });
     },
     onError: (e: Error) =>
