@@ -42,29 +42,29 @@ export async function brand1Profile() {
 }
 
 export async function brand1ListProducts(): Promise<Brand1ProductSummary[]> {
-  // Walk content/0 (root) and its categories to flatten all products.
-  // Provider returns { status, data: { products: [...], categories: [...] } }
-  const out: Brand1ProductSummary[] = [];
-  const seen = new Set<string>();
-
-  async function walk(catId: number | string) {
-    const key = String(catId);
-    if (seen.has(key)) return;
-    seen.add(key);
-    try {
-      const body = (await brand1Get(`client/api/content/${catId}`)) as {
-        data?: { products?: Brand1ProductSummary[]; categories?: { id: number | string; name?: string }[] };
-      };
-      const products = body.data?.products ?? [];
-      for (const p of products) out.push(p);
-      const cats = body.data?.categories ?? [];
-      for (const c of cats) await walk(c.id);
-    } catch (e) {
-      console.warn("[brand1] walk failed for", catId, e);
+  // Direct endpoint: returns a flat JSON array of all products.
+  // Docs: GET /client/api/products
+  const body = (await brand1Get("client/api/products")) as unknown;
+  let arr: unknown[] = [];
+  if (Array.isArray(body)) arr = body;
+  else if (body && typeof body === "object") {
+    const maybeData = (body as { data?: unknown }).data;
+    if (Array.isArray(maybeData)) arr = maybeData;
+    else if (maybeData && typeof maybeData === "object") {
+      const inner = (maybeData as { products?: unknown }).products;
+      if (Array.isArray(inner)) arr = inner;
     }
   }
-  await walk(0);
-  return out;
+  return arr.map((p) => {
+    const o = p as Record<string, unknown>;
+    return {
+      id: (o.id as number | string) ?? "",
+      name: String(o.name ?? o.category_name ?? `#${o.id}`),
+      price: o.price as number | string | undefined,
+      category_id: o.parent_id as number | string | undefined,
+      category_name: o.category_name as string | undefined,
+    };
+  }).filter((p) => p.id !== "");
 }
 
 export interface Brand1NewOrderResult {
