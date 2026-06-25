@@ -89,6 +89,14 @@ export const purchaseProduct = createServerFn({ method: "POST" })
       console.error("notify failed", e);
     }
 
+    // Auto-fulfillment via provider (Brand1) — fire-and-forget; safe no-op if not configured.
+    try {
+      const { tryAutoFulfillOrder } = await import("./fulfillment.server");
+      await tryAutoFulfillOrder(orderId as string);
+    } catch (e) {
+      console.error("[auto-fulfill]", e);
+    }
+
     return { orderId: orderId as string };
   });
 
