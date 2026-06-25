@@ -30,6 +30,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProductIdRouteImport } from './routes/product.$id'
 import { Route as CollectionSlugRouteImport } from './routes/collection.$slug'
 import { Route as ApiPublicTelegramWebhookRouteImport } from './routes/api/public/telegram/webhook'
+import { Route as ApiPublicHooksFulfillmentPollRouteImport } from './routes/api/public/hooks/fulfillment-poll'
 
 const TransactionsRoute = TransactionsRouteImport.update({
   id: '/transactions',
@@ -137,6 +138,12 @@ const ApiPublicTelegramWebhookRoute =
     path: '/api/public/telegram/webhook',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksFulfillmentPollRoute =
+  ApiPublicHooksFulfillmentPollRouteImport.update({
+    id: '/api/public/hooks/fulfillment-poll',
+    path: '/api/public/hooks/fulfillment-poll',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -159,6 +166,7 @@ export interface FileRoutesByFullPath {
   '/transactions': typeof TransactionsRoute
   '/collection/$slug': typeof CollectionSlugRoute
   '/product/$id': typeof ProductIdRoute
+  '/api/public/hooks/fulfillment-poll': typeof ApiPublicHooksFulfillmentPollRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
 }
 export interface FileRoutesByTo {
@@ -182,6 +190,7 @@ export interface FileRoutesByTo {
   '/transactions': typeof TransactionsRoute
   '/collection/$slug': typeof CollectionSlugRoute
   '/product/$id': typeof ProductIdRoute
+  '/api/public/hooks/fulfillment-poll': typeof ApiPublicHooksFulfillmentPollRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
 }
 export interface FileRoutesById {
@@ -206,6 +215,7 @@ export interface FileRoutesById {
   '/transactions': typeof TransactionsRoute
   '/collection/$slug': typeof CollectionSlugRoute
   '/product/$id': typeof ProductIdRoute
+  '/api/public/hooks/fulfillment-poll': typeof ApiPublicHooksFulfillmentPollRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
 }
 export interface FileRouteTypes {
@@ -231,6 +241,7 @@ export interface FileRouteTypes {
     | '/transactions'
     | '/collection/$slug'
     | '/product/$id'
+    | '/api/public/hooks/fulfillment-poll'
     | '/api/public/telegram/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -254,6 +265,7 @@ export interface FileRouteTypes {
     | '/transactions'
     | '/collection/$slug'
     | '/product/$id'
+    | '/api/public/hooks/fulfillment-poll'
     | '/api/public/telegram/webhook'
   id:
     | '__root__'
@@ -277,6 +289,7 @@ export interface FileRouteTypes {
     | '/transactions'
     | '/collection/$slug'
     | '/product/$id'
+    | '/api/public/hooks/fulfillment-poll'
     | '/api/public/telegram/webhook'
   fileRoutesById: FileRoutesById
 }
@@ -301,6 +314,7 @@ export interface RootRouteChildren {
   TransactionsRoute: typeof TransactionsRoute
   CollectionSlugRoute: typeof CollectionSlugRoute
   ProductIdRoute: typeof ProductIdRoute
+  ApiPublicHooksFulfillmentPollRoute: typeof ApiPublicHooksFulfillmentPollRoute
   ApiPublicTelegramWebhookRoute: typeof ApiPublicTelegramWebhookRoute
 }
 
@@ -453,6 +467,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicTelegramWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/fulfillment-poll': {
+      id: '/api/public/hooks/fulfillment-poll'
+      path: '/api/public/hooks/fulfillment-poll'
+      fullPath: '/api/public/hooks/fulfillment-poll'
+      preLoaderRoute: typeof ApiPublicHooksFulfillmentPollRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -477,6 +498,7 @@ const rootRouteChildren: RootRouteChildren = {
   TransactionsRoute: TransactionsRoute,
   CollectionSlugRoute: CollectionSlugRoute,
   ProductIdRoute: ProductIdRoute,
+  ApiPublicHooksFulfillmentPollRoute: ApiPublicHooksFulfillmentPollRoute,
   ApiPublicTelegramWebhookRoute: ApiPublicTelegramWebhookRoute,
 }
 export const routeTree = rootRouteImport
