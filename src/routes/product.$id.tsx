@@ -282,8 +282,10 @@ function ProductPage() {
                   payload = gameId.trim();
                 } else if (fieldMode === "subscription") {
                   const email = subEmail.trim();
+                  const pw = subPassword.trim();
                   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setIdError(true); toast.error(t("بريد إلكتروني غير صالح", "Invalid email")); return; }
-                  payload = subNote.trim() ? `${email} | ${subNote.trim()}` : email;
+                  if (!pw) { setPwError(true); toast.error(t("كلمة المرور مفقودة", "Password is missing")); return; }
+                  payload = `${email} | ${pw}`;
                 }
                 mutation.mutate({ productId: p.id, gameUserId: payload, quantity: qtyEnabled ? qtyNum : undefined });
               }}
