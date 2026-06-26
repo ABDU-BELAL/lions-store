@@ -58,12 +58,15 @@ export const adminUpdatePaymentMethods = createServerFn({ method: "POST" })
 
 
 const createSchema = z.object({
-  amount: z.number().min(100, "الحد الأدنى للشحن 100 جنيه").max(1_000_000),
+  amount: z.number().positive().max(1_000_000),
   method: z.enum(["vodafone_cash", "instapay", "fawry", "binance"]),
   reference: z.string().trim().min(3).max(200),
   note: z.string().trim().max(500).optional(),
   screenshot_path: z.string().trim().max(500).optional(),
-});
+}).refine(
+  (d) => (d.method === "binance" ? d.amount >= 50 : d.amount >= 100),
+  { message: "الحد الأدنى للشحن غير مستوفى", path: ["amount"] },
+);
 
 export const createTopupRequest = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
