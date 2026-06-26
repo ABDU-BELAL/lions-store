@@ -489,6 +489,22 @@ function ProductsTab({ initialCollectionId, onBack }: { initialCollectionId?: st
               )}
             </div>
 
+            <div className="rounded-xl border border-border bg-secondary/40 p-3 space-y-2">
+              <label className="text-sm font-bold block">حقل البيانات المطلوبة من العميل / Customer field</label>
+              <select
+                value={editing.purchase_field_mode}
+                onChange={(e) => setEditing({ ...editing, purchase_field_mode: e.target.value as "game_id" | "subscription" | "none" })}
+                className="w-full rounded-xl bg-secondary px-3 py-2 text-sm"
+              >
+                <option value="game_id">ID اللاعب / الحساب (افتراضي) — Player / Account ID</option>
+                <option value="subscription">اشتراك: بريد إلكتروني + ملاحظة — Subscription (email + note)</option>
+                <option value="none">بدون أي حقل — None</option>
+              </select>
+              <p className="text-[11px] text-muted-foreground">
+                اختر &quot;اشتراك&quot; لمنتجات زي Netflix و Spotify اللي بتحتاج إيميل بدل ID. اختر &quot;بدون&quot; لو مفيش أي بيانات لازمة.
+              </p>
+            </div>
+
             <div className="flex items-center gap-4 text-sm">
               <label className="flex items-center gap-2"><input type="checkbox" checked={editing.is_active} onChange={(e) => setEditing({ ...editing, is_active: e.target.checked })} /> مفعّل</label>
               <label className="flex items-center gap-2"><input type="checkbox" checked={editing.is_offer} onChange={(e) => setEditing({ ...editing, is_offer: e.target.checked })} /> عرض</label>
