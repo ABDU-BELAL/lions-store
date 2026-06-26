@@ -9,7 +9,7 @@ import { enforceRateLimit } from "@/lib/rate-limit.server";
 export const listShopProducts = createServerFn({ method: "GET" }).handler(async () => {
   const { data, error } = await supabaseAdmin
     .from("products")
-    .select("id, title, title_en, description, description_en, category, price, image_url, is_offer, sort_order, collection_id, quantity_enabled, unit_size, unit_label, min_quantity, max_quantity")
+    .select("id, title, title_en, description, description_en, category, price, image_url, is_offer, sort_order, collection_id, quantity_enabled, unit_size, unit_label, min_quantity, max_quantity, purchase_field_mode")
     .eq("is_active", true)
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: false });
