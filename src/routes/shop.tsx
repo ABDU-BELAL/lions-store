@@ -72,6 +72,7 @@ function ShopPage() {
       toast.success(t("تم إرسال الطلب! هيتم تنفيذه قريبًا.", "Order placed! It will be processed shortly."));
       setSelected(null);
       setGameId("");
+      setSubPassword("");
       setQuantity("");
       qc.invalidateQueries({ queryKey: ["account"] });
       qc.invalidateQueries({ queryKey: ["my-orders"] });
