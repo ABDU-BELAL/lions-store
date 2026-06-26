@@ -208,7 +208,7 @@ function TopupPage() {
             return;
           }
           if (!minOk) {
-            toast.error(isBinance ? t("الحد الأدنى 2 دولار", "Minimum is 2 USD") : t("الحد الأدنى 100 جنيه", "Minimum is 100 EGP"));
+            toast.error(isBinance ? t(`الحد الأدنى ${MIN_USD_BINANCE} دولار`, `Minimum is ${MIN_USD_BINANCE} USD`) : t(`الحد الأدنى ${MIN_EGP_LOCAL} جنيه`, `Minimum is ${MIN_EGP_LOCAL} EGP`));
             return;
           }
           mutation.mutate({ amount: effectiveAmountEgp, method, reference, note: note || undefined });
