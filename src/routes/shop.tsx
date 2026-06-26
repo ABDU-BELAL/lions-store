@@ -48,7 +48,9 @@ function ShopPage() {
 
   const [selected, setSelected] = useState<Product | null>(null);
   const [gameId, setGameId] = useState("");
+  const [subPassword, setSubPassword] = useState("");
   const [idError, setIdError] = useState(false);
+  const [pwError, setPwError] = useState(false);
   const [quantity, setQuantity] = useState<string>("");
   const discount = useQuery({
     queryKey: ["my-discount", selected?.id, user?.id],
