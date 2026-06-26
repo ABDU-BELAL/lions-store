@@ -72,7 +72,7 @@ function TopupPage() {
   const [screenshot, setScreenshot] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
 
-  const { rate } = useCurrency();
+  
   const isBinance = method === "binance";
   // For binance the user enters USD; convert to EGP for the server (server stores EGP).
   const effectiveAmountEgp = isBinance ? Math.round((usdAmount || 0) * (rate ?? 0) * 100) / 100 : amount;
