@@ -99,8 +99,9 @@ function ProductPage() {
   const fieldMode: "game_id" | "subscription" | "none" = p.purchase_field_mode ?? "game_id";
   const [gameId, setGameId] = useState("");
   const [subEmail, setSubEmail] = useState("");
-  const [subNote, setSubNote] = useState("");
+  const [subPassword, setSubPassword] = useState("");
   const [idError, setIdError] = useState(false);
+  const [pwError, setPwError] = useState(false);
   const qtyEnabled = !!p.quantity_enabled;
   const unitSize = Number(p.unit_size ?? 1) || 1;
   const unitLabel = p.unit_label ?? "";
