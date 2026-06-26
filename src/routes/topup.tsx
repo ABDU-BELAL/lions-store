@@ -44,7 +44,7 @@ function TopupPage() {
   const myTopups = useServerFn(listMyTopups);
   const fetchPaymentMethods = useServerFn(getPaymentMethods);
   const { t, lang } = useLang();
-  const { format } = useCurrency();
+  const { format, rate } = useCurrency();
 
   useEffect(() => { if (!authLoading && !user) navigate({ to: "/login", replace: true }); }, [authLoading, user, navigate]);
 
@@ -66,10 +66,17 @@ function TopupPage() {
 
   const [method, setMethod] = useState<typeof methodMeta[number]["id"]>("vodafone_cash");
   const [amount, setAmount] = useState<number>(100);
+  const [usdAmount, setUsdAmount] = useState<number>(2);
   const [reference, setReference] = useState("");
   const [note, setNote] = useState("");
   const [screenshot, setScreenshot] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+
+  
+  const isBinance = method === "binance";
+  // For binance the user enters USD; convert to EGP for the server (server stores EGP).
+  const effectiveAmountEgp = isBinance ? Math.round((usdAmount || 0) * (rate ?? 0) * 100) / 100 : amount;
+  const minOk = isBinance ? usdAmount >= 2 && rate != null && effectiveAmountEgp >= 50 : amount >= 100;
 
   const mutation = useMutation({
     mutationFn: async (vars: { amount: number; method: typeof method; reference: string; note?: string }) => {
@@ -193,13 +200,34 @@ function TopupPage() {
       )}
 
       <form
-        onSubmit={(e) => { e.preventDefault(); mutation.mutate({ amount, method, reference, note: note || undefined }); }}
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (isBinance && (!rate || rate <= 0)) {
+            toast.error(t("تعذر تحميل سعر الصرف، حاول مرة أخرى", "Could not load exchange rate, try again"));
+            return;
+          }
+          if (!minOk) {
+            toast.error(isBinance ? t("الحد الأدنى 2 دولار", "Minimum is 2 USD") : t("الحد الأدنى 100 جنيه", "Minimum is 100 EGP"));
+            return;
+          }
+          mutation.mutate({ amount: effectiveAmountEgp, method, reference, note: note || undefined });
+        }}
         className="mt-4 rounded-2xl bg-card/70 border border-border p-5 space-y-3"
       >
-        <div>
-          <label className="text-xs font-bold mb-1 block">{t("المبلغ (EGP) — الحد الأدنى 100", "Amount (EGP) — minimum 100")}</label>
-          <input dir="ltr" type="number" min={100} max={1000000} required value={amount} onChange={(e) => setAmount(Number(e.target.value))} className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gold/50" />
-        </div>
+        {isBinance ? (
+          <div>
+            <label className="text-xs font-bold mb-1 block">{t("المبلغ (USD) — الحد الأدنى 2", "Amount (USD) — minimum 2")}</label>
+            <input dir="ltr" type="number" step="0.01" min={2} max={100000} required value={usdAmount} onChange={(e) => setUsdAmount(Number(e.target.value))} className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gold/50" />
+            <p className="text-[11px] text-muted-foreground mt-1" dir="ltr">
+              {rate ? `≈ ${effectiveAmountEgp.toLocaleString(undefined,{maximumFractionDigits:2})} EGP (1 USD = ${rate.toFixed(2)} EGP)` : t("جاري تحميل سعر الصرف...", "Loading exchange rate...")}
+            </p>
+          </div>
+        ) : (
+          <div>
+            <label className="text-xs font-bold mb-1 block">{t("المبلغ (EGP) — الحد الأدنى 100", "Amount (EGP) — minimum 100")}</label>
+            <input dir="ltr" type="number" min={100} max={1000000} required value={amount} onChange={(e) => setAmount(Number(e.target.value))} className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gold/50" />
+          </div>
+        )}
         <div>
           <label className="text-xs font-bold mb-1 block">{t("رقم العملية / المرجع", "Transaction ID / reference")}</label>
           <input required minLength={3} maxLength={200} value={reference} onChange={(e) => setReference(e.target.value)} placeholder={t("مثلاً: TXN12345 أو 4 أرقام أخيرة من رقم المحول منه", "e.g. TXN12345 or last 4 digits of the sender number")} className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gold/50" />
@@ -229,7 +257,7 @@ function TopupPage() {
           <label className="text-xs font-bold mb-1 block">{t("ملاحظات (اختياري)", "Notes (optional)")}</label>
           <textarea maxLength={500} value={note} onChange={(e) => setNote(e.target.value)} rows={2} className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gold/50 resize-none" />
         </div>
-        <button disabled={mutation.isPending || uploading || !activeEnabled || amount < 100} className="w-full rounded-xl bg-gold-gradient text-primary-foreground font-extrabold py-3 shadow-gold disabled:opacity-50">
+        <button disabled={mutation.isPending || uploading || !activeEnabled || !minOk} className="w-full rounded-xl bg-gold-gradient text-primary-foreground font-extrabold py-3 shadow-gold disabled:opacity-50">
           {!activeEnabled ? t("تحت الصيانة", "Under maintenance") : uploading ? t("جاري رفع الصورة...", "Uploading image...") : mutation.isPending ? t("جاري الإرسال...", "Sending...") : t("إرسال طلب الشحن", "Send top-up request")}
         </button>
       </form>
