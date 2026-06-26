@@ -217,16 +217,16 @@ function TopupPage() {
       >
         {isBinance ? (
           <div>
-            <label className="text-xs font-bold mb-1 block">{t("المبلغ (USD) — الحد الأدنى 2", "Amount (USD) — minimum 2")}</label>
-            <input dir="ltr" type="number" step="0.01" min={2} max={100000} required value={usdAmount} onChange={(e) => setUsdAmount(Number(e.target.value))} className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gold/50" />
+            <label className="text-xs font-bold mb-1 block">{t(`المبلغ (USD) — الحد الأدنى ${MIN_USD_BINANCE}`, `Amount (USD) — minimum ${MIN_USD_BINANCE}`)}</label>
+            <input dir="ltr" type="number" step="0.01" min={MIN_USD_BINANCE} max={100000} required value={usdAmount} onChange={(e) => setUsdAmount(Number(e.target.value))} className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gold/50" />
             <p className="text-[11px] text-muted-foreground mt-1" dir="ltr">
               {rate ? `≈ ${effectiveAmountEgp.toLocaleString(undefined,{maximumFractionDigits:2})} EGP (1 USD = ${rate.toFixed(2)} EGP)` : t("جاري تحميل سعر الصرف...", "Loading exchange rate...")}
             </p>
           </div>
         ) : (
           <div>
-            <label className="text-xs font-bold mb-1 block">{t("المبلغ (EGP) — الحد الأدنى 100", "Amount (EGP) — minimum 100")}</label>
-            <input dir="ltr" type="number" min={100} max={1000000} required value={amount} onChange={(e) => setAmount(Number(e.target.value))} className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gold/50" />
+            <label className="text-xs font-bold mb-1 block">{t(`المبلغ (EGP) — الحد الأدنى ${MIN_EGP_LOCAL}`, `Amount (EGP) — minimum ${MIN_EGP_LOCAL}`)}</label>
+            <input dir="ltr" type="number" min={MIN_EGP_LOCAL} max={1000000} required value={amount} onChange={(e) => setAmount(Number(e.target.value))} className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gold/50" />
           </div>
         )}
         <div>
