@@ -200,13 +200,34 @@ function TopupPage() {
       )}
 
       <form
-        onSubmit={(e) => { e.preventDefault(); mutation.mutate({ amount, method, reference, note: note || undefined }); }}
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (isBinance && (!rate || rate <= 0)) {
+            toast.error(t("تعذر تحميل سعر الصرف، حاول مرة أخرى", "Could not load exchange rate, try again"));
+            return;
+          }
+          if (!minOk) {
+            toast.error(isBinance ? t("الحد الأدنى 2 دولار", "Minimum is 2 USD") : t("الحد الأدنى 100 جنيه", "Minimum is 100 EGP"));
+            return;
+          }
+          mutation.mutate({ amount: effectiveAmountEgp, method, reference, note: note || undefined });
+        }}
         className="mt-4 rounded-2xl bg-card/70 border border-border p-5 space-y-3"
       >
-        <div>
-          <label className="text-xs font-bold mb-1 block">{t("المبلغ (EGP) — الحد الأدنى 100", "Amount (EGP) — minimum 100")}</label>
-          <input dir="ltr" type="number" min={100} max={1000000} required value={amount} onChange={(e) => setAmount(Number(e.target.value))} className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gold/50" />
-        </div>
+        {isBinance ? (
+          <div>
+            <label className="text-xs font-bold mb-1 block">{t("المبلغ (USD) — الحد الأدنى 2", "Amount (USD) — minimum 2")}</label>
+            <input dir="ltr" type="number" step="0.01" min={2} max={100000} required value={usdAmount} onChange={(e) => setUsdAmount(Number(e.target.value))} className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gold/50" />
+            <p className="text-[11px] text-muted-foreground mt-1" dir="ltr">
+              {rate ? `≈ ${effectiveAmountEgp.toLocaleString(undefined,{maximumFractionDigits:2})} EGP (1 USD = ${rate.toFixed(2)} EGP)` : t("جاري تحميل سعر الصرف...", "Loading exchange rate...")}
+            </p>
+          </div>
+        ) : (
+          <div>
+            <label className="text-xs font-bold mb-1 block">{t("المبلغ (EGP) — الحد الأدنى 100", "Amount (EGP) — minimum 100")}</label>
+            <input dir="ltr" type="number" min={100} max={1000000} required value={amount} onChange={(e) => setAmount(Number(e.target.value))} className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gold/50" />
+          </div>
+        )}
         <div>
           <label className="text-xs font-bold mb-1 block">{t("رقم العملية / المرجع", "Transaction ID / reference")}</label>
           <input required minLength={3} maxLength={200} value={reference} onChange={(e) => setReference(e.target.value)} placeholder={t("مثلاً: TXN12345 أو 4 أرقام أخيرة من رقم المحول منه", "e.g. TXN12345 or last 4 digits of the sender number")} className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gold/50" />
