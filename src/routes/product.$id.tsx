@@ -96,7 +96,10 @@ function ProductPage() {
   const title = pickLocalized(p.title, p.title_en, lang);
   const description = pickLocalized(p.description, p.description_en, lang);
 
+  const fieldMode: "game_id" | "subscription" | "none" = p.purchase_field_mode ?? "game_id";
   const [gameId, setGameId] = useState("");
+  const [subEmail, setSubEmail] = useState("");
+  const [subNote, setSubNote] = useState("");
   const [idError, setIdError] = useState(false);
   const qtyEnabled = !!p.quantity_enabled;
   const unitSize = Number(p.unit_size ?? 1) || 1;
