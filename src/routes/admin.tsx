@@ -358,6 +358,7 @@ function ProductsTab({ initialCollectionId, onBack }: { initialCollectionId?: st
         unit_label: editing!.quantity_enabled ? (editing!.unit_label.trim() || null) : null,
         min_quantity: editing!.quantity_enabled && editing!.min_quantity ? Number(editing!.min_quantity) : null,
         max_quantity: editing!.quantity_enabled && editing!.max_quantity ? Number(editing!.max_quantity) : null,
+        purchase_field_mode: editing!.purchase_field_mode,
       } } });
       // Save provider mapping only for already-existing products.
       if (editing?.id) {
