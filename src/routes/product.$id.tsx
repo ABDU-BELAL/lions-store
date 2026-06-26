@@ -247,14 +247,19 @@ function ProductPage() {
                 )}
               </div>
               <div>
-                <label className="text-xs font-bold mb-1 block">{t("ملاحظة (اختياري)", "Note (optional)")}</label>
-                <textarea
-                  rows={2}
-                  value={subNote}
-                  onChange={(e) => setSubNote(e.target.value)}
-                  placeholder={t("مثلاً: الخطة المفضلة، المدة...", "e.g. preferred plan, duration...")}
-                  className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3"
+                <label className="text-xs font-bold mb-1 block">
+                  {t("كلمة المرور", "Password")} <span className="text-destructive">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={subPassword}
+                  onChange={(e) => { setSubPassword(e.target.value); if (pwError) setPwError(false); }}
+                  placeholder={t("كلمة مرور الحساب", "Account password")}
+                  className={`w-full rounded-xl bg-secondary/60 border px-4 py-3 ${pwError ? "border-destructive ring-1 ring-destructive" : "border-border"}`}
                 />
+                {pwError && (
+                  <p className="mt-1 text-xs font-semibold text-destructive">{t("كلمة المرور مفقودة", "Password is missing")}</p>
+                )}
               </div>
             </div>
           )}
