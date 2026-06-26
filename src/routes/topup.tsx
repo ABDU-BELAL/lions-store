@@ -66,10 +66,17 @@ function TopupPage() {
 
   const [method, setMethod] = useState<typeof methodMeta[number]["id"]>("vodafone_cash");
   const [amount, setAmount] = useState<number>(100);
+  const [usdAmount, setUsdAmount] = useState<number>(2);
   const [reference, setReference] = useState("");
   const [note, setNote] = useState("");
   const [screenshot, setScreenshot] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+
+  const { rate } = useCurrency();
+  const isBinance = method === "binance";
+  // For binance the user enters USD; convert to EGP for the server (server stores EGP).
+  const effectiveAmountEgp = isBinance ? Math.round((usdAmount || 0) * (rate ?? 0) * 100) / 100 : amount;
+  const minOk = isBinance ? usdAmount >= 2 && rate != null && effectiveAmountEgp >= 50 : amount >= 100;
 
   const mutation = useMutation({
     mutationFn: async (vars: { amount: number; method: typeof method; reference: string; note?: string }) => {
