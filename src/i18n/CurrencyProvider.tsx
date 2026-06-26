@@ -15,7 +15,7 @@ const CurrencyContext = createContext<Ctx | null>(null);
 
 const STORAGE_KEY = "lion_currency";
 const RATE_KEY = "lion_usd_egp_rate";
-const RATE_TTL_MS = 60 * 60 * 1000; // 1h
+const RATE_TTL_MS = 20 * 60 * 1000; // 20 minutes
 
 function readInitial(): Currency {
   if (typeof window === "undefined") return "EGP";
