@@ -188,6 +188,7 @@ export type Database = {
           price: number
           provider: string | null
           provider_product_id: string | null
+          purchase_field_mode: string
           quantity_enabled: boolean
           sort_order: number
           title: string
@@ -212,6 +213,7 @@ export type Database = {
           price: number
           provider?: string | null
           provider_product_id?: string | null
+          purchase_field_mode?: string
           quantity_enabled?: boolean
           sort_order?: number
           title: string
@@ -236,6 +238,7 @@ export type Database = {
           price?: number
           provider?: string | null
           provider_product_id?: string | null
+          purchase_field_mode?: string
           quantity_enabled?: boolean
           sort_order?: number
           title?: string
