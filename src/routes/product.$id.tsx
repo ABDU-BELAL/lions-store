@@ -211,7 +211,7 @@ function ProductPage() {
             </div>
           )}
 
-          {user && (
+          {user && fieldMode === "game_id" && (
             <div className="mt-4">
               <label className="text-xs font-bold mb-1 block">
                 {p.category === "games" ? t("ID اللاعب", "Player ID") : t("ID الحساب / رقم التعريف", "Account ID")} <span className="text-destructive">*</span>
@@ -228,6 +228,36 @@ function ProductPage() {
             </div>
           )}
 
+          {user && fieldMode === "subscription" && (
+            <div className="mt-4 space-y-3">
+              <div>
+                <label className="text-xs font-bold mb-1 block">
+                  {t("البريد الإلكتروني للاشتراك", "Subscription email")} <span className="text-destructive">*</span>
+                </label>
+                <input
+                  type="email"
+                  value={subEmail}
+                  onChange={(e) => { setSubEmail(e.target.value); if (idError) setIdError(false); }}
+                  placeholder="you@example.com"
+                  className={`w-full rounded-xl bg-secondary/60 border px-4 py-3 ${idError ? "border-destructive ring-1 ring-destructive" : "border-border"}`}
+                />
+                {idError && (
+                  <p className="mt-1 text-xs font-semibold text-destructive">{t("بريد إلكتروني غير صالح", "Invalid email")}</p>
+                )}
+              </div>
+              <div>
+                <label className="text-xs font-bold mb-1 block">{t("ملاحظة (اختياري)", "Note (optional)")}</label>
+                <textarea
+                  rows={2}
+                  value={subNote}
+                  onChange={(e) => setSubNote(e.target.value)}
+                  placeholder={t("مثلاً: الخطة المفضلة، المدة...", "e.g. preferred plan, duration...")}
+                  className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3"
+                />
+              </div>
+            </div>
+          )}
+
           {!user ? (
             <Link to="/login" className="mt-6 w-full block text-center rounded-xl bg-gold-gradient text-primary-foreground font-extrabold py-3 shadow-gold">
               {t("سجّل دخول للشراء", "Sign in to buy")}
@@ -240,8 +270,16 @@ function ProductPage() {
             <button
               disabled={mutation.isPending || !qtyValid}
               onClick={() => {
-                if (!gameId.trim()) { setIdError(true); toast.error(t("الـ ID مفقود", "ID is missing")); return; }
-                mutation.mutate({ productId: p.id, gameUserId: gameId.trim(), quantity: qtyEnabled ? qtyNum : undefined });
+                let payload: string | undefined;
+                if (fieldMode === "game_id") {
+                  if (!gameId.trim()) { setIdError(true); toast.error(t("الـ ID مفقود", "ID is missing")); return; }
+                  payload = gameId.trim();
+                } else if (fieldMode === "subscription") {
+                  const email = subEmail.trim();
+                  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setIdError(true); toast.error(t("بريد إلكتروني غير صالح", "Invalid email")); return; }
+                  payload = subNote.trim() ? `${email} | ${subNote.trim()}` : email;
+                }
+                mutation.mutate({ productId: p.id, gameUserId: payload, quantity: qtyEnabled ? qtyNum : undefined });
               }}
               className="mt-6 w-full rounded-xl bg-gold-gradient text-primary-foreground font-extrabold py-3 shadow-gold disabled:opacity-50"
             >
