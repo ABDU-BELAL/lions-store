@@ -310,40 +310,59 @@ function ShopPage() {
               </span>
             </div>
 
-            <div className="mt-4">
-              <label className="text-xs font-bold mb-1 block">
-                {sel.category === "games" ? t("ID اللاعب", "Player ID") : t("ID الحساب / رقم التعريف", "Account ID")} <span className="text-destructive">*</span>
-              </label>
-              <input
-                value={gameId}
-                onChange={(e) => { setGameId(e.target.value); if (idError) setIdError(false); }}
-                placeholder={t("مثلاً: 123456789", "e.g. 123456789")}
-                className={`w-full rounded-xl bg-secondary/60 border px-4 py-3 focus:outline-none focus:ring-2 ${idError ? "border-destructive ring-1 ring-destructive focus:ring-destructive/60" : "border-border focus:ring-gold/50"}`}
-              />
-              {idError && (
-                <p className="mt-1 text-xs font-semibold text-destructive">{t("الـ ID مفقود", "ID is missing")}</p>
-              )}
-            </div>
+            {(() => {
+              const fieldMode = ((sel as { purchase_field_mode?: string }).purchase_field_mode ?? "game_id") as "game_id" | "subscription" | "none";
+              return (
+                <>
+                  {fieldMode !== "none" && (
+                    <div className="mt-4">
+                      <label className="text-xs font-bold mb-1 block">
+                        {fieldMode === "subscription"
+                          ? <>{t("البريد الإلكتروني للاشتراك", "Subscription email")} <span className="text-destructive">*</span></>
+                          : <>{sel.category === "games" ? t("ID اللاعب", "Player ID") : t("ID الحساب / رقم التعريف", "Account ID")} <span className="text-destructive">*</span></>}
+                      </label>
+                      <input
+                        type={fieldMode === "subscription" ? "email" : "text"}
+                        value={gameId}
+                        onChange={(e) => { setGameId(e.target.value); if (idError) setIdError(false); }}
+                        placeholder={fieldMode === "subscription" ? "you@example.com" : t("مثلاً: 123456789", "e.g. 123456789")}
+                        className={`w-full rounded-xl bg-secondary/60 border px-4 py-3 focus:outline-none focus:ring-2 ${idError ? "border-destructive ring-1 ring-destructive focus:ring-destructive/60" : "border-border focus:ring-gold/50"}`}
+                      />
+                      {idError && (
+                        <p className="mt-1 text-xs font-semibold text-destructive">
+                          {fieldMode === "subscription" ? t("بريد إلكتروني غير صالح", "Invalid email") : t("الـ ID مفقود", "ID is missing")}
+                        </p>
+                      )}
+                    </div>
+                  )}
 
-            {balance < total ? (
-              <Link
-                to="/topup"
-                className="mt-5 w-full block text-center rounded-xl bg-gold-gradient text-primary-foreground font-extrabold py-3 shadow-gold"
-              >
-                {t("اشحن رصيدك أولًا", "Top up your balance first")}
-              </Link>
-            ) : (
-              <button
-                disabled={mutation.isPending || !qtyValid}
-                onClick={() => {
-                  if (!gameId.trim()) { setIdError(true); toast.error(t("الـ ID مفقود", "ID is missing")); return; }
-                  mutation.mutate({ productId: sel.id, gameUserId: gameId.trim(), quantity: qtyEnabled ? qtyNum : undefined });
-                }}
-                className="mt-5 w-full rounded-xl bg-gold-gradient text-primary-foreground font-extrabold py-3 shadow-gold disabled:opacity-50"
-              >
-                {mutation.isPending ? t("جاري التنفيذ...", "Processing...") : qtyEnabled ? `${t("أكد الشراء", "Confirm")} — ${format(total)}` : t("أكد الشراء", "Confirm purchase")}
-              </button>
-            )}
+                  {balance < total ? (
+                    <Link to="/topup" className="mt-5 w-full block text-center rounded-xl bg-gold-gradient text-primary-foreground font-extrabold py-3 shadow-gold">
+                      {t("اشحن رصيدك أولًا", "Top up your balance first")}
+                    </Link>
+                  ) : (
+                    <button
+                      disabled={mutation.isPending || !qtyValid}
+                      onClick={() => {
+                        let payload: string | undefined;
+                        if (fieldMode === "game_id") {
+                          if (!gameId.trim()) { setIdError(true); toast.error(t("الـ ID مفقود", "ID is missing")); return; }
+                          payload = gameId.trim();
+                        } else if (fieldMode === "subscription") {
+                          const email = gameId.trim();
+                          if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setIdError(true); toast.error(t("بريد إلكتروني غير صالح", "Invalid email")); return; }
+                          payload = email;
+                        }
+                        mutation.mutate({ productId: sel.id, gameUserId: payload, quantity: qtyEnabled ? qtyNum : undefined });
+                      }}
+                      className="mt-5 w-full rounded-xl bg-gold-gradient text-primary-foreground font-extrabold py-3 shadow-gold disabled:opacity-50"
+                    >
+                      {mutation.isPending ? t("جاري التنفيذ...", "Processing...") : qtyEnabled ? `${t("أكد الشراء", "Confirm")} — ${format(total)}` : t("أكد الشراء", "Confirm purchase")}
+                    </button>
+                  )}
+                </>
+              );
+            })()}
           </div>
         </div>
         );
