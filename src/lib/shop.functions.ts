@@ -46,10 +46,29 @@ export const purchaseProduct = createServerFn({ method: "POST" })
     const { userId } = context;
     // Rate limit purchases: max 10 per minute per user
     await enforceRateLimit(`purchase:${userId}`, 10, 60, "عدد كبير من المحاولات. حاول بعد قليل.");
+
+    // Validate the customer-input field per the product's purchase_field_mode
+    const { data: modeRow } = await supabaseAdmin
+      .from("products")
+      .select("purchase_field_mode")
+      .eq("id", data.productId)
+      .maybeSingle();
+    const mode = (modeRow?.purchase_field_mode as "game_id" | "subscription" | "none" | undefined) ?? "game_id";
+    const trimmed = (data.gameUserId ?? "").trim();
+    if (mode === "game_id") {
+      if (!trimmed) throw new Error("ID is missing");
+    } else if (mode === "subscription") {
+      if (!trimmed) throw new Error("Email is missing");
+      // basic email check on the first line/segment
+      const firstLine = trimmed.split(/\r?\n|\s\|\s/)[0];
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(firstLine)) throw new Error("Invalid email");
+    }
+    const gameUserIdToStore = mode === "none" ? null : trimmed;
+
     const { data: orderId, error } = await supabaseAdmin.rpc("process_purchase", {
       p_user_id: userId,
       p_product_id: data.productId,
-      p_game_user_id: data.gameUserId,
+      p_game_user_id: gameUserIdToStore,
       p_quantity: data.quantity ?? null,
     });
     if (error) { console.error("[db]", error); throw new Error("حدث خطأ، حاول مرة أخرى"); };
