@@ -72,11 +72,12 @@ function TopupPage() {
   const [screenshot, setScreenshot] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
 
-  
+  const MIN_USD_BINANCE = 2;
+  const MIN_EGP_LOCAL = 100;
   const isBinance = method === "binance";
   // For binance the user enters USD; convert to EGP for the server (server stores EGP).
   const effectiveAmountEgp = isBinance ? Math.round((usdAmount || 0) * (rate ?? 0) * 100) / 100 : amount;
-  const minOk = isBinance ? usdAmount >= 2 && rate != null && effectiveAmountEgp >= 50 : amount >= 100;
+  const minOk = isBinance ? usdAmount >= MIN_USD_BINANCE && rate != null : amount >= MIN_EGP_LOCAL;
 
   const mutation = useMutation({
     mutationFn: async (vars: { amount: number; method: typeof method; reference: string; note?: string }) => {
