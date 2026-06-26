@@ -59,9 +59,12 @@ export const purchaseProduct = createServerFn({ method: "POST" })
       if (!trimmed) throw new Error("ID is missing");
     } else if (mode === "subscription") {
       if (!trimmed) throw new Error("Email is missing");
-      // basic email check on the first line/segment
-      const firstLine = trimmed.split(/\r?\n|\s\|\s/)[0];
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(firstLine)) throw new Error("Invalid email");
+      // Expect format: "email | password"
+      const parts = trimmed.split(/\s\|\s/);
+      const email = (parts[0] ?? "").trim();
+      const password = (parts[1] ?? "").trim();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error("Invalid email");
+      if (!password) throw new Error("Password is missing");
     }
     const gameUserIdToStore = mode === "none" ? null : trimmed;
 
@@ -101,7 +104,16 @@ export const purchaseProduct = createServerFn({ method: "POST" })
           `🔢 الكمية: ${escapeTelegramHtml(qtyText)}\n` +
           `💰 EG ${escapeTelegramHtml(totalAmount.toLocaleString())}\n` +
 
-          (data.gameUserId ? `🆔 ${escapeTelegramHtml(data.gameUserId)}\n` : "") +
+          (data.gameUserId
+            ? (mode === "subscription"
+                ? (() => {
+                    const parts = data.gameUserId!.split(/\s\|\s/);
+                    const email = (parts[0] ?? "").trim();
+                    const password = (parts[1] ?? "").trim();
+                    return `📧 ${escapeTelegramHtml(email)}\n🔑 ${escapeTelegramHtml(password)}\n`;
+                  })()
+                : `🆔 ${escapeTelegramHtml(data.gameUserId)}\n`)
+            : "") +
           `#order_${String(orderId).slice(0, 8)}`,
       );
     } catch (e) {

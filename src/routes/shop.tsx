@@ -48,7 +48,9 @@ function ShopPage() {
 
   const [selected, setSelected] = useState<Product | null>(null);
   const [gameId, setGameId] = useState("");
+  const [subPassword, setSubPassword] = useState("");
   const [idError, setIdError] = useState(false);
+  const [pwError, setPwError] = useState(false);
   const [quantity, setQuantity] = useState<string>("");
   const discount = useQuery({
     queryKey: ["my-discount", selected?.id, user?.id],
@@ -70,6 +72,7 @@ function ShopPage() {
       toast.success(t("تم إرسال الطلب! هيتم تنفيذه قريبًا.", "Order placed! It will be processed shortly."));
       setSelected(null);
       setGameId("");
+      setSubPassword("");
       setQuantity("");
       qc.invalidateQueries({ queryKey: ["account"] });
       qc.invalidateQueries({ queryKey: ["my-orders"] });
@@ -315,23 +318,42 @@ function ShopPage() {
               return (
                 <>
                   {fieldMode !== "none" && (
-                    <div className="mt-4">
-                      <label className="text-xs font-bold mb-1 block">
-                        {fieldMode === "subscription"
-                          ? <>{t("البريد الإلكتروني للاشتراك", "Subscription email")} <span className="text-destructive">*</span></>
-                          : <>{sel.category === "games" ? t("ID اللاعب", "Player ID") : t("ID الحساب / رقم التعريف", "Account ID")} <span className="text-destructive">*</span></>}
-                      </label>
-                      <input
-                        type={fieldMode === "subscription" ? "email" : "text"}
-                        value={gameId}
-                        onChange={(e) => { setGameId(e.target.value); if (idError) setIdError(false); }}
-                        placeholder={fieldMode === "subscription" ? "you@example.com" : t("مثلاً: 123456789", "e.g. 123456789")}
-                        className={`w-full rounded-xl bg-secondary/60 border px-4 py-3 focus:outline-none focus:ring-2 ${idError ? "border-destructive ring-1 ring-destructive focus:ring-destructive/60" : "border-border focus:ring-gold/50"}`}
-                      />
-                      {idError && (
-                        <p className="mt-1 text-xs font-semibold text-destructive">
-                          {fieldMode === "subscription" ? t("بريد إلكتروني غير صالح", "Invalid email") : t("الـ ID مفقود", "ID is missing")}
-                        </p>
+                    <div className="mt-4 space-y-3">
+                      <div>
+                        <label className="text-xs font-bold mb-1 block">
+                          {fieldMode === "subscription"
+                            ? <>{t("البريد الإلكتروني للاشتراك", "Subscription email")} <span className="text-destructive">*</span></>
+                            : <>{sel.category === "games" ? t("ID اللاعب", "Player ID") : t("ID الحساب / رقم التعريف", "Account ID")} <span className="text-destructive">*</span></>}
+                        </label>
+                        <input
+                          type={fieldMode === "subscription" ? "email" : "text"}
+                          value={gameId}
+                          onChange={(e) => { setGameId(e.target.value); if (idError) setIdError(false); }}
+                          placeholder={fieldMode === "subscription" ? "you@example.com" : t("مثلاً: 123456789", "e.g. 123456789")}
+                          className={`w-full rounded-xl bg-secondary/60 border px-4 py-3 focus:outline-none focus:ring-2 ${idError ? "border-destructive ring-1 ring-destructive focus:ring-destructive/60" : "border-border focus:ring-gold/50"}`}
+                        />
+                        {idError && (
+                          <p className="mt-1 text-xs font-semibold text-destructive">
+                            {fieldMode === "subscription" ? t("بريد إلكتروني غير صالح", "Invalid email") : t("الـ ID مفقود", "ID is missing")}
+                          </p>
+                        )}
+                      </div>
+                      {fieldMode === "subscription" && (
+                        <div>
+                          <label className="text-xs font-bold mb-1 block">
+                            {t("كلمة المرور", "Password")} <span className="text-destructive">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            value={subPassword}
+                            onChange={(e) => { setSubPassword(e.target.value); if (pwError) setPwError(false); }}
+                            placeholder={t("كلمة مرور الحساب", "Account password")}
+                            className={`w-full rounded-xl bg-secondary/60 border px-4 py-3 focus:outline-none focus:ring-2 ${pwError ? "border-destructive ring-1 ring-destructive focus:ring-destructive/60" : "border-border focus:ring-gold/50"}`}
+                          />
+                          {pwError && (
+                            <p className="mt-1 text-xs font-semibold text-destructive">{t("كلمة المرور مفقودة", "Password is missing")}</p>
+                          )}
+                        </div>
                       )}
                     </div>
                   )}
@@ -350,8 +372,10 @@ function ShopPage() {
                           payload = gameId.trim();
                         } else if (fieldMode === "subscription") {
                           const email = gameId.trim();
+                          const pw = subPassword.trim();
                           if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setIdError(true); toast.error(t("بريد إلكتروني غير صالح", "Invalid email")); return; }
-                          payload = email;
+                          if (!pw) { setPwError(true); toast.error(t("كلمة المرور مفقودة", "Password is missing")); return; }
+                          payload = `${email} | ${pw}`;
                         }
                         mutation.mutate({ productId: sel.id, gameUserId: payload, quantity: qtyEnabled ? qtyNum : undefined });
                       }}

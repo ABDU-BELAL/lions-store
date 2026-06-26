@@ -99,8 +99,9 @@ function ProductPage() {
   const fieldMode: "game_id" | "subscription" | "none" = p.purchase_field_mode ?? "game_id";
   const [gameId, setGameId] = useState("");
   const [subEmail, setSubEmail] = useState("");
-  const [subNote, setSubNote] = useState("");
+  const [subPassword, setSubPassword] = useState("");
   const [idError, setIdError] = useState(false);
+  const [pwError, setPwError] = useState(false);
   const qtyEnabled = !!p.quantity_enabled;
   const unitSize = Number(p.unit_size ?? 1) || 1;
   const unitLabel = p.unit_label ?? "";
@@ -246,14 +247,19 @@ function ProductPage() {
                 )}
               </div>
               <div>
-                <label className="text-xs font-bold mb-1 block">{t("ملاحظة (اختياري)", "Note (optional)")}</label>
-                <textarea
-                  rows={2}
-                  value={subNote}
-                  onChange={(e) => setSubNote(e.target.value)}
-                  placeholder={t("مثلاً: الخطة المفضلة، المدة...", "e.g. preferred plan, duration...")}
-                  className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3"
+                <label className="text-xs font-bold mb-1 block">
+                  {t("كلمة المرور", "Password")} <span className="text-destructive">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={subPassword}
+                  onChange={(e) => { setSubPassword(e.target.value); if (pwError) setPwError(false); }}
+                  placeholder={t("كلمة مرور الحساب", "Account password")}
+                  className={`w-full rounded-xl bg-secondary/60 border px-4 py-3 ${pwError ? "border-destructive ring-1 ring-destructive" : "border-border"}`}
                 />
+                {pwError && (
+                  <p className="mt-1 text-xs font-semibold text-destructive">{t("كلمة المرور مفقودة", "Password is missing")}</p>
+                )}
               </div>
             </div>
           )}
@@ -276,8 +282,10 @@ function ProductPage() {
                   payload = gameId.trim();
                 } else if (fieldMode === "subscription") {
                   const email = subEmail.trim();
+                  const pw = subPassword.trim();
                   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setIdError(true); toast.error(t("بريد إلكتروني غير صالح", "Invalid email")); return; }
-                  payload = subNote.trim() ? `${email} | ${subNote.trim()}` : email;
+                  if (!pw) { setPwError(true); toast.error(t("كلمة المرور مفقودة", "Password is missing")); return; }
+                  payload = `${email} | ${pw}`;
                 }
                 mutation.mutate({ productId: p.id, gameUserId: payload, quantity: qtyEnabled ? qtyNum : undefined });
               }}
