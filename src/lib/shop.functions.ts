@@ -104,7 +104,16 @@ export const purchaseProduct = createServerFn({ method: "POST" })
           `🔢 الكمية: ${escapeTelegramHtml(qtyText)}\n` +
           `💰 EG ${escapeTelegramHtml(totalAmount.toLocaleString())}\n` +
 
-          (data.gameUserId ? `🆔 ${escapeTelegramHtml(data.gameUserId)}\n` : "") +
+          (data.gameUserId
+            ? (mode === "subscription"
+                ? (() => {
+                    const parts = data.gameUserId!.split(/\s\|\s/);
+                    const email = (parts[0] ?? "").trim();
+                    const password = (parts[1] ?? "").trim();
+                    return `📧 ${escapeTelegramHtml(email)}\n🔑 ${escapeTelegramHtml(password)}\n`;
+                  })()
+                : `🆔 ${escapeTelegramHtml(data.gameUserId)}\n`)
+            : "") +
           `#order_${String(orderId).slice(0, 8)}`,
       );
     } catch (e) {
