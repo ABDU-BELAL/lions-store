@@ -31,6 +31,7 @@ export type Product = {
   unit_label: string | null;
   min_quantity: number | null;
   max_quantity: number | null;
+  purchase_field_mode: "game_id" | "subscription" | "none";
 };
 
 export const getProductById = createServerFn({ method: "GET" })
@@ -38,7 +39,7 @@ export const getProductById = createServerFn({ method: "GET" })
   .handler(async ({ data }): Promise<Product | null> => {
     const { data: product, error } = await supabaseAdmin
       .from("products")
-      .select("id, title, title_en, description, description_en, category, price, image_url, is_offer, collection_id, quantity_enabled, unit_size, unit_label, min_quantity, max_quantity")
+      .select("id, title, title_en, description, description_en, category, price, image_url, is_offer, collection_id, quantity_enabled, unit_size, unit_label, min_quantity, max_quantity, purchase_field_mode")
       .eq("id", data.id)
       .eq("is_active", true)
       .maybeSingle();
