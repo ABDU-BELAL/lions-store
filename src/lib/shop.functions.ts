@@ -68,8 +68,8 @@ export const purchaseProduct = createServerFn({ method: "POST" })
     const { data: orderId, error } = await supabaseAdmin.rpc("process_purchase", {
       p_user_id: userId,
       p_product_id: data.productId,
-      p_game_user_id: gameUserIdToStore,
-      p_quantity: data.quantity ?? null,
+      p_game_user_id: gameUserIdToStore ?? undefined,
+      p_quantity: data.quantity ?? undefined,
     });
     if (error) { console.error("[db]", error); throw new Error("حدث خطأ، حاول مرة أخرى"); };
 
