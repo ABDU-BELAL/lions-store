@@ -44,7 +44,7 @@ function TopupPage() {
   const myTopups = useServerFn(listMyTopups);
   const fetchPaymentMethods = useServerFn(getPaymentMethods);
   const { t, lang } = useLang();
-  const { format } = useCurrency();
+  const { format, rate } = useCurrency();
 
   useEffect(() => { if (!authLoading && !user) navigate({ to: "/login", replace: true }); }, [authLoading, user, navigate]);
 
