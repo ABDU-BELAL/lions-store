@@ -72,11 +72,12 @@ function TopupPage() {
   const [screenshot, setScreenshot] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
 
-  
+  const MIN_USD_BINANCE = 2;
+  const MIN_EGP_LOCAL = 100;
   const isBinance = method === "binance";
   // For binance the user enters USD; convert to EGP for the server (server stores EGP).
   const effectiveAmountEgp = isBinance ? Math.round((usdAmount || 0) * (rate ?? 0) * 100) / 100 : amount;
-  const minOk = isBinance ? usdAmount >= 2 && rate != null && effectiveAmountEgp >= 50 : amount >= 100;
+  const minOk = isBinance ? usdAmount >= MIN_USD_BINANCE && rate != null : amount >= MIN_EGP_LOCAL;
 
   const mutation = useMutation({
     mutationFn: async (vars: { amount: number; method: typeof method; reference: string; note?: string }) => {
@@ -207,7 +208,7 @@ function TopupPage() {
             return;
           }
           if (!minOk) {
-            toast.error(isBinance ? t("الحد الأدنى 2 دولار", "Minimum is 2 USD") : t("الحد الأدنى 100 جنيه", "Minimum is 100 EGP"));
+            toast.error(isBinance ? t(`الحد الأدنى ${MIN_USD_BINANCE} دولار`, `Minimum is ${MIN_USD_BINANCE} USD`) : t(`الحد الأدنى ${MIN_EGP_LOCAL} جنيه`, `Minimum is ${MIN_EGP_LOCAL} EGP`));
             return;
           }
           mutation.mutate({ amount: effectiveAmountEgp, method, reference, note: note || undefined });
@@ -216,16 +217,16 @@ function TopupPage() {
       >
         {isBinance ? (
           <div>
-            <label className="text-xs font-bold mb-1 block">{t("المبلغ (USD) — الحد الأدنى 2", "Amount (USD) — minimum 2")}</label>
-            <input dir="ltr" type="number" step="0.01" min={2} max={100000} required value={usdAmount} onChange={(e) => setUsdAmount(Number(e.target.value))} className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gold/50" />
+            <label className="text-xs font-bold mb-1 block">{t(`المبلغ (USD) — الحد الأدنى ${MIN_USD_BINANCE}`, `Amount (USD) — minimum ${MIN_USD_BINANCE}`)}</label>
+            <input dir="ltr" type="number" step="0.01" min={MIN_USD_BINANCE} max={100000} required value={usdAmount} onChange={(e) => setUsdAmount(Number(e.target.value))} className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gold/50" />
             <p className="text-[11px] text-muted-foreground mt-1" dir="ltr">
               {rate ? `≈ ${effectiveAmountEgp.toLocaleString(undefined,{maximumFractionDigits:2})} EGP (1 USD = ${rate.toFixed(2)} EGP)` : t("جاري تحميل سعر الصرف...", "Loading exchange rate...")}
             </p>
           </div>
         ) : (
           <div>
-            <label className="text-xs font-bold mb-1 block">{t("المبلغ (EGP) — الحد الأدنى 100", "Amount (EGP) — minimum 100")}</label>
-            <input dir="ltr" type="number" min={100} max={1000000} required value={amount} onChange={(e) => setAmount(Number(e.target.value))} className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gold/50" />
+            <label className="text-xs font-bold mb-1 block">{t(`المبلغ (EGP) — الحد الأدنى ${MIN_EGP_LOCAL}`, `Amount (EGP) — minimum ${MIN_EGP_LOCAL}`)}</label>
+            <input dir="ltr" type="number" min={MIN_EGP_LOCAL} max={1000000} required value={amount} onChange={(e) => setAmount(Number(e.target.value))} className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gold/50" />
           </div>
         )}
         <div>
