@@ -1257,8 +1257,10 @@ function VipTab() {
     onError: (e: Error) => toast.error(e.message),
   });
   const mRevoke = useMutation({
-    mutationFn: (uid: string) => revokeFn({ data: { userId: uid } }),
+    mutationFn: (val: string) => revokeFn({ data: { customIdOrUserId: val } }),
     onSuccess: () => { toast.success("تم السحب — رجع لوضع تلقائي"); setRevokeUid(""); },
+    onError: (e: Error) => toast.error(e.message),
+  });
     onError: (e: Error) => toast.error(e.message),
   });
 
