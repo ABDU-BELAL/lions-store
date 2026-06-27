@@ -16,6 +16,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { Toaster } from "sonner";
 import { LanguageProvider, useLang } from "@/i18n/LanguageProvider";
 import { CurrencyProvider } from "@/i18n/CurrencyProvider";
+import { VipCongratsModal } from "@/components/VipCongratsModal";
 
 function NotFoundComponent() {
   return (
@@ -99,6 +100,7 @@ function RootComponent() {
         <CurrencyProvider>
           <AuthProvider>
             <Outlet />
+            <VipCongratsModal />
             <ToasterLocalized />
           </AuthProvider>
         </CurrencyProvider>

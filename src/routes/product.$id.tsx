@@ -6,9 +6,10 @@ import { AppLayout } from "@/components/AppLayout";
 import { FramedImage } from "@/components/FramedImage";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { signBucketPath } from "@/lib/storage.server";
-import { purchaseProduct, getMyProductDiscount } from "@/lib/shop.functions";
+import { purchaseProduct } from "@/lib/shop.functions";
 import { getMyAccount } from "@/lib/account.functions";
 import { useAuth } from "@/hooks/useAuth";
+import { useEffectiveDiscount } from "@/hooks/useEffectiveDiscount";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Wallet, ArrowRight, ArrowLeft } from "lucide-react";
@@ -80,17 +81,11 @@ function ProductPage() {
   const qc = useQueryClient();
   const accountFn = useServerFn(getMyAccount);
   const purchaseFn = useServerFn(purchaseProduct);
-  const discountFn = useServerFn(getMyProductDiscount);
   const { t, lang, dir } = useLang();
   const { format } = useCurrency();
 
   const account = useQuery({ queryKey: ["account"], queryFn: () => accountFn(), enabled: !!user });
-  const discountQ = useQuery({
-    queryKey: ["my-discount", product.id, user?.id],
-    queryFn: () => discountFn({ data: { productId: product.id } }),
-    enabled: !!user,
-  });
-  const discountPct = Number(discountQ.data?.percent ?? 0);
+  const { percent: discountPct } = useEffectiveDiscount(product.id);
 
   const p = product;
   const title = pickLocalized(p.title, p.title_en, lang);

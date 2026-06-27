@@ -13,6 +13,8 @@ import {
   adminListDiscounts, adminUpsertDiscount, adminDeleteDiscount,
   adminBrand1TestConnection, adminBrand1ListProducts, adminSetProductProvider,
 } from "@/lib/admin.functions";
+import { listVipTiers, adminUpdateVipTier, adminAssignVip, adminRevokeVip } from "@/lib/vip.functions";
+import { VipBadge } from "@/components/VipBadge";
 
 
 import { adminListBanners, adminUpsertBanner, adminDeleteBanner, adminUploadBannerImage } from "@/lib/banners.functions";
@@ -42,7 +44,7 @@ export const Route = createFileRoute("/admin")({
   component: AdminPage,
 });
 
-type Tab = "stats" | "topups" | "orders" | "products" | "collections" | "banners" | "settings" | "payments" | "users" | "discounts" | "admins";
+type Tab = "stats" | "topups" | "orders" | "products" | "collections" | "banners" | "settings" | "payments" | "users" | "discounts" | "vip" | "admins";
 
 function AdminPage() {
   const { user, loading } = useAuth();
@@ -83,6 +85,7 @@ function AdminPage() {
           ...(account.data.isSuperAdmin ? [{ id: "payments" as Tab, label: "وسائل الدفع" }] : []),
           ...(account.data.isSuperAdmin ? [{ id: "users" as Tab, label: "المستخدمين" }] : []),
           ...(account.data.isSuperAdmin ? [{ id: "discounts" as Tab, label: "الخصومات" }] : []),
+          ...(account.data.isSuperAdmin ? [{ id: "vip" as Tab, label: "VIP" }] : []),
           { id: "admins", label: "الأدمنز" },
 
 
@@ -105,6 +108,7 @@ function AdminPage() {
       {tab === "payments" && account.data.isSuperAdmin && <PaymentMethodsTab />}
       {tab === "users" && account.data.isSuperAdmin && <UsersTab />}
       {tab === "discounts" && account.data.isSuperAdmin && <DiscountsTab />}
+      {tab === "vip" && account.data.isSuperAdmin && <VipTab />}
       {tab === "admins" && <AdminsTab isSuper={!!account.data.isSuperAdmin} />}
 
 
@@ -1221,6 +1225,87 @@ function DiscountsTab() {
               </div>
             </div>
           ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// =============================================================
+// VIP Tab — manage tier table + manual assignment
+// =============================================================
+function VipTab() {
+  const listFn = useServerFn(listVipTiers);
+  const updateFn = useServerFn(adminUpdateVipTier);
+  const assignFn = useServerFn(adminAssignVip);
+  const revokeFn = useServerFn(adminRevokeVip);
+  const qc = useQueryClient();
+  const { data: tiers } = useQuery({ queryKey: ["vip-tiers"], queryFn: () => listFn() });
+  const [edits, setEdits] = useState<Record<number, { name_ar?: string; name_en?: string; discount_percent?: number; spend_threshold?: number; color_hex?: string }>>({});
+  const [target, setTarget] = useState("");
+  const [assignLvl, setAssignLvl] = useState<number>(1);
+  const [revokeUid, setRevokeUid] = useState("");
+
+  const mUpdate = useMutation({
+    mutationFn: (v: { level: number } & Record<string, unknown>) => updateFn({ data: v as never }),
+    onSuccess: (_d, v) => { toast.success(`تم حفظ المستوى ${v.level}`); setEdits((e) => { const c = { ...e }; delete c[v.level]; return c; }); qc.invalidateQueries({ queryKey: ["vip-tiers"] }); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const mAssign = useMutation({
+    mutationFn: (v: { customIdOrUserId: string; level: number }) => assignFn({ data: v }),
+    onSuccess: () => { toast.success("تم منح المستوى"); setTarget(""); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const mRevoke = useMutation({
+    mutationFn: (uid: string) => revokeFn({ data: { userId: uid } }),
+    onSuccess: () => { toast.success("تم السحب — رجع لوضع تلقائي"); setRevokeUid(""); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <div className="space-y-6">
+      {/* Manual assign */}
+      <div className="rounded-2xl bg-card/70 border border-border p-5 space-y-3">
+        <h3 className="text-lg font-extrabold text-gold-gradient">منح VIP لمستخدم</h3>
+        <p className="text-xs text-muted-foreground">أدخل الرقم التعريفي (custom_id) للمستخدم أو الـ UUID. المنح اليدوي يلغي الترقية التلقائية لهذا المستخدم.</p>
+        <div className="flex gap-2 flex-wrap items-end">
+          <input value={target} onChange={(e) => setTarget(e.target.value)} placeholder="custom_id (مثال: 12345678)" className="flex-1 min-w-[180px] rounded-xl bg-secondary px-3 py-2" />
+          <select value={assignLvl} onChange={(e) => setAssignLvl(Number(e.target.value))} className="rounded-xl bg-secondary px-3 py-2">
+            <option value={0}>0 — بدون</option>
+            {Array.from({ length: 20 }).map((_, i) => <option key={i+1} value={i+1}>LV {i+1}</option>)}
+          </select>
+          <button disabled={mAssign.isPending || !target.trim()} onClick={() => mAssign.mutate({ customIdOrUserId: target.trim(), level: assignLvl })} className="rounded-xl bg-gold-gradient text-primary-foreground font-extrabold px-4 py-2 disabled:opacity-50">
+            {mAssign.isPending ? "..." : "منح"}
+          </button>
+        </div>
+        <div className="flex gap-2 flex-wrap items-end pt-2 border-t border-border">
+          <input value={revokeUid} onChange={(e) => setRevokeUid(e.target.value)} placeholder="UUID للمستخدم لإلغاء المنح اليدوي" className="flex-1 min-w-[180px] rounded-xl bg-secondary px-3 py-2" dir="ltr" />
+          <button disabled={mRevoke.isPending || !revokeUid.trim()} onClick={() => mRevoke.mutate(revokeUid.trim())} className="rounded-xl bg-destructive text-white font-bold px-4 py-2 disabled:opacity-50">سحب يدوي</button>
+        </div>
+      </div>
+
+      {/* 20-level editable table */}
+      <div>
+        <h3 className="text-lg font-extrabold text-gold-gradient mb-2">المستويات (20)</h3>
+        <p className="text-xs text-muted-foreground mb-3">عدّل الاسم بالعربية/الإنجليزية، نسبة الخصم %، وحد الإنفاق (EGP) لكل مستوى. اضغط حفظ بعد كل تغيير.</p>
+        <div className="space-y-2">
+          {(tiers ?? []).map((t) => {
+            const e = edits[t.level] ?? {};
+            const get = <K extends keyof typeof e>(k: K, def: unknown) => (e[k] !== undefined ? e[k] : def);
+            return (
+              <div key={t.level} className="rounded-2xl bg-card/60 border border-border p-3 grid grid-cols-1 md:grid-cols-[auto_1fr_1fr_120px_140px_auto] gap-2 items-center">
+                <div className="flex items-center gap-2 min-w-[110px]">
+                  <VipBadge level={t.level} color={t.color_hex} accent={t.accent_hex} size={48} />
+                  <span className="font-black text-gold">LV {t.level}</span>
+                </div>
+                <input value={String(get("name_ar", t.name_ar) ?? "")} onChange={(ev) => setEdits({ ...edits, [t.level]: { ...e, name_ar: ev.target.value } })} placeholder="اسم عربي" className="rounded-lg bg-secondary px-3 py-2 text-sm" />
+                <input value={String(get("name_en", t.name_en) ?? "")} onChange={(ev) => setEdits({ ...edits, [t.level]: { ...e, name_en: ev.target.value } })} placeholder="English name" dir="ltr" className="rounded-lg bg-secondary px-3 py-2 text-sm" />
+                <input type="number" step="0.5" min="0" max="100" value={String(get("discount_percent", Number(t.discount_percent)))} onChange={(ev) => setEdits({ ...edits, [t.level]: { ...e, discount_percent: Number(ev.target.value) } })} placeholder="%" className="rounded-lg bg-secondary px-3 py-2 text-sm" />
+                <input type="number" min="0" value={String(get("spend_threshold", Number(t.spend_threshold)))} onChange={(ev) => setEdits({ ...edits, [t.level]: { ...e, spend_threshold: Number(ev.target.value) } })} placeholder="حد الإنفاق EGP" className="rounded-lg bg-secondary px-3 py-2 text-sm" />
+                <button disabled={mUpdate.isPending || Object.keys(e).length === 0} onClick={() => mUpdate.mutate({ level: t.level, ...e })} className="rounded-lg bg-gold-gradient text-primary-foreground font-bold px-3 py-2 text-sm disabled:opacity-40">حفظ</button>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>

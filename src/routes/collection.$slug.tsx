@@ -10,8 +10,9 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { FramedImage } from "@/components/FramedImage";
 import { Wallet, X, ShoppingBag } from "lucide-react";
-import { useLang, pickLocalized } from "@/i18n/LanguageProvider";
+import { useLang, pickLocalized, type Lang } from "@/i18n/LanguageProvider";
 import { useCurrency } from "@/i18n/CurrencyProvider";
+import { useEffectiveDiscount } from "@/hooks/useEffectiveDiscount";
 
 export const Route = createFileRoute("/collection/$slug")({
   head: ({ params }) => ({ meta: [{ title: `${params.slug} — Lion Store` }] }),
@@ -148,21 +149,50 @@ function CollectionPage() {
         </>
       )}
 
-      {selected && (() => {
-        const qtyEnabled = !!selected.quantity_enabled;
-        const unitSize = Number(selected.unit_size ?? 1) || 1;
-        const unitLabel = selected.unit_label ?? "";
-        const minQty = selected.min_quantity != null ? Number(selected.min_quantity) : null;
-        const maxQty = selected.max_quantity != null ? Number(selected.max_quantity) : null;
-        const qtyNum = Number(quantity) || 0;
-        const total = qtyEnabled ? Math.round((qtyNum / unitSize) * Number(selected.price) * 100) / 100 : Number(selected.price);
-        const qtyValid = !qtyEnabled || (qtyNum > 0 && (minQty == null || qtyNum >= minQty) && (maxQty == null || qtyNum <= maxQty));
-        const selTitle = pickLocalized(selected.title, selected.title_en, lang);
-        const selDesc = pickLocalized(selected.description, selected.description_en, lang);
-        return (
-          <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 backdrop-blur-sm p-4" onClick={() => { setSelected(null); setQuantity(""); }}>
+      {selected && <PurchaseModal
+        selected={selected}
+        onClose={() => { setSelected(null); setQuantity(""); setGameId(""); setSubPassword(""); setIdError(false); setPwError(false); }}
+        gameId={gameId} setGameId={setGameId}
+        subPassword={subPassword} setSubPassword={setSubPassword}
+        idError={idError} setIdError={setIdError}
+        pwError={pwError} setPwError={setPwError}
+        quantity={quantity} setQuantity={setQuantity}
+        balance={balance} mutation={mutation}
+        t={t} lang={lang} dir={dir} format={format}
+      />}
+    </AppLayout>
+  );
+}
+
+type ModalProps = {
+  selected: ColProduct; onClose: () => void;
+  gameId: string; setGameId: (v: string) => void;
+  subPassword: string; setSubPassword: (v: string) => void;
+  idError: boolean; setIdError: (v: boolean) => void;
+  pwError: boolean; setPwError: (v: boolean) => void;
+  quantity: string; setQuantity: (v: string) => void;
+  balance: number;
+  mutation: { mutate: (v: { productId: string; gameUserId?: string; quantity?: number }) => void; isPending: boolean };
+  t: (a: string, b: string) => string; lang: Lang; dir: string; format: (n: number) => string;
+};
+
+function PurchaseModal({ selected, onClose, gameId, setGameId, subPassword, setSubPassword, idError, setIdError, pwError, setPwError, quantity, setQuantity, balance, mutation, t, lang, dir, format }: ModalProps) {
+  const { percent: discountPct } = useEffectiveDiscount(selected.id);
+  const qtyEnabled = !!selected.quantity_enabled;
+  const unitSize = Number(selected.unit_size ?? 1) || 1;
+  const unitLabel = selected.unit_label ?? "";
+  const minQty = selected.min_quantity != null ? Number(selected.min_quantity) : null;
+  const maxQty = selected.max_quantity != null ? Number(selected.max_quantity) : null;
+  const qtyNum = Number(quantity) || 0;
+  const baseTotal = qtyEnabled ? Math.round((qtyNum / unitSize) * Number(selected.price) * 100) / 100 : Number(selected.price);
+  const total = discountPct > 0 ? Math.round(baseTotal * (1 - discountPct / 100) * 100) / 100 : baseTotal;
+  const qtyValid = !qtyEnabled || (qtyNum > 0 && (minQty == null || qtyNum >= minQty) && (maxQty == null || qtyNum <= maxQty));
+  const selTitle = pickLocalized(selected.title, selected.title_en, lang);
+  const selDesc = pickLocalized(selected.description, selected.description_en, lang);
+  return (
+          <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 backdrop-blur-sm p-4" onClick={onClose}>
             <div onClick={(e) => e.stopPropagation()} className="w-full max-w-md rounded-3xl bg-card border-gold shadow-card p-6 relative max-h-[90vh] overflow-y-auto">
-              <button onClick={() => { setSelected(null); setQuantity(""); }} className={`absolute top-3 ${dir === "rtl" ? "left-3" : "right-3"} grid place-items-center size-9 rounded-full bg-secondary`}><X className="size-5" /></button>
+              <button onClick={onClose} className={`absolute top-3 ${dir === "rtl" ? "left-3" : "right-3"} grid place-items-center size-9 rounded-full bg-secondary`}><X className="size-5" /></button>
               <h3 className="text-xl font-black text-gold-gradient text-center">{t("تأكيد الشراء", "Confirm purchase")}</h3>
               <div className="mt-4 rounded-2xl bg-secondary/40 p-4 text-center">
                 <p className="text-sm text-muted-foreground">{selTitle}</p>
@@ -170,9 +200,20 @@ function CollectionPage() {
                   <p className="mt-2 text-xs text-foreground/80 whitespace-pre-line">{selDesc}</p>
                 )}
                 {qtyEnabled ? (
-                  <p className="text-base font-bold text-gold mt-1">{format(Number(selected.price))} <span className="text-xs text-muted-foreground">/ {t("كل", "per")} {unitSize.toLocaleString()} {unitLabel || t("وحدة", "unit")}</span></p>
+                  <p className="text-base font-bold text-gold mt-1">
+                    {discountPct > 0 && <span className="text-xs text-muted-foreground line-through me-2">{format(Number(selected.price))}</span>}
+                    {format(discountPct > 0 ? Math.round(Number(selected.price) * (1 - discountPct / 100) * 100) / 100 : Number(selected.price))}
+                    <span className="text-xs text-muted-foreground"> / {t("كل", "per")} {unitSize.toLocaleString()} {unitLabel || t("وحدة", "unit")}</span>
+                    {discountPct > 0 && <span className="ms-2 text-[10px] font-extrabold bg-gold-gradient text-primary-foreground rounded-full px-2 py-0.5">−{discountPct}%</span>}
+                  </p>
                 ) : (
-                  <p className="text-3xl font-black text-gold mt-1">{format(Number(selected.price))}</p>
+                  <div className="mt-1">
+                    {discountPct > 0 && <p className="text-sm text-muted-foreground line-through">{format(Number(selected.price))}</p>}
+                    <p className="text-3xl font-black text-gold flex items-center justify-center gap-2">
+                      {format(discountPct > 0 ? Math.round(Number(selected.price) * (1 - discountPct / 100) * 100) / 100 : Number(selected.price))}
+                      {discountPct > 0 && <span className="text-[10px] font-extrabold bg-gold-gradient text-primary-foreground rounded-full px-2 py-0.5">−{discountPct}%</span>}
+                    </p>
+                  </div>
                 )}
               </div>
               {qtyEnabled && (
@@ -246,8 +287,5 @@ function CollectionPage() {
               })()}
             </div>
           </div>
-        );
-      })()}
-    </AppLayout>
   );
 }

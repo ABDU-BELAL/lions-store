@@ -103,6 +103,39 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          body: string | null
+          created_at: string
+          data: Json | null
+          id: string
+          read_at: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          data?: Json | null
+          id?: string
+          read_at?: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          data?: Json | null
+          id?: string
+          read_at?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       orders: {
         Row: {
           amount: number
@@ -265,9 +298,13 @@ export type Database = {
           full_name: string
           id: string
           is_banned: boolean
+          lifetime_spend: number
           notified_at: string | null
           phone: string
           updated_at: string
+          vip_assigned_at: string | null
+          vip_assigned_by: string | null
+          vip_level: number
         }
         Insert: {
           created_at?: string
@@ -276,9 +313,13 @@ export type Database = {
           full_name?: string
           id: string
           is_banned?: boolean
+          lifetime_spend?: number
           notified_at?: string | null
           phone?: string
           updated_at?: string
+          vip_assigned_at?: string | null
+          vip_assigned_by?: string | null
+          vip_level?: number
         }
         Update: {
           created_at?: string
@@ -287,9 +328,13 @@ export type Database = {
           full_name?: string
           id?: string
           is_banned?: boolean
+          lifetime_spend?: number
           notified_at?: string | null
           phone?: string
           updated_at?: string
+          vip_assigned_at?: string | null
+          vip_assigned_by?: string | null
+          vip_level?: number
         }
         Relationships: []
       }
@@ -451,6 +496,75 @@ export type Database = {
         }
         Relationships: []
       }
+      vip_audit_log: {
+        Row: {
+          action: string
+          actor_id: string | null
+          created_at: string
+          id: string
+          meta: Json | null
+          new_level: number | null
+          old_level: number | null
+          target_user_id: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          meta?: Json | null
+          new_level?: number | null
+          old_level?: number | null
+          target_user_id?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          meta?: Json | null
+          new_level?: number | null
+          old_level?: number | null
+          target_user_id?: string | null
+        }
+        Relationships: []
+      }
+      vip_tiers: {
+        Row: {
+          accent_hex: string
+          badge_url: string | null
+          color_hex: string
+          discount_percent: number
+          level: number
+          name_ar: string
+          name_en: string
+          spend_threshold: number
+          updated_at: string
+        }
+        Insert: {
+          accent_hex?: string
+          badge_url?: string | null
+          color_hex?: string
+          discount_percent?: number
+          level: number
+          name_ar: string
+          name_en: string
+          spend_threshold?: number
+          updated_at?: string
+        }
+        Update: {
+          accent_hex?: string
+          badge_url?: string | null
+          color_hex?: string
+          discount_percent?: number
+          level?: number
+          name_ar?: string
+          name_en?: string
+          spend_threshold?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       wallet_transactions: {
         Row: {
           amount: number
@@ -510,6 +624,24 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_assign_vip: {
+        Args: { p_level: number; p_target: string }
+        Returns: undefined
+      }
+      admin_revoke_vip: { Args: { p_target: string }; Returns: undefined }
+      admin_update_vip_tier: {
+        Args: {
+          p_accent_hex?: string
+          p_badge_url?: string
+          p_color_hex?: string
+          p_discount_percent?: number
+          p_level: number
+          p_name_ar?: string
+          p_name_en?: string
+          p_spend_threshold?: number
+        }
+        Returns: undefined
+      }
       credit_wallet: {
         Args: {
           p_amount: number
@@ -522,6 +654,10 @@ export type Database = {
         Returns: number
       }
       gen_custom_id: { Args: never; Returns: string }
+      get_effective_discount: {
+        Args: { p_product_id: string; p_user_id: string }
+        Returns: number
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
