@@ -1241,7 +1241,7 @@ function VipTab() {
   const revokeFn = useServerFn(adminRevokeVip);
   const qc = useQueryClient();
   const { data: tiers } = useQuery({ queryKey: ["vip-tiers"], queryFn: () => listFn() });
-  const [edits, setEdits] = useState<Record<number, { name_ar?: string; name_en?: string; discount_percent?: number; spend_threshold?: number; usd_spend_threshold?: number; color_hex?: string }>>({});
+  const [edits, setEdits] = useState<Record<number, { name_ar?: string; name_en?: string; discount_percent?: number; spend_threshold?: number; usd_spend_threshold?: number; color_hex?: string; badge_url?: string }>>({});
   const [target, setTarget] = useState("");
   const [assignLvl, setAssignLvl] = useState<number>(1);
   const [revokeUid, setRevokeUid] = useState("");
@@ -1292,15 +1292,36 @@ function VipTab() {
           {(tiers ?? []).map((t) => {
             const e = edits[t.level] ?? {};
             const get = <K extends keyof typeof e>(k: K, def: unknown) => (e[k] !== undefined ? e[k] : def);
-            const tierAny = t as typeof t & { usd_spend_threshold?: number | string };
+            const tierAny = t as typeof t & { usd_spend_threshold?: number | string; badge_url?: string | null };
+            const currentBadge = (e.badge_url !== undefined ? e.badge_url : (tierAny.badge_url ?? "")) || "";
+            const onPickImage = async (file: File) => {
+              if (!file.type.startsWith("image/")) { toast.error("اختر صورة"); return; }
+              if (file.size > 200 * 1024) { toast.error("الحد الأقصى 200KB"); return; }
+              const dataUrl = await new Promise<string>((res, rej) => {
+                const r = new FileReader();
+                r.onload = () => res(String(r.result));
+                r.onerror = () => rej(r.error);
+                r.readAsDataURL(file);
+              });
+              setEdits({ ...edits, [t.level]: { ...e, badge_url: dataUrl } });
+            };
             const L = ({ children }: { children: React.ReactNode }) => (
               <span className="block text-[10px] font-extrabold text-gold/70 mb-1 uppercase tracking-wide">{children}</span>
             );
             return (
               <div key={t.level} className="rounded-2xl bg-card/60 border border-border p-3 grid grid-cols-1 md:grid-cols-[auto_1fr_1fr_110px_130px_130px_auto] gap-2 md:items-end">
-                <div className="flex items-center gap-2 min-w-[110px] md:pb-2">
-                  <VipBadge level={t.level} color={t.color_hex} accent={t.accent_hex} size={48} />
-                  <span className="font-black text-gold">LV {t.level}</span>
+                <div className="flex flex-col items-center gap-2 min-w-[110px] md:pb-1">
+                  <VipBadge level={t.level} color={t.color_hex} accent={t.accent_hex} badgeUrl={currentBadge || null} size={56} />
+                  <span className="font-black text-gold text-sm">LV {t.level}</span>
+                  <div className="flex flex-col gap-1 w-full">
+                    <label className="text-[10px] text-center rounded-md bg-secondary hover:bg-secondary/70 cursor-pointer px-2 py-1 font-bold">
+                      {currentBadge ? "تغيير الصورة" : "رفع صورة"}
+                      <input type="file" accept="image/*" className="hidden" onChange={(ev) => { const f = ev.target.files?.[0]; if (f) void onPickImage(f); ev.target.value = ""; }} />
+                    </label>
+                    {currentBadge && (
+                      <button type="button" onClick={() => setEdits({ ...edits, [t.level]: { ...e, badge_url: "" } })} className="text-[10px] rounded-md bg-destructive/20 hover:bg-destructive/30 text-destructive px-2 py-1 font-bold">إزالة</button>
+                    )}
+                  </div>
                 </div>
                 <div>
                   <L>الاسم بالعربي</L>

@@ -216,7 +216,7 @@ function VipSection({ level, lifetimeSpend, manual, tiers, lang, t, format }: {
 
       {/* Current badge + progress */}
       <div className="flex items-center gap-5 mb-5">
-        <VipBadge level={level || 1} color={current?.color_hex} accent={current?.accent_hex} current={level > 0} locked={level === 0} size={104} />
+        <VipBadge level={level || 1} color={current?.color_hex} accent={current?.accent_hex} badgeUrl={(current as { badge_url?: string | null } | undefined)?.badge_url ?? null} current={level > 0} locked={level === 0} size={104} />
         <div className="flex-1 min-w-0">
           <p className="text-xl font-black text-gold-gradient">
             {level > 0 ? (
@@ -271,7 +271,7 @@ function VipSection({ level, lifetimeSpend, manual, tiers, lang, t, format }: {
             return (
               <div key={tr.level} className={`rounded-xl border p-2 text-center ${isCurrent ? "border-gold bg-gold/10" : "border-border bg-secondary/30"}`}>
                 <div className="flex justify-center">
-                  <VipBadge level={tr.level} color={tr.color_hex} accent={tr.accent_hex} locked={locked} current={isCurrent} size={56} />
+                  <VipBadge level={tr.level} color={tr.color_hex} accent={tr.accent_hex} badgeUrl={(tr as { badge_url?: string | null }).badge_url ?? null} locked={locked} current={isCurrent} size={56} />
                 </div>
                 <p className="mt-1 text-[11px] font-bold truncate">{lang === "ar" ? tr.name_ar : tr.name_en}</p>
                 <p className="text-[10px] text-muted-foreground">{Number(tr.discount_percent).toFixed(1)}%</p>
