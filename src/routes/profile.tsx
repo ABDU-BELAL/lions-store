@@ -275,6 +275,8 @@ function VipSection({ level, lifetimeSpend, manual, tiers, lang, t, format }: {
                 </div>
                 <p className="mt-1 text-[11px] font-bold truncate">{lang === "ar" ? tr.name_ar : tr.name_en}</p>
                 <p className="text-[10px] text-muted-foreground">{Number(tr.discount_percent).toFixed(1)}%</p>
+                <p className="text-[10px] text-muted-foreground"><bdi>{format(Number(tr.spend_threshold))}</bdi></p>
+                <p className="text-[10px] text-muted-foreground"><bdi>{fmtUsd(Number(tr.usd_spend_threshold ?? 0))}</bdi></p>
               </div>
             );
           })}
