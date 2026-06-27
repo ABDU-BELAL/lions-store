@@ -13,6 +13,8 @@ import {
   adminListDiscounts, adminUpsertDiscount, adminDeleteDiscount,
   adminBrand1TestConnection, adminBrand1ListProducts, adminSetProductProvider,
 } from "@/lib/admin.functions";
+import { listVipTiers, adminUpdateVipTier, adminAssignVip, adminRevokeVip } from "@/lib/vip.functions";
+import { VipBadge } from "@/components/VipBadge";
 
 
 import { adminListBanners, adminUpsertBanner, adminDeleteBanner, adminUploadBannerImage } from "@/lib/banners.functions";
@@ -42,7 +44,7 @@ export const Route = createFileRoute("/admin")({
   component: AdminPage,
 });
 
-type Tab = "stats" | "topups" | "orders" | "products" | "collections" | "banners" | "settings" | "payments" | "users" | "discounts" | "admins";
+type Tab = "stats" | "topups" | "orders" | "products" | "collections" | "banners" | "settings" | "payments" | "users" | "discounts" | "vip" | "admins";
 
 function AdminPage() {
   const { user, loading } = useAuth();
@@ -83,6 +85,7 @@ function AdminPage() {
           ...(account.data.isSuperAdmin ? [{ id: "payments" as Tab, label: "وسائل الدفع" }] : []),
           ...(account.data.isSuperAdmin ? [{ id: "users" as Tab, label: "المستخدمين" }] : []),
           ...(account.data.isSuperAdmin ? [{ id: "discounts" as Tab, label: "الخصومات" }] : []),
+          ...(account.data.isSuperAdmin ? [{ id: "vip" as Tab, label: "VIP" }] : []),
           { id: "admins", label: "الأدمنز" },
 
 
@@ -105,6 +108,7 @@ function AdminPage() {
       {tab === "payments" && account.data.isSuperAdmin && <PaymentMethodsTab />}
       {tab === "users" && account.data.isSuperAdmin && <UsersTab />}
       {tab === "discounts" && account.data.isSuperAdmin && <DiscountsTab />}
+      {tab === "vip" && account.data.isSuperAdmin && <VipTab />}
       {tab === "admins" && <AdminsTab isSuper={!!account.data.isSuperAdmin} />}
 
 
