@@ -89,6 +89,16 @@ export function VipBadge({ level, color, accent, badgeUrl, locked = false, curre
           }}
         />
       )}
+      {badgeUrl ? (
+        <img
+          src={badgeUrl}
+          alt={`VIP level ${level}`}
+          width={size}
+          height={size}
+          className={`object-contain ${locked ? "grayscale opacity-50" : ""}`}
+          style={{ filter: locked ? "" : `drop-shadow(0 4px 14px ${primary}55)` }}
+        />
+      ) : (
       <svg
         viewBox="0 0 100 100"
         width={size}
