@@ -98,9 +98,10 @@ export const adminAssignVip = createServerFn({ method: "POST" })
     let targetId: string | null = null;
     let targetProfile: { full_name?: string | null; custom_id?: string | null; email?: string | null } | null = null;
     const sel = "id, full_name, custom_id, email";
-    const tryFind = async (col: string, val: string) => {
+    const tryFind = async (col: string, val: string): Promise<void> => {
+      if (targetId) return;
       const { data: p } = await supabaseAdmin.from("profiles").select(sel).eq(col, val).maybeSingle();
-      if (p) { targetId = p.id; targetProfile = p; }
+      if (p) { targetId = (p as { id: string }).id; targetProfile = p as typeof targetProfile; }
     };
     if (isUuid) await tryFind("id", v);
     else if (isCustomId) await tryFind("custom_id", v);
