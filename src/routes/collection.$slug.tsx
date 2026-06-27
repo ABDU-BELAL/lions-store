@@ -173,7 +173,7 @@ type ModalProps = {
   quantity: string; setQuantity: (v: string) => void;
   balance: number;
   mutation: { mutate: (v: { productId: string; gameUserId?: string; quantity?: number }) => void; isPending: boolean };
-  t: (a: string, b: string) => string; lang: string; dir: string; format: (n: number) => string;
+  t: (a: string, b: string) => string; lang: Lang; dir: string; format: (n: number) => string;
 };
 
 function PurchaseModal({ selected, onClose, gameId, setGameId, subPassword, setSubPassword, idError, setIdError, pwError, setPwError, quantity, setQuantity, balance, mutation, t, lang, dir, format }: ModalProps) {
@@ -190,9 +190,9 @@ function PurchaseModal({ selected, onClose, gameId, setGameId, subPassword, setS
   const selTitle = pickLocalized(selected.title, selected.title_en, lang);
   const selDesc = pickLocalized(selected.description, selected.description_en, lang);
   return (
-          <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 backdrop-blur-sm p-4" onClick={() => { setSelected(null); setQuantity(""); }}>
+          <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 backdrop-blur-sm p-4" onClick={onClose}>
             <div onClick={(e) => e.stopPropagation()} className="w-full max-w-md rounded-3xl bg-card border-gold shadow-card p-6 relative max-h-[90vh] overflow-y-auto">
-              <button onClick={() => { setSelected(null); setQuantity(""); }} className={`absolute top-3 ${dir === "rtl" ? "left-3" : "right-3"} grid place-items-center size-9 rounded-full bg-secondary`}><X className="size-5" /></button>
+              <button onClick={onClose} className={`absolute top-3 ${dir === "rtl" ? "left-3" : "right-3"} grid place-items-center size-9 rounded-full bg-secondary`}><X className="size-5" /></button>
               <h3 className="text-xl font-black text-gold-gradient text-center">{t("تأكيد الشراء", "Confirm purchase")}</h3>
               <div className="mt-4 rounded-2xl bg-secondary/40 p-4 text-center">
                 <p className="text-sm text-muted-foreground">{selTitle}</p>
@@ -200,9 +200,20 @@ function PurchaseModal({ selected, onClose, gameId, setGameId, subPassword, setS
                   <p className="mt-2 text-xs text-foreground/80 whitespace-pre-line">{selDesc}</p>
                 )}
                 {qtyEnabled ? (
-                  <p className="text-base font-bold text-gold mt-1">{format(Number(selected.price))} <span className="text-xs text-muted-foreground">/ {t("كل", "per")} {unitSize.toLocaleString()} {unitLabel || t("وحدة", "unit")}</span></p>
+                  <p className="text-base font-bold text-gold mt-1">
+                    {discountPct > 0 && <span className="text-xs text-muted-foreground line-through me-2">{format(Number(selected.price))}</span>}
+                    {format(discountPct > 0 ? Math.round(Number(selected.price) * (1 - discountPct / 100) * 100) / 100 : Number(selected.price))}
+                    <span className="text-xs text-muted-foreground"> / {t("كل", "per")} {unitSize.toLocaleString()} {unitLabel || t("وحدة", "unit")}</span>
+                    {discountPct > 0 && <span className="ms-2 text-[10px] font-extrabold bg-gold-gradient text-primary-foreground rounded-full px-2 py-0.5">−{discountPct}%</span>}
+                  </p>
                 ) : (
-                  <p className="text-3xl font-black text-gold mt-1">{format(Number(selected.price))}</p>
+                  <div className="mt-1">
+                    {discountPct > 0 && <p className="text-sm text-muted-foreground line-through">{format(Number(selected.price))}</p>}
+                    <p className="text-3xl font-black text-gold flex items-center justify-center gap-2">
+                      {format(discountPct > 0 ? Math.round(Number(selected.price) * (1 - discountPct / 100) * 100) / 100 : Number(selected.price))}
+                      {discountPct > 0 && <span className="text-[10px] font-extrabold bg-gold-gradient text-primary-foreground rounded-full px-2 py-0.5">−{discountPct}%</span>}
+                    </p>
+                  </div>
                 )}
               </div>
               {qtyEnabled && (
