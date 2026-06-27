@@ -104,7 +104,7 @@ export const adminAssignVip = createServerFn({ method: "POST" })
     }
     if (!targetId) throw new Error("المستخدم غير موجود");
 
-    const { error } = await supabaseAdmin.rpc("admin_assign_vip", { p_target: targetId, p_level: data.level });
+    const { error } = await context.supabase.rpc("admin_assign_vip", { p_target: targetId, p_level: data.level });
     if (error) { console.error("[adminAssignVip]", error); throw new Error("فشل المنح"); }
 
     // Telegram transparency alert
