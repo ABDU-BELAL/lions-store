@@ -276,8 +276,5 @@ function PurchaseModal({ selected, onClose, gameId, setGameId, subPassword, setS
               })()}
             </div>
           </div>
-        );
-      })()}
-    </AppLayout>
   );
 }
