@@ -129,6 +129,7 @@ export function VipBadge({ level, color, accent, badgeUrl, locked = false, curre
           LV{level}
         </text>
       </svg>
+      )}
       {locked && (
         <div className="absolute inset-0 grid place-items-center pointer-events-none">
           <div className="rounded-full bg-black/70 p-1.5">
