@@ -942,17 +942,31 @@ function UsersTab() {
   const [mode, setMode] = useState<"set" | "add" | "subtract">("set");
   const [amount, setAmount] = useState<string>("");
   const [note, setNote] = useState("");
+  const [editCurrency, setEditCurrency] = useState<"EGP" | "USD">("EGP");
+  const { rate } = useCurrency();
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin-users", search],
     queryFn: () => list({ data: { search: search || undefined } }),
   });
 
+  const computeEgpAmount = (): number | null => {
+    const n = Number(amount);
+    if (!isFinite(n) || isNaN(n)) return null;
+    if (editCurrency === "EGP") return n;
+    if (!rate || rate <= 0) return null;
+    return Math.round(n * rate * 100) / 100;
+  };
+
   const m = useMutation({
-    mutationFn: () => adjust({ data: { userId: editing!.id, mode, amount: Number(amount), note: note || undefined } }),
+    mutationFn: () => {
+      const egp = computeEgpAmount();
+      if (egp === null) throw new Error("سعر الصرف غير متاح، حاول مرة أخرى");
+      return adjust({ data: { userId: editing!.id, mode, amount: egp, note: note || undefined } });
+    },
     onSuccess: () => {
       toast.success("تم تعديل الرصيد");
-      setEditing(null); setAmount(""); setNote(""); setMode("set");
+      setEditing(null); setAmount(""); setNote(""); setMode("set"); setEditCurrency("EGP");
       qc.invalidateQueries({ queryKey: ["admin-users"] });
       qc.invalidateQueries({ queryKey: ["account"] });
     },
