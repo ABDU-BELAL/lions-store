@@ -13,6 +13,7 @@ import { Wallet, X, ShoppingBag } from "lucide-react";
 import { useLang, pickLocalized, type Lang } from "@/i18n/LanguageProvider";
 import { useCurrency } from "@/i18n/CurrencyProvider";
 import { useEffectiveDiscount } from "@/hooks/useEffectiveDiscount";
+import { CardPrice } from "@/components/CardPrice";
 
 export const Route = createFileRoute("/collection/$slug")({
   head: ({ params }) => ({ meta: [{ title: `${params.slug} — Lion Store` }] }),
@@ -139,7 +140,7 @@ function CollectionPage() {
                     {description && (
                       <p className="mt-1 text-[11px] text-muted-foreground line-clamp-2 whitespace-pre-line">{description}</p>
                     )}
-                    <p className="mt-1 text-lg font-black text-gold">{format(Number(pp.price))}</p>
+                    <CardPrice productId={pp.id} price={Number(pp.price)} />
                   </div>
                   <div className="absolute inset-x-0 top-0 h-1 bg-gold-gradient opacity-80" />
                 </button>

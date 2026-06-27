@@ -12,6 +12,7 @@ import { Wallet, X, ShoppingBag, Clock, CheckCircle2, XCircle, Search as SearchI
 import { z } from "zod";
 import { useLang, pickLocalized } from "@/i18n/LanguageProvider";
 import { useCurrency } from "@/i18n/CurrencyProvider";
+import { CardPrice } from "@/components/CardPrice";
 
 const shopSearch = z.object({ q: z.string().optional().catch("") });
 
@@ -189,7 +190,7 @@ function ShopPage() {
                   {description && (
                     <p className="mt-1 text-[11px] text-muted-foreground line-clamp-2 whitespace-pre-line">{description}</p>
                   )}
-                  <p className="mt-1 text-lg font-black text-gold">{format(Number(p.price))}</p>
+                  <CardPrice productId={p.id} price={Number(p.price)} />
                 </div>
               </button>
               <div className="px-4 pb-4 pt-2 text-center">
