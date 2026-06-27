@@ -10,7 +10,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { FramedImage } from "@/components/FramedImage";
 import { Wallet, X, ShoppingBag } from "lucide-react";
-import { useLang, pickLocalized } from "@/i18n/LanguageProvider";
+import { useLang, pickLocalized, type Lang } from "@/i18n/LanguageProvider";
 import { useCurrency } from "@/i18n/CurrencyProvider";
 import { useEffectiveDiscount } from "@/hooks/useEffectiveDiscount";
 
