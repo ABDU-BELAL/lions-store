@@ -24,6 +24,7 @@ import { getPaymentMethods, adminUpdatePaymentMethods } from "@/lib/topup.functi
 import { useState } from "react";
 import { toast } from "sonner";
 import { Users, Wallet, ShoppingBag, Package, CheckCircle2, XCircle, Trash2, Plus, Crown, Shield, Image as ImageIcon, Upload, Settings as SettingsIcon, Layers } from "lucide-react";
+import { useCurrency } from "@/i18n/CurrencyProvider";
 
 export const Route = createFileRoute("/admin")({
   ssr: false,
