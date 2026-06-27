@@ -1288,6 +1288,15 @@ function VipTab() {
       <div>
         <h3 className="text-lg font-extrabold text-gold-gradient mb-2">المستويات (20)</h3>
         <p className="text-xs text-muted-foreground mb-3">عدّل الاسم بالعربية/الإنجليزية، نسبة الخصم %، وحد الإنفاق بالـ EGP والـ USD لكل مستوى (الاتنين منفصلين عشان تقدر تظبط القيمتين يدوي). اضغط حفظ بعد كل تغيير.</p>
+        <div className="hidden md:grid grid-cols-[auto_1fr_1fr_110px_130px_130px_auto] gap-2 px-3 pb-2 text-[11px] font-extrabold text-gold/80 uppercase tracking-wide">
+          <div>المستوى</div>
+          <div>الاسم بالعربي</div>
+          <div dir="ltr">English Name</div>
+          <div>الخصم %</div>
+          <div>السعر بالجنيه (EGP)</div>
+          <div dir="ltr">Price in USD</div>
+          <div>حفظ</div>
+        </div>
         <div className="space-y-2">
           {(tiers ?? []).map((t) => {
             const e = edits[t.level] ?? {};
