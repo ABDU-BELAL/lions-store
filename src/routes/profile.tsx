@@ -167,8 +167,100 @@ function ProfilePage() {
             </Link>
           </div>
         </div>
+
+        {/* VIP Section */}
+        <VipSection
+          level={vip.data?.level ?? 0}
+          lifetimeSpend={vip.data?.lifetimeSpend ?? 0}
+          manual={!!vip.data?.manuallyAssigned}
+          tiers={tiers.data ?? []}
+          lang={lang}
+          t={t}
+          format={format}
+        />
       </div>
     </AppLayout>
+  );
+}
+
+type Tier = { level: number; name_ar: string; name_en: string; discount_percent: number | string; spend_threshold: number | string; color_hex: string; accent_hex: string };
+
+function VipSection({ level, lifetimeSpend, manual, tiers, lang, t, format }: {
+  level: number; lifetimeSpend: number; manual: boolean;
+  tiers: Tier[]; lang: string; t: (a: string, b: string) => string; format: (n: number) => string;
+}) {
+  const current = tiers.find((x) => x.level === level);
+  const next = tiers.find((x) => x.level === level + 1);
+  const currentThreshold = current ? Number(current.spend_threshold) : 0;
+  const nextThreshold = next ? Number(next.spend_threshold) : null;
+  const progress = nextThreshold && nextThreshold > currentThreshold
+    ? Math.min(100, Math.max(0, ((lifetimeSpend - currentThreshold) / (nextThreshold - currentThreshold)) * 100))
+    : 100;
+  const remaining = nextThreshold ? Math.max(0, nextThreshold - lifetimeSpend) : 0;
+
+  return (
+    <div className="mt-6 bg-card/80 border border-gold/30 rounded-2xl p-6 shadow-lg">
+      <div className="flex items-center gap-2 mb-4">
+        <Crown className="size-5 text-gold" />
+        <h2 className="text-lg font-extrabold text-gold-gradient">{t("مستوى VIP", "VIP Status")}</h2>
+        {manual && (
+          <span className="text-[10px] font-bold bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded-full">
+            {t("ممنوح يدوياً", "Admin granted")}
+          </span>
+        )}
+      </div>
+
+      {/* Current badge + progress */}
+      <div className="flex items-center gap-5 mb-5">
+        <VipBadge level={level || 1} color={current?.color_hex} accent={current?.accent_hex} current={level > 0} locked={level === 0} size={104} />
+        <div className="flex-1 min-w-0">
+          <p className="text-xl font-black text-gold-gradient">
+            {level > 0 ? `LV ${level} — ${lang === "ar" ? (current?.name_ar ?? "") : (current?.name_en ?? "")}` : t("بدون مستوى", "No tier yet")}
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            {t("إجمالي إنفاقك", "Lifetime spend")}: <span className="font-bold text-foreground">{format(lifetimeSpend)}</span>
+          </p>
+          {current && Number(current.discount_percent) > 0 && (
+            <p className="text-xs text-gold mt-0.5">
+              {t("خصم ثابت", "Permanent discount")}: <span className="font-extrabold">{Number(current.discount_percent).toFixed(1)}%</span>
+            </p>
+          )}
+
+          {nextThreshold !== null && !manual && (
+            <div className="mt-3">
+              <div className="h-2 rounded-full bg-secondary overflow-hidden">
+                <div className="h-full bg-gold-gradient transition-all duration-500" style={{ width: `${progress}%` }} />
+              </div>
+              <p className="text-[11px] text-muted-foreground mt-1">
+                {t("للوصول إلى", "To reach")} LV {(next as Tier).level}: {format(remaining)} {t("متبقي", "remaining")}
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* 20-level gallery */}
+      <details className="group">
+        <summary className="cursor-pointer text-sm font-bold text-gold hover:text-gold-deep">
+          {t("عرض كل المستويات (20)", "Show all 20 tiers")}
+        </summary>
+        <div className="mt-4 grid grid-cols-3 sm:grid-cols-5 gap-3">
+          {tiers.map((tr) => {
+            const locked = tr.level > level;
+            const isCurrent = tr.level === level;
+            return (
+              <div key={tr.level} className={`rounded-xl border p-2 text-center ${isCurrent ? "border-gold bg-gold/10" : "border-border bg-secondary/30"}`}>
+                <div className="flex justify-center">
+                  <VipBadge level={tr.level} color={tr.color_hex} accent={tr.accent_hex} locked={locked} current={isCurrent} size={56} />
+                </div>
+                <p className="mt-1 text-[11px] font-bold truncate">{lang === "ar" ? tr.name_ar : tr.name_en}</p>
+                <p className="text-[10px] text-muted-foreground">{Number(tr.discount_percent).toFixed(1)}%</p>
+              </div>
+            );
+          })}
+        </div>
+      </details>
+    </div>
   );
 }
 
