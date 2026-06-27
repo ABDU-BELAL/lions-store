@@ -6,6 +6,8 @@ type Props = {
   color?: string;
   /** Accent color (hex). */
   accent?: string;
+  /** Optional custom image (data URL or https URL). When set, replaces the procedural SVG. */
+  badgeUrl?: string | null;
   /** Whether the user has unlocked this tier. Locked tiers render grayscale + lock icon. */
   locked?: boolean;
   /** True when this is the user's CURRENT tier — adds animated ring + sparkles. */
@@ -17,7 +19,7 @@ type Props = {
  * Procedurally generated VIP badge. 4 base silhouettes × 5 color bands → 20 unique looks.
  * Each level (1..20) maps deterministically to (shape, palette).
  */
-export function VipBadge({ level, color, accent, locked = false, current = false, size = 96 }: Props) {
+export function VipBadge({ level, color, accent, badgeUrl, locked = false, current = false, size = 96 }: Props) {
   const shape = ((level - 1) % 4) as 0 | 1 | 2 | 3; // shield, star, sun, diamond
   const primary = color || "#d4af37";
   const second = accent || "#ffd96b";

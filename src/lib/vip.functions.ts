@@ -53,6 +53,10 @@ export const adminUpdateVipTier = createServerFn({ method: "POST" })
       usd_spend_threshold: z.number().min(0).max(1_000_000_000).optional(),
       color_hex: z.string().trim().regex(/^#[0-9a-fA-F]{6}$/).optional(),
       accent_hex: z.string().trim().regex(/^#[0-9a-fA-F]{6}$/).optional(),
+      badge_url: z.string().trim().max(300_000).refine(
+        (v) => v === "" || /^data:image\/(png|jpeg|jpg|webp|gif|svg\+xml);base64,/.test(v) || /^https?:\/\//.test(v),
+        "صورة غير صالحة",
+      ).optional(),
     }).parse(input),
   )
   .handler(async ({ data, context }) => {
@@ -67,6 +71,7 @@ export const adminUpdateVipTier = createServerFn({ method: "POST" })
       p_usd_spend_threshold: data.usd_spend_threshold,
       p_color_hex: data.color_hex,
       p_accent_hex: data.accent_hex,
+      p_badge_url: data.badge_url,
     });
     if (error) { console.error("[adminUpdateVipTier]", error); throw new Error("فشل التحديث"); }
     return { ok: true };
