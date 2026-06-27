@@ -1,0 +1,1 @@
+DROP FUNCTION IF EXISTS public.admin_update_vip_tier(integer, text, text, numeric, numeric, text, text, text);
