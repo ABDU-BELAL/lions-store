@@ -50,6 +50,7 @@ export const adminUpdateVipTier = createServerFn({ method: "POST" })
       name_en: z.string().trim().min(1).max(60).optional(),
       discount_percent: z.number().min(0).max(100).optional(),
       spend_threshold: z.number().min(0).max(1_000_000_000).optional(),
+      usd_spend_threshold: z.number().min(0).max(1_000_000_000).optional(),
       color_hex: z.string().trim().regex(/^#[0-9a-fA-F]{6}$/).optional(),
       accent_hex: z.string().trim().regex(/^#[0-9a-fA-F]{6}$/).optional(),
     }).parse(input),
@@ -63,6 +64,7 @@ export const adminUpdateVipTier = createServerFn({ method: "POST" })
       p_name_en: data.name_en,
       p_discount_percent: data.discount_percent,
       p_spend_threshold: data.spend_threshold,
+      p_usd_spend_threshold: data.usd_spend_threshold,
       p_color_hex: data.color_hex,
       p_accent_hex: data.accent_hex,
     });
