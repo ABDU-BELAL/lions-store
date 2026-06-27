@@ -1288,32 +1288,41 @@ function VipTab() {
       <div>
         <h3 className="text-lg font-extrabold text-gold-gradient mb-2">المستويات (20)</h3>
         <p className="text-xs text-muted-foreground mb-3">عدّل الاسم بالعربية/الإنجليزية، نسبة الخصم %، وحد الإنفاق بالـ EGP والـ USD لكل مستوى (الاتنين منفصلين عشان تقدر تظبط القيمتين يدوي). اضغط حفظ بعد كل تغيير.</p>
-        <div className="hidden md:grid grid-cols-[auto_1fr_1fr_110px_130px_130px_auto] gap-2 px-3 pb-2 text-[11px] font-extrabold text-gold/80 uppercase tracking-wide">
-          <div>المستوى</div>
-          <div>الاسم بالعربي</div>
-          <div dir="ltr">English Name</div>
-          <div>الخصم %</div>
-          <div>السعر بالجنيه (EGP)</div>
-          <div dir="ltr">Price in USD</div>
-          <div>حفظ</div>
-        </div>
         <div className="space-y-2">
           {(tiers ?? []).map((t) => {
             const e = edits[t.level] ?? {};
             const get = <K extends keyof typeof e>(k: K, def: unknown) => (e[k] !== undefined ? e[k] : def);
             const tierAny = t as typeof t & { usd_spend_threshold?: number | string };
+            const L = ({ children }: { children: React.ReactNode }) => (
+              <span className="block text-[10px] font-extrabold text-gold/70 mb-1 uppercase tracking-wide">{children}</span>
+            );
             return (
-              <div key={t.level} className="rounded-2xl bg-card/60 border border-border p-3 grid grid-cols-1 md:grid-cols-[auto_1fr_1fr_110px_130px_130px_auto] gap-2 items-center">
-                <div className="flex items-center gap-2 min-w-[110px]">
+              <div key={t.level} className="rounded-2xl bg-card/60 border border-border p-3 grid grid-cols-1 md:grid-cols-[auto_1fr_1fr_110px_130px_130px_auto] gap-2 md:items-end">
+                <div className="flex items-center gap-2 min-w-[110px] md:pb-2">
                   <VipBadge level={t.level} color={t.color_hex} accent={t.accent_hex} size={48} />
                   <span className="font-black text-gold">LV {t.level}</span>
                 </div>
-                <input value={String(get("name_ar", t.name_ar) ?? "")} onChange={(ev) => setEdits({ ...edits, [t.level]: { ...e, name_ar: ev.target.value } })} placeholder="اسم عربي" className="rounded-lg bg-secondary px-3 py-2 text-sm" />
-                <input value={String(get("name_en", t.name_en) ?? "")} onChange={(ev) => setEdits({ ...edits, [t.level]: { ...e, name_en: ev.target.value } })} placeholder="English name" dir="ltr" className="rounded-lg bg-secondary px-3 py-2 text-sm" />
-                <input type="number" step="0.5" min="0" max="100" value={String(get("discount_percent", Number(t.discount_percent)))} onChange={(ev) => setEdits({ ...edits, [t.level]: { ...e, discount_percent: Number(ev.target.value) } })} placeholder="%" className="rounded-lg bg-secondary px-3 py-2 text-sm" />
-                <input type="number" min="0" value={String(get("spend_threshold", Number(t.spend_threshold)))} onChange={(ev) => setEdits({ ...edits, [t.level]: { ...e, spend_threshold: Number(ev.target.value) } })} placeholder="حد EGP" className="rounded-lg bg-secondary px-3 py-2 text-sm" />
-                <input type="number" min="0" step="0.01" value={String(get("usd_spend_threshold", Number(tierAny.usd_spend_threshold ?? 0)))} onChange={(ev) => setEdits({ ...edits, [t.level]: { ...e, usd_spend_threshold: Number(ev.target.value) } })} placeholder="حد USD" dir="ltr" className="rounded-lg bg-secondary px-3 py-2 text-sm" />
-                <button disabled={mUpdate.isPending || Object.keys(e).length === 0} onClick={() => mUpdate.mutate({ level: t.level, ...e })} className="rounded-lg bg-gold-gradient text-primary-foreground font-bold px-3 py-2 text-sm disabled:opacity-40">حفظ</button>
+                <div>
+                  <L>الاسم بالعربي</L>
+                  <input value={String(get("name_ar", t.name_ar) ?? "")} onChange={(ev) => setEdits({ ...edits, [t.level]: { ...e, name_ar: ev.target.value } })} placeholder="اسم عربي" className="w-full rounded-lg bg-secondary px-3 py-2 text-sm" />
+                </div>
+                <div>
+                  <L>English Name</L>
+                  <input value={String(get("name_en", t.name_en) ?? "")} onChange={(ev) => setEdits({ ...edits, [t.level]: { ...e, name_en: ev.target.value } })} placeholder="English name" dir="ltr" className="w-full rounded-lg bg-secondary px-3 py-2 text-sm" />
+                </div>
+                <div>
+                  <L>الخصم %</L>
+                  <input type="number" step="0.5" min="0" max="100" value={String(get("discount_percent", Number(t.discount_percent)))} onChange={(ev) => setEdits({ ...edits, [t.level]: { ...e, discount_percent: Number(ev.target.value) } })} placeholder="%" className="w-full rounded-lg bg-secondary px-3 py-2 text-sm" />
+                </div>
+                <div>
+                  <L>السعر بالجنيه (EGP)</L>
+                  <input type="number" min="0" value={String(get("spend_threshold", Number(t.spend_threshold)))} onChange={(ev) => setEdits({ ...edits, [t.level]: { ...e, spend_threshold: Number(ev.target.value) } })} placeholder="EGP" className="w-full rounded-lg bg-secondary px-3 py-2 text-sm" />
+                </div>
+                <div>
+                  <L>Price in USD</L>
+                  <input type="number" min="0" step="0.01" value={String(get("usd_spend_threshold", Number(tierAny.usd_spend_threshold ?? 0)))} onChange={(ev) => setEdits({ ...edits, [t.level]: { ...e, usd_spend_threshold: Number(ev.target.value) } })} placeholder="USD" dir="ltr" className="w-full rounded-lg bg-secondary px-3 py-2 text-sm" />
+                </div>
+                <button disabled={mUpdate.isPending || Object.keys(e).length === 0} onClick={() => mUpdate.mutate({ level: t.level, ...e })} className="rounded-lg bg-gold-gradient text-primary-foreground font-bold px-3 py-2 text-sm disabled:opacity-40 md:mb-0">حفظ</button>
               </div>
             );
           })}
