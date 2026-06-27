@@ -1261,8 +1261,6 @@ function VipTab() {
     onSuccess: () => { toast.success("تم السحب — رجع لوضع تلقائي"); setRevokeUid(""); },
     onError: (e: Error) => toast.error(e.message),
   });
-    onError: (e: Error) => toast.error(e.message),
-  });
 
   return (
     <div className="space-y-6">
