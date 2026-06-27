@@ -127,8 +127,8 @@ export const adminAssignVip = createServerFn({ method: "POST" })
     try {
       await notifyTelegram(
         `👑 <b>تخصيص VIP يدوي</b>\n` +
-        `👤 ${escapeTelegramHtml(targetProfile?.full_name || targetProfile?.email || targetId)}\n` +
-        `🆔 ${escapeTelegramHtml(targetProfile?.custom_id || "-")}\n` +
+        `👤 ${escapeTelegramHtml((targetProfile as any)?.full_name || (targetProfile as any)?.email || targetId)}\n` +
+        `🆔 ${escapeTelegramHtml((targetProfile as any)?.custom_id || "-")}\n` +
         `⭐ مستوى: LV ${data.level}`,
       );
     } catch { /* ignore */ }
