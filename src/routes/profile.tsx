@@ -183,7 +183,7 @@ function ProfilePage() {
   );
 }
 
-type Tier = { level: number; name_ar: string; name_en: string; discount_percent: number | string; spend_threshold: number | string; color_hex: string; accent_hex: string };
+type Tier = { level: number; name_ar: string; name_en: string; discount_percent: number | string; spend_threshold: number | string; usd_spend_threshold?: number | string | null; color_hex: string; accent_hex: string };
 
 function VipSection({ level, lifetimeSpend, manual, tiers, lang, t, format }: {
   level: number; lifetimeSpend: number; manual: boolean;
@@ -193,10 +193,14 @@ function VipSection({ level, lifetimeSpend, manual, tiers, lang, t, format }: {
   const next = tiers.find((x) => x.level === level + 1);
   const currentThreshold = current ? Number(current.spend_threshold) : 0;
   const nextThreshold = next ? Number(next.spend_threshold) : null;
+  const nextUsd = next ? Number(next.usd_spend_threshold ?? 0) : null;
   const progress = nextThreshold && nextThreshold > currentThreshold
     ? Math.min(100, Math.max(0, ((lifetimeSpend - currentThreshold) / (nextThreshold - currentThreshold)) * 100))
     : 100;
   const remaining = nextThreshold ? Math.max(0, nextThreshold - lifetimeSpend) : 0;
+
+  // USD formatter (independent of user's currency choice — always shows USD)
+  const fmtUsd = (n: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 2 }).format(n);
 
   return (
     <div className="mt-6 bg-card/80 border border-gold/30 rounded-2xl p-6 shadow-lg">
@@ -223,6 +227,8 @@ function VipSection({ level, lifetimeSpend, manual, tiers, lang, t, format }: {
           </p>
           <p className="text-xs text-muted-foreground mt-1">
             {t("إجمالي إنفاقك", "Lifetime spend")}: <bdi className="font-bold text-foreground">{format(lifetimeSpend)}</bdi>
+            <span className="mx-1 text-muted-foreground/60">•</span>
+            <bdi className="font-bold text-foreground">{fmtUsd(lifetimeSpend / 50)}</bdi>
           </p>
           {current && Number(current.discount_percent) > 0 && (
             <p className="text-xs text-gold mt-0.5">
@@ -238,11 +244,11 @@ function VipSection({ level, lifetimeSpend, manual, tiers, lang, t, format }: {
               <p className="text-[11px] text-muted-foreground mt-1">
                 {lang === "ar" ? (
                   <>
-                    <bdi>{format(remaining)}</bdi> متبقي للوصول إلى <bdi>LV {(next as Tier).level}</bdi>
+                    <bdi>{format(remaining)}</bdi>{nextUsd ? <> (<bdi>{fmtUsd(remaining / 50)}</bdi>)</> : null} متبقي للوصول إلى <bdi>LV {(next as Tier).level}</bdi>
                   </>
                 ) : (
                   <>
-                    <bdi>{format(remaining)}</bdi> remaining to reach <bdi>LV {(next as Tier).level}</bdi>
+                    <bdi>{format(remaining)}</bdi>{nextUsd ? <> (<bdi>{fmtUsd(remaining / 50)}</bdi>)</> : null} remaining to reach <bdi>LV {(next as Tier).level}</bdi>
                   </>
                 )}
               </p>
@@ -250,6 +256,7 @@ function VipSection({ level, lifetimeSpend, manual, tiers, lang, t, format }: {
           )}
         </div>
       </div>
+
 
 
       {/* 20-level gallery */}
