@@ -62,7 +62,7 @@ export const adminUpdateVipTier = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertSuperAdmin(context.userId);
     await enforceRateLimit(`vip-tier-update:${context.userId}`, 30, 60, "محاولات كثيرة");
-    const { error } = await supabaseAdmin.rpc("admin_update_vip_tier", {
+    const { error } = await context.supabase.rpc("admin_update_vip_tier", {
       p_level: data.level,
       p_name_ar: data.name_ar,
       p_name_en: data.name_en,
