@@ -1241,7 +1241,7 @@ function VipTab() {
   const revokeFn = useServerFn(adminRevokeVip);
   const qc = useQueryClient();
   const { data: tiers } = useQuery({ queryKey: ["vip-tiers"], queryFn: () => listFn() });
-  const [edits, setEdits] = useState<Record<number, { name_ar?: string; name_en?: string; discount_percent?: number; spend_threshold?: number; color_hex?: string }>>({});
+  const [edits, setEdits] = useState<Record<number, { name_ar?: string; name_en?: string; discount_percent?: number; spend_threshold?: number; usd_spend_threshold?: number; color_hex?: string }>>({});
   const [target, setTarget] = useState("");
   const [assignLvl, setAssignLvl] = useState<number>(1);
   const [revokeUid, setRevokeUid] = useState("");
@@ -1287,13 +1287,14 @@ function VipTab() {
       {/* 20-level editable table */}
       <div>
         <h3 className="text-lg font-extrabold text-gold-gradient mb-2">المستويات (20)</h3>
-        <p className="text-xs text-muted-foreground mb-3">عدّل الاسم بالعربية/الإنجليزية، نسبة الخصم %، وحد الإنفاق (EGP) لكل مستوى. اضغط حفظ بعد كل تغيير.</p>
+        <p className="text-xs text-muted-foreground mb-3">عدّل الاسم بالعربية/الإنجليزية، نسبة الخصم %، وحد الإنفاق بالـ EGP والـ USD لكل مستوى (الاتنين منفصلين عشان تقدر تظبط القيمتين يدوي). اضغط حفظ بعد كل تغيير.</p>
         <div className="space-y-2">
           {(tiers ?? []).map((t) => {
             const e = edits[t.level] ?? {};
             const get = <K extends keyof typeof e>(k: K, def: unknown) => (e[k] !== undefined ? e[k] : def);
+            const tierAny = t as typeof t & { usd_spend_threshold?: number | string };
             return (
-              <div key={t.level} className="rounded-2xl bg-card/60 border border-border p-3 grid grid-cols-1 md:grid-cols-[auto_1fr_1fr_120px_140px_auto] gap-2 items-center">
+              <div key={t.level} className="rounded-2xl bg-card/60 border border-border p-3 grid grid-cols-1 md:grid-cols-[auto_1fr_1fr_110px_130px_130px_auto] gap-2 items-center">
                 <div className="flex items-center gap-2 min-w-[110px]">
                   <VipBadge level={t.level} color={t.color_hex} accent={t.accent_hex} size={48} />
                   <span className="font-black text-gold">LV {t.level}</span>
@@ -1301,7 +1302,8 @@ function VipTab() {
                 <input value={String(get("name_ar", t.name_ar) ?? "")} onChange={(ev) => setEdits({ ...edits, [t.level]: { ...e, name_ar: ev.target.value } })} placeholder="اسم عربي" className="rounded-lg bg-secondary px-3 py-2 text-sm" />
                 <input value={String(get("name_en", t.name_en) ?? "")} onChange={(ev) => setEdits({ ...edits, [t.level]: { ...e, name_en: ev.target.value } })} placeholder="English name" dir="ltr" className="rounded-lg bg-secondary px-3 py-2 text-sm" />
                 <input type="number" step="0.5" min="0" max="100" value={String(get("discount_percent", Number(t.discount_percent)))} onChange={(ev) => setEdits({ ...edits, [t.level]: { ...e, discount_percent: Number(ev.target.value) } })} placeholder="%" className="rounded-lg bg-secondary px-3 py-2 text-sm" />
-                <input type="number" min="0" value={String(get("spend_threshold", Number(t.spend_threshold)))} onChange={(ev) => setEdits({ ...edits, [t.level]: { ...e, spend_threshold: Number(ev.target.value) } })} placeholder="حد الإنفاق EGP" className="rounded-lg bg-secondary px-3 py-2 text-sm" />
+                <input type="number" min="0" value={String(get("spend_threshold", Number(t.spend_threshold)))} onChange={(ev) => setEdits({ ...edits, [t.level]: { ...e, spend_threshold: Number(ev.target.value) } })} placeholder="حد EGP" className="rounded-lg bg-secondary px-3 py-2 text-sm" />
+                <input type="number" min="0" step="0.01" value={String(get("usd_spend_threshold", Number(tierAny.usd_spend_threshold ?? 0)))} onChange={(ev) => setEdits({ ...edits, [t.level]: { ...e, usd_spend_threshold: Number(ev.target.value) } })} placeholder="حد USD" dir="ltr" className="rounded-lg bg-secondary px-3 py-2 text-sm" />
                 <button disabled={mUpdate.isPending || Object.keys(e).length === 0} onClick={() => mUpdate.mutate({ level: t.level, ...e })} className="rounded-lg bg-gold-gradient text-primary-foreground font-bold px-3 py-2 text-sm disabled:opacity-40">حفظ</button>
               </div>
             );

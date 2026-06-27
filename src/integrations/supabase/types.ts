@@ -540,6 +540,7 @@ export type Database = {
           name_en: string
           spend_threshold: number
           updated_at: string
+          usd_spend_threshold: number
         }
         Insert: {
           accent_hex?: string
@@ -551,6 +552,7 @@ export type Database = {
           name_en: string
           spend_threshold?: number
           updated_at?: string
+          usd_spend_threshold?: number
         }
         Update: {
           accent_hex?: string
@@ -562,6 +564,7 @@ export type Database = {
           name_en?: string
           spend_threshold?: number
           updated_at?: string
+          usd_spend_threshold?: number
         }
         Relationships: []
       }
@@ -629,19 +632,34 @@ export type Database = {
         Returns: undefined
       }
       admin_revoke_vip: { Args: { p_target: string }; Returns: undefined }
-      admin_update_vip_tier: {
-        Args: {
-          p_accent_hex?: string
-          p_badge_url?: string
-          p_color_hex?: string
-          p_discount_percent?: number
-          p_level: number
-          p_name_ar?: string
-          p_name_en?: string
-          p_spend_threshold?: number
-        }
-        Returns: undefined
-      }
+      admin_update_vip_tier:
+        | {
+            Args: {
+              p_accent_hex?: string
+              p_badge_url?: string
+              p_color_hex?: string
+              p_discount_percent?: number
+              p_level: number
+              p_name_ar?: string
+              p_name_en?: string
+              p_spend_threshold?: number
+            }
+            Returns: undefined
+          }
+        | {
+            Args: {
+              p_accent_hex?: string
+              p_badge_url?: string
+              p_color_hex?: string
+              p_discount_percent?: number
+              p_level: number
+              p_name_ar?: string
+              p_name_en?: string
+              p_spend_threshold?: number
+              p_usd_spend_threshold?: number
+            }
+            Returns: undefined
+          }
       credit_wallet: {
         Args: {
           p_amount: number
