@@ -1279,7 +1279,7 @@ function VipTab() {
           </button>
         </div>
         <div className="flex gap-2 flex-wrap items-end pt-2 border-t border-border">
-          <input value={revokeUid} onChange={(e) => setRevokeUid(e.target.value)} placeholder="UUID للمستخدم لإلغاء المنح اليدوي" className="flex-1 min-w-[180px] rounded-xl bg-secondary px-3 py-2" dir="ltr" />
+          <input value={revokeUid} onChange={(e) => setRevokeUid(e.target.value)} placeholder="custom_id / email / phone (UUID للمطور فقط)" className="flex-1 min-w-[180px] rounded-xl bg-secondary px-3 py-2" />
           <button disabled={mRevoke.isPending || !revokeUid.trim()} onClick={() => mRevoke.mutate(revokeUid.trim())} className="rounded-xl bg-destructive text-white font-bold px-4 py-2 disabled:opacity-50">سحب يدوي</button>
         </div>
       </div>
