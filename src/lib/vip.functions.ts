@@ -104,7 +104,7 @@ export const adminAssignVip = createServerFn({ method: "POST" })
     }
     if (!targetId) throw new Error("المستخدم غير موجود");
 
-    const { error } = await supabaseAdmin.rpc("admin_assign_vip", { p_target: targetId, p_level: data.level });
+    const { error } = await context.supabase.rpc("admin_assign_vip", { p_target: targetId, p_level: data.level });
     if (error) { console.error("[adminAssignVip]", error); throw new Error("فشل المنح"); }
 
     // Telegram transparency alert
@@ -127,7 +127,7 @@ export const adminRevokeVip = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertSuperAdmin(context.userId);
     await enforceRateLimit(`vip-revoke:${context.userId}`, 20, 60, "محاولات كثيرة");
-    const { error } = await supabaseAdmin.rpc("admin_revoke_vip", { p_target: data.userId });
+    const { error } = await context.supabase.rpc("admin_revoke_vip", { p_target: data.userId });
     if (error) { console.error("[adminRevokeVip]", error); throw new Error("فشل السحب"); }
     return { ok: true };
   });
