@@ -1035,7 +1035,12 @@ function UsersTab() {
           <div onClick={(e) => e.stopPropagation()} className="w-full max-w-md rounded-3xl bg-card border-gold shadow-card p-6 max-h-[90vh] overflow-y-auto">
             <h3 className="text-xl font-black text-gold-gradient text-center">تعديل رصيد</h3>
             <p className="text-center text-sm text-muted-foreground mt-1">{editing.name}</p>
-            <p className="text-center mt-2">الرصيد الحالي: <span className="font-extrabold text-gold">EG {editing.balance.toLocaleString()}</span></p>
+            <p className="text-center mt-2">
+              الرصيد الحالي: <span className="font-extrabold text-gold">EG {editing.balance.toLocaleString()}</span>
+              {rate && rate > 0 && (
+                <span className="block text-xs text-muted-foreground mt-1">≈ USD {(editing.balance / rate).toFixed(2)}</span>
+              )}
+            </p>
 
             <div className="mt-4 grid grid-cols-3 gap-2">
               {([
@@ -1050,10 +1055,35 @@ function UsersTab() {
               ))}
             </div>
 
-            <div className="mt-4">
-              <label className="text-xs font-bold mb-1 block">المبلغ (EGP)</label>
+            <div className="mt-4 flex items-center justify-between">
+              <label className="text-xs font-bold">العملة</label>
+              <div className="inline-flex rounded-full bg-secondary border border-border p-1">
+                {(["EGP", "USD"] as const).map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setEditCurrency(c)}
+                    className={`px-3 py-1 text-xs font-bold rounded-full transition-colors ${editCurrency === c ? "bg-gold-gradient text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                  >
+                    {c}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-3">
+              <label className="text-xs font-bold mb-1 block">المبلغ ({editCurrency})</label>
               <input type="number" min="0" step="any" value={amount} onChange={(e) => setAmount(e.target.value)}
                 className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3" />
+              {editCurrency === "USD" && (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {rate && rate > 0 && amount && !isNaN(Number(amount))
+                    ? `≈ EG ${(Number(amount) * rate).toLocaleString(undefined, { maximumFractionDigits: 2 })} (1 USD = ${rate.toFixed(2)} EGP)`
+                    : !rate || rate <= 0
+                      ? "جارٍ تحميل سعر الصرف..."
+                      : `1 USD = ${rate.toFixed(2)} EGP`}
+                </p>
+              )}
             </div>
 
             <div className="mt-3">
@@ -1064,7 +1094,7 @@ function UsersTab() {
 
             <div className="mt-5 flex gap-2">
               <button onClick={() => setEditing(null)} className="flex-1 rounded-xl bg-secondary border border-border font-bold py-2.5">إلغاء</button>
-              <button disabled={m.isPending || !amount || isNaN(Number(amount))} onClick={() => m.mutate()}
+              <button disabled={m.isPending || !amount || isNaN(Number(amount)) || (editCurrency === "USD" && (!rate || rate <= 0))} onClick={() => m.mutate()}
                 className="flex-1 rounded-xl bg-gold-gradient text-primary-foreground font-extrabold py-2.5 disabled:opacity-50">
                 {m.isPending ? "..." : "حفظ"}
               </button>
