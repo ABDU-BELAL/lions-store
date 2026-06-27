@@ -84,8 +84,8 @@ export const createTopupRequest = createServerFn({ method: "POST" })
       throw new Error("وسيلة الدفع هذه تحت الصيانة حاليًا، اختر طريقة أخرى");
     }
 
-    // Rate limit
-    await enforceRateLimit(`topup:${userId}`, 5, 3600, "لقد تجاوزت الحد المسموح به، يرجى المحاولة لاحقاً");
+    // Anti-spam only (no daily cap): max 5 requests per minute
+    await enforceRateLimit(`topup:${userId}`, 5, 60, "طلبات كثيرة في وقت قصير، انتظر دقيقة ثم حاول مرة أخرى");
 
     // Block duplicate reference numbers globally
     const refTrimmed = data.reference.trim();
