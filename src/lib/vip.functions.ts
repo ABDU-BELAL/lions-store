@@ -90,19 +90,34 @@ export const adminAssignVip = createServerFn({ method: "POST" })
     await assertSuperAdmin(context.userId);
     await enforceRateLimit(`vip-assign:${context.userId}`, 20, 60, "محاولات كثيرة");
 
-    // Resolve target
-    const v = data.customIdOrUserId;
+    // Resolve target by UUID, custom_id (8-digit), email, or phone
+    const v = data.customIdOrUserId.trim();
     const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
+    const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+    const isCustomId = /^\d{8}$/.test(v);
     let targetId: string | null = null;
     let targetProfile: { full_name?: string | null; custom_id?: string | null; email?: string | null } | null = null;
-    if (isUuid) {
-      const { data: p } = await supabaseAdmin.from("profiles").select("id, full_name, custom_id, email").eq("id", v).maybeSingle();
+    const sel = "id, full_name, custom_id, email";
+    const tryFind = async (col: string, val: string) => {
+      const { data: p } = await supabaseAdmin.from("profiles").select(sel).eq(col, val).maybeSingle();
       if (p) { targetId = p.id; targetProfile = p; }
-    } else {
-      const { data: p } = await supabaseAdmin.from("profiles").select("id, full_name, custom_id, email").eq("custom_id", v).maybeSingle();
-      if (p) { targetId = p.id; targetProfile = p; }
+    };
+    if (isUuid) await tryFind("id", v);
+    else if (isCustomId) await tryFind("custom_id", v);
+    else if (isEmail) await tryFind("email", v.toLowerCase());
+    else {
+      // phone: try as-is, then normalized variants
+      await tryFind("phone", v);
+      if (!targetId) {
+        const digits = v.replace(/\D/g, "");
+        if (digits) await tryFind("phone", digits);
+        if (!targetId && digits) await tryFind("phone", "+" + digits);
+      }
+      // fallback: maybe they pasted custom_id with spaces
+      if (!targetId) await tryFind("custom_id", v);
     }
     if (!targetId) throw new Error("المستخدم غير موجود");
+
 
     const { error } = await context.supabase.rpc("admin_assign_vip", { p_target: targetId, p_level: data.level });
     if (error) { console.error("[adminAssignVip]", error); throw new Error("فشل المنح"); }
