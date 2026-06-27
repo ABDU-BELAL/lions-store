@@ -84,6 +84,11 @@ export const createTopupRequest = createServerFn({ method: "POST" })
       throw new Error("وسيلة الدفع هذه تحت الصيانة حاليًا، اختر طريقة أخرى");
     }
 
+    // Enforce that the receipt path belongs to the caller (prevents IDOR on other users' uploads)
+    if (data.screenshot_path && !data.screenshot_path.startsWith(`${userId}/`)) {
+      throw new Error("Invalid screenshot path");
+    }
+
     // Anti-spam only (no daily cap): max 5 requests per minute
     await enforceRateLimit(`topup:${userId}`, 5, 60, "طلبات كثيرة في وقت قصير، انتظر دقيقة ثم حاول مرة أخرى");
 
