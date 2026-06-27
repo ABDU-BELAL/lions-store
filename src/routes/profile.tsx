@@ -215,14 +215,18 @@ function VipSection({ level, lifetimeSpend, manual, tiers, lang, t, format }: {
         <VipBadge level={level || 1} color={current?.color_hex} accent={current?.accent_hex} current={level > 0} locked={level === 0} size={104} />
         <div className="flex-1 min-w-0">
           <p className="text-xl font-black text-gold-gradient">
-            {level > 0 ? `LV ${level} — ${lang === "ar" ? (current?.name_ar ?? "") : (current?.name_en ?? "")}` : t("بدون مستوى", "No tier yet")}
+            {level > 0 ? (
+              <>
+                <bdi>LV {level}</bdi> — <bdi>{lang === "ar" ? (current?.name_ar ?? "") : (current?.name_en ?? "")}</bdi>
+              </>
+            ) : t("بدون مستوى", "No tier yet")}
           </p>
           <p className="text-xs text-muted-foreground mt-1">
-            {t("إجمالي إنفاقك", "Lifetime spend")}: <span className="font-bold text-foreground">{format(lifetimeSpend)}</span>
+            {t("إجمالي إنفاقك", "Lifetime spend")}: <bdi className="font-bold text-foreground">{format(lifetimeSpend)}</bdi>
           </p>
           {current && Number(current.discount_percent) > 0 && (
             <p className="text-xs text-gold mt-0.5">
-              {t("خصم ثابت", "Permanent discount")}: <span className="font-extrabold">{Number(current.discount_percent).toFixed(1)}%</span>
+              {t("خصم ثابت", "Permanent discount")}: <bdi className="font-extrabold">{Number(current.discount_percent).toFixed(1)}%</bdi>
             </p>
           )}
 
@@ -232,12 +236,21 @@ function VipSection({ level, lifetimeSpend, manual, tiers, lang, t, format }: {
                 <div className="h-full bg-gold-gradient transition-all duration-500" style={{ width: `${progress}%` }} />
               </div>
               <p className="text-[11px] text-muted-foreground mt-1">
-                {t("للوصول إلى", "To reach")} LV {(next as Tier).level}: {format(remaining)} {t("متبقي", "remaining")}
+                {lang === "ar" ? (
+                  <>
+                    <bdi>{format(remaining)}</bdi> متبقي للوصول إلى <bdi>LV {(next as Tier).level}</bdi>
+                  </>
+                ) : (
+                  <>
+                    <bdi>{format(remaining)}</bdi> remaining to reach <bdi>LV {(next as Tier).level}</bdi>
+                  </>
+                )}
               </p>
             </div>
           )}
         </div>
       </div>
+
 
       {/* 20-level gallery */}
       <details className="group">
