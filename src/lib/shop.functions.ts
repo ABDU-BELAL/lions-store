@@ -17,18 +17,17 @@ export const listShopProducts = createServerFn({ method: "GET" }).handler(async 
   return signMany("products", data ?? []);
 });
 
-// Returns the signed-in user's discount percent for a given product (0 if none).
+// Returns the signed-in user's EFFECTIVE discount for a given product
+// (MAX of manual user_discount and VIP tier discount). 0 if none.
 export const getMyProductDiscount = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ productId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
-    const { data: row } = await supabaseAdmin
-      .from("user_discounts")
-      .select("percent")
-      .eq("user_id", context.userId)
-      .eq("product_id", data.productId)
-      .maybeSingle();
-    return { percent: row ? Number(row.percent) : 0 };
+    const { data: pct } = await supabaseAdmin.rpc("get_effective_discount", {
+      p_user_id: context.userId,
+      p_product_id: data.productId,
+    });
+    return { percent: Number(pct ?? 0) };
   });
 
 
