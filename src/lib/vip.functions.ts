@@ -59,13 +59,12 @@ export const adminUpdateVipTier = createServerFn({ method: "POST" })
     await enforceRateLimit(`vip-tier-update:${context.userId}`, 30, 60, "محاولات كثيرة");
     const { error } = await supabaseAdmin.rpc("admin_update_vip_tier", {
       p_level: data.level,
-      p_name_ar: data.name_ar ?? null,
-      p_name_en: data.name_en ?? null,
-      p_discount_percent: data.discount_percent ?? null,
-      p_spend_threshold: data.spend_threshold ?? null,
-      p_color_hex: data.color_hex ?? null,
-      p_accent_hex: data.accent_hex ?? null,
-      p_badge_url: null,
+      p_name_ar: data.name_ar,
+      p_name_en: data.name_en,
+      p_discount_percent: data.discount_percent,
+      p_spend_threshold: data.spend_threshold,
+      p_color_hex: data.color_hex,
+      p_accent_hex: data.accent_hex,
     });
     if (error) { console.error("[adminUpdateVipTier]", error); throw new Error("فشل التحديث"); }
     return { ok: true };
