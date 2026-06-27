@@ -1010,7 +1010,7 @@ function UsersTab() {
             </div>
             <div className="flex flex-col sm:flex-row gap-2">
               <button
-                onClick={() => { setEditing({ id: u.id, name: u.full_name || u.email || u.id, balance: Number(u.balance) }); setAmount(String(u.balance)); setMode("set"); }}
+                onClick={() => { setEditing({ id: u.id, name: u.full_name || u.email || u.id, balance: Number(u.balance) }); setAmount(String(u.balance)); setMode("set"); setEditCurrency("EGP"); }}
                 className="rounded-lg bg-gold-gradient text-primary-foreground font-bold px-4 py-2 text-sm flex items-center gap-1"
               >
                 <Wallet className="size-4" /> تعديل الرصيد
