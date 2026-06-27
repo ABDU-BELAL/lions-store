@@ -1267,9 +1267,9 @@ function VipTab() {
       {/* Manual assign */}
       <div className="rounded-2xl bg-card/70 border border-border p-5 space-y-3">
         <h3 className="text-lg font-extrabold text-gold-gradient">منح VIP لمستخدم</h3>
-        <p className="text-xs text-muted-foreground">أدخل الرقم التعريفي (custom_id) للمستخدم أو الـ UUID. المنح اليدوي يلغي الترقية التلقائية لهذا المستخدم.</p>
+        <p className="text-xs text-muted-foreground">أدخل الرقم التعريفي (custom_id) أو الإيميل أو رقم الهاتف أو الـ UUID. المنح اليدوي يلغي الترقية التلقائية لهذا المستخدم.</p>
         <div className="flex gap-2 flex-wrap items-end">
-          <input value={target} onChange={(e) => setTarget(e.target.value)} placeholder="custom_id (مثال: 12345678)" className="flex-1 min-w-[180px] rounded-xl bg-secondary px-3 py-2" />
+          <input value={target} onChange={(e) => setTarget(e.target.value)} placeholder="custom_id / email / phone" className="flex-1 min-w-[180px] rounded-xl bg-secondary px-3 py-2" />
           <select value={assignLvl} onChange={(e) => setAssignLvl(Number(e.target.value))} className="rounded-xl bg-secondary px-3 py-2">
             <option value={0}>0 — بدون</option>
             {Array.from({ length: 20 }).map((_, i) => <option key={i+1} value={i+1}>LV {i+1}</option>)}
