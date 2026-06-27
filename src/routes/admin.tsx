@@ -1241,7 +1241,7 @@ function VipTab() {
   const revokeFn = useServerFn(adminRevokeVip);
   const qc = useQueryClient();
   const { data: tiers } = useQuery({ queryKey: ["vip-tiers"], queryFn: () => listFn() });
-  const [edits, setEdits] = useState<Record<number, { name_ar?: string; name_en?: string; discount_percent?: number; spend_threshold?: number; color_hex?: string }>>({});
+  const [edits, setEdits] = useState<Record<number, { name_ar?: string; name_en?: string; discount_percent?: number; spend_threshold?: number; usd_spend_threshold?: number; color_hex?: string }>>({});
   const [target, setTarget] = useState("");
   const [assignLvl, setAssignLvl] = useState<number>(1);
   const [revokeUid, setRevokeUid] = useState("");
