@@ -136,14 +136,41 @@ export const adminAssignVip = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-// Admin: revoke manual VIP
+// Admin: revoke manual VIP — accepts UUID, custom_id, email, or phone
 export const adminRevokeVip = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) => z.object({ userId: z.string().uuid() }).parse(input))
+  .inputValidator((input) =>
+    z.object({ customIdOrUserId: z.string().trim().min(1).max(80) }).parse(input),
+  )
   .handler(async ({ data, context }) => {
     await assertSuperAdmin(context.userId);
     await enforceRateLimit(`vip-revoke:${context.userId}`, 20, 60, "محاولات كثيرة");
-    const { error } = await context.supabase.rpc("admin_revoke_vip", { p_target: data.userId });
+
+    const v = data.customIdOrUserId.trim();
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
+    const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+    const isCustomId = /^\d{8}$/.test(v);
+    let targetId: string | null = null;
+    const tryFind = async (col: string, val: string): Promise<void> => {
+      if (targetId) return;
+      const { data: p } = await supabaseAdmin.from("profiles").select("id").eq(col, val).maybeSingle();
+      if (p) targetId = (p as { id: string }).id;
+    };
+    if (isUuid) await tryFind("id", v);
+    else if (isCustomId) await tryFind("custom_id", v);
+    else if (isEmail) await tryFind("email", v.toLowerCase());
+    else {
+      await tryFind("phone", v);
+      if (!targetId) {
+        const digits = v.replace(/\D/g, "");
+        if (digits) await tryFind("phone", digits);
+        if (!targetId && digits) await tryFind("phone", "+" + digits);
+      }
+      if (!targetId) await tryFind("custom_id", v);
+    }
+    if (!targetId) throw new Error("المستخدم غير موجود");
+
+    const { error } = await context.supabase.rpc("admin_revoke_vip", { p_target: targetId });
     if (error) { console.error("[adminRevokeVip]", error); throw new Error("فشل السحب"); }
     return { ok: true };
   });
