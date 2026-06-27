@@ -4,9 +4,11 @@ import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getMyAccount } from "@/lib/account.functions";
+import { getMyVip, listVipTiers } from "@/lib/vip.functions";
+import { VipBadge } from "@/components/VipBadge";
 import { useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { User, Mail, Phone, Wallet, Shield, Copy, ArrowRight, ArrowLeft } from "lucide-react";
+import { User, Mail, Phone, Wallet, Shield, Copy, ArrowRight, ArrowLeft, Crown } from "lucide-react";
 import { toast } from "sonner";
 import { useLang } from "@/i18n/LanguageProvider";
 import { useCurrency, type Currency } from "@/i18n/CurrencyProvider";
@@ -37,12 +39,16 @@ function ProfilePage() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const getAccount = useServerFn(getMyAccount);
-  const { t, dir } = useLang();
+  const getVip = useServerFn(getMyVip);
+  const getTiers = useServerFn(listVipTiers);
+  const { t, lang, dir } = useLang();
   const { currency, setCurrency, rate, format } = useCurrency();
 
   useEffect(() => { if (!authLoading && !user) navigate({ to: "/login", replace: true }); }, [authLoading, user, navigate]);
 
   const account = useQuery({ queryKey: ["account", user?.id], queryFn: () => getAccount(), enabled: !!user });
+  const vip = useQuery({ queryKey: ["my-vip", user?.id], queryFn: () => getVip(), enabled: !!user });
+  const tiers = useQuery({ queryKey: ["vip-tiers"], queryFn: () => getTiers(), enabled: !!user });
 
   const profile = account.data?.profile;
   const balance = Number(account.data?.balance ?? 0);
