@@ -1052,7 +1052,18 @@ function UsersTab() {
                 { id: "add", label: "إضافة" },
                 { id: "subtract", label: "خصم" },
               ] as const).map((o) => (
-                <button key={o.id} onClick={() => setMode(o.id)}
+                <button key={o.id} onClick={() => {
+                  setMode(o.id);
+                  // Prefill current balance only for "set"; clear for add/subtract
+                  if (o.id === "set" && editing) {
+                    const v = editCurrency === "USD" && rate && rate > 0
+                      ? (editing.balance / rate).toFixed(2)
+                      : String(editing.balance);
+                    setAmount(v);
+                  } else {
+                    setAmount("");
+                  }
+                }}
                   className={`rounded-xl py-2 text-sm font-bold ${mode === o.id ? "bg-gold-gradient text-primary-foreground" : "bg-secondary border border-border"}`}>
                   {o.label}
                 </button>
