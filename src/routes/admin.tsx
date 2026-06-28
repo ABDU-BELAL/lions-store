@@ -1066,7 +1066,15 @@ function UsersTab() {
                   <button
                     key={c}
                     type="button"
-                    onClick={() => setEditCurrency(c)}
+                    onClick={() => {
+                      if (c === editCurrency) return;
+                      const n = Number(amount);
+                      if (amount && !isNaN(n) && rate && rate > 0) {
+                        const converted = c === "USD" ? n / rate : n * rate;
+                        setAmount((Math.round(converted * 100) / 100).toString());
+                      }
+                      setEditCurrency(c);
+                    }}
                     className={`px-3 py-1 text-xs font-bold rounded-full transition-colors ${editCurrency === c ? "bg-gold-gradient text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
                   >
                     {c}
