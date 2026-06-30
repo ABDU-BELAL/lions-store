@@ -260,7 +260,11 @@ function ProductPage() {
             </div>
           )}
 
-          {!user ? (
+          {!p.in_stock ? (
+            <div className="mt-6 w-full text-center rounded-xl bg-destructive/15 border border-destructive text-destructive font-extrabold py-3">
+              {t("نفد المخزون", "Out of stock")}
+            </div>
+          ) : !user ? (
             <Link to="/login" className="mt-6 w-full block text-center rounded-xl bg-gold-gradient text-primary-foreground font-extrabold py-3 shadow-gold">
               {t("سجّل دخول للشراء", "Sign in to buy")}
             </Link>
