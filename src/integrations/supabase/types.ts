@@ -153,6 +153,9 @@ export type Database = {
           provider_status: string | null
           provider_uuid: string | null
           quantity: number | null
+          refund_reason: string | null
+          refunded: boolean
+          refunded_at: string | null
           status: string
           user_id: string
         }
@@ -172,6 +175,9 @@ export type Database = {
           provider_status?: string | null
           provider_uuid?: string | null
           quantity?: number | null
+          refund_reason?: string | null
+          refunded?: boolean
+          refunded_at?: string | null
           status?: string
           user_id: string
         }
@@ -191,6 +197,9 @@ export type Database = {
           provider_status?: string | null
           provider_uuid?: string | null
           quantity?: number | null
+          refund_reason?: string | null
+          refunded?: boolean
+          refunded_at?: string | null
           status?: string
           user_id?: string
         }
