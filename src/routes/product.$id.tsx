@@ -33,6 +33,7 @@ export type Product = {
   min_quantity: number | null;
   max_quantity: number | null;
   purchase_field_mode: "game_id" | "subscription" | "none";
+  in_stock: boolean;
 };
 
 export const getProductById = createServerFn({ method: "GET" })
