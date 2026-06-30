@@ -118,9 +118,22 @@ export async function brand1NewOrder(args: {
   }
 }
 
-export async function brand1CheckOrder(providerOrderId: string): Promise<{ status?: string; raw: Json }> {
+export async function brand1CheckOrder(providerOrderId: string): Promise<{ status?: string; orderId?: string; raw: Json }> {
   const body = (await brand1Get(`client/api/check`, {
     orders: `[${providerOrderId}]`,
-  })) as { data?: Array<{ status?: string }> };
-  return { status: body.data?.[0]?.status, raw: body as Json };
+  })) as { data?: Array<{ status?: string; order_id?: string }> };
+  return { status: body.data?.[0]?.status, orderId: body.data?.[0]?.order_id, raw: body as Json };
+}
+
+/** Check order by our generated UUIDv4 (idempotent recovery after network failure). */
+export async function brand1CheckByUuid(orderUuid: string): Promise<{ status?: string; orderId?: string; raw: Json }> {
+  try {
+    const body = (await brand1Get(`client/api/check`, {
+      orders: `[${orderUuid}]`,
+      uuid: 1,
+    })) as { data?: Array<{ status?: string; order_id?: string }> };
+    return { status: body.data?.[0]?.status, orderId: body.data?.[0]?.order_id, raw: body as Json };
+  } catch (e) {
+    return { raw: { error: e instanceof Error ? e.message : "check failed" } };
+  }
 }
