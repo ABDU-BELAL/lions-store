@@ -181,15 +181,15 @@ export async function tryAutoFulfillOrder(orderId: string): Promise<{ attempted:
       // wait — leave pending; poll will follow up safely.
       return { attempted: true, finalStatus: "pending" };
     }
-    // Provider truly has no record. Only refund when we're certain (no orderId AND uuid not found).
-    if (!result.ok && result.errorMessage?.toLowerCase().includes("network")) {
-      // Network failure with no record on provider side — leave pending; poll will re-verify.
-      alertAdmin(`فشل شبكة أثناء طلب التنفيذ التلقائي — الطلب معلّق للمراجعة\n#order_${orderId.slice(0,8)} uuid=${uuid}`);
-      return { attempted: true, finalStatus: "pending" };
-    }
-    await supabaseAdmin.from("orders").update({ status: "rejected" }).eq("id", orderId).eq("status", "pending");
-    await refundOrder(order as OrderRow, result.errorMessage ?? "Provider error");
-    return { attempted: true, finalStatus: "rejected" };
+    // Provider has no visible record yet. Do NOT decline/refund here: some providers
+    // can still accept/charge the order after returning an API error or timeout.
+    // Keep the order pending and let polling/admin review confirm the real provider state.
+    alertAdmin(
+      `فشل رد مزود التنفيذ التلقائي — الطلب مازال معلّق للمراجعة ولا يتم رفضه تلقائياً\n` +
+        `#order_${orderId.slice(0, 8)} uuid=${uuid}\n` +
+        `السبب: ${escapeTelegramHtml(result.errorMessage ?? "Provider error")}`,
+    );
+    return { attempted: true, finalStatus: "pending" };
   }
 
   if (result.status === "accept") {
@@ -226,11 +226,10 @@ export async function pollPendingProviderOrders(): Promise<{ checked: number; co
       // Do NOT refund just because newOrder didn't return one — the order may exist on the provider side.
       if (!order.provider_order_id) {
         if (!order.provider_uuid) {
-          // Should not happen, but if no uuid either, mark and alert.
+          // Should not happen. Do not reject/refund automatically when provider state is unknown.
           if (ageMin >= MAX_WAIT_MINUTES) {
-            await supabaseAdmin.from("orders").update({ status: "rejected" }).eq("id", order.id).eq("status", "pending");
-            await refundOrder(order, "No provider_uuid (timeout)");
-            refunded++;
+            alertAdmin(`طلب تنفيذ تلقائي بدون uuid بعد ${Math.floor(ageMin)} دقيقة — للمراجعة اليدوية\n#order_${order.id.slice(0,8)}`);
+            stillPending++;
           } else { stillPending++; }
           continue;
         }
@@ -277,7 +276,7 @@ export async function pollPendingProviderOrders(): Promise<{ checked: number; co
         await refundOrder(order, "Provider rejected (poll)");
         refunded++;
       } else if (ageMin >= MAX_WAIT_MINUTES) {
-        // Before refunding on timeout, do a final uuid-check to be safe against status caching.
+        // Before taking any action on timeout, do a final uuid-check to be safe against status caching.
         if (order.provider_uuid) {
           const finalCheck = await providerCheckByUuid(provider, order.provider_uuid);
           if (finalCheck.status === "accept") {
@@ -285,10 +284,16 @@ export async function pollPendingProviderOrders(): Promise<{ checked: number; co
             completed++;
             continue;
           }
+          if (finalCheck.status === "reject") {
+            await supabaseAdmin.from("orders").update({ status: "rejected" }).eq("id", order.id).eq("status", "pending");
+            await refundOrder(order, `Provider rejected after ${MAX_WAIT_MINUTES} minutes`);
+            refunded++;
+            continue;
+          }
         }
-        await supabaseAdmin.from("orders").update({ status: "rejected" }).eq("id", order.id).eq("status", "pending");
-        await refundOrder(order, `Timeout after ${MAX_WAIT_MINUTES} minutes`);
-        refunded++;
+        // Unknown/waiting provider status is not proof of rejection. Keep pending.
+        alertAdmin(`طلب مازال غير مؤكد بعد ${MAX_WAIT_MINUTES} دقيقة — لم يتم رفضه أو رد المبلغ تلقائياً\n#order_${order.id.slice(0,8)} uuid=${order.provider_uuid ?? "-"}`);
+        stillPending++;
       } else {
         stillPending++;
       }
