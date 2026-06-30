@@ -162,23 +162,28 @@ function ShopPage() {
           const title = pickLocalized(p.title, (p as { title_en?: string | null }).title_en, lang);
           const description = pickLocalized(p.description, (p as { description_en?: string | null }).description_en, lang);
           return (
-            <div key={p.id} className="group relative rounded-2xl overflow-hidden bg-dark-gradient shadow-card border border-gold/20 transition-transform hover:-translate-y-1 hover:shadow-gold">
+            <div key={p.id} className={`group relative rounded-2xl overflow-hidden bg-dark-gradient shadow-card border border-gold/20 transition-transform hover:-translate-y-1 hover:shadow-gold ${!(p as { in_stock?: boolean }).in_stock ? "opacity-75" : ""}`}>
               {p.is_offer && (
                 <span className={`absolute top-2 ${dir === "rtl" ? "right-2" : "left-2"} z-20 text-[10px] font-extrabold bg-destructive text-destructive-foreground rounded-full px-2 py-1`}>{t("عرض", "Offer")}</span>
               )}
+              {!(p as { in_stock?: boolean }).in_stock && (
+                <span className={`absolute top-2 ${dir === "rtl" ? "left-2" : "right-2"} z-20 text-[10px] font-extrabold bg-destructive text-destructive-foreground rounded-full px-2 py-1`}>{t("نفد المخزون", "Out of stock")}</span>
+              )}
               <button
                 type="button"
+                disabled={!(p as { in_stock?: boolean }).in_stock}
                 onClick={() => {
+                  if (!(p as { in_stock?: boolean }).in_stock) { toast.error(t("نفد المخزون", "Out of stock")); return; }
                   if (!user) { toast.error(t("سجّل دخول أولًا", "Sign in first")); return; }
                   setSelected(p);
                 }}
-                className="block w-full"
+                className="block w-full disabled:cursor-not-allowed"
               >
                 <div className="relative aspect-square p-6 flex items-center justify-center">
                   <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_oklch(0.7_0.18_75/_18%),_transparent_65%)]" />
                   <div className="relative w-full h-full grid place-items-center">
                     {p.image_url ? (
-                      <img src={p.image_url} alt={title} className="absolute inset-[18%] w-[64%] h-[64%] object-cover rounded-2xl z-10" />
+                      <img src={p.image_url} alt={title} className={`absolute inset-[18%] w-[64%] h-[64%] object-cover rounded-2xl z-10 ${!(p as { in_stock?: boolean }).in_stock ? "grayscale" : ""}`} />
                     ) : (
                       <div className="absolute inset-[18%] w-[64%] h-[64%] grid place-items-center rounded-2xl bg-secondary z-10 text-3xl">🎮</div>
                     )}

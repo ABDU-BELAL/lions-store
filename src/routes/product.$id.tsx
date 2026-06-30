@@ -33,6 +33,7 @@ export type Product = {
   min_quantity: number | null;
   max_quantity: number | null;
   purchase_field_mode: "game_id" | "subscription" | "none";
+  in_stock: boolean;
 };
 
 export const getProductById = createServerFn({ method: "GET" })
@@ -40,7 +41,7 @@ export const getProductById = createServerFn({ method: "GET" })
   .handler(async ({ data }): Promise<Product | null> => {
     const { data: product, error } = await supabaseAdmin
       .from("products")
-      .select("id, title, title_en, description, description_en, category, price, image_url, is_offer, collection_id, quantity_enabled, unit_size, unit_label, min_quantity, max_quantity, purchase_field_mode")
+      .select("id, title, title_en, description, description_en, category, price, image_url, is_offer, collection_id, quantity_enabled, unit_size, unit_label, min_quantity, max_quantity, purchase_field_mode, in_stock")
       .eq("id", data.id)
       .eq("is_active", true)
       .maybeSingle();
@@ -259,7 +260,11 @@ function ProductPage() {
             </div>
           )}
 
-          {!user ? (
+          {!p.in_stock ? (
+            <div className="mt-6 w-full text-center rounded-xl bg-destructive/15 border border-destructive text-destructive font-extrabold py-3">
+              {t("نفد المخزون", "Out of stock")}
+            </div>
+          ) : !user ? (
             <Link to="/login" className="mt-6 w-full block text-center rounded-xl bg-gold-gradient text-primary-foreground font-extrabold py-3 shadow-gold">
               {t("سجّل دخول للشراء", "Sign in to buy")}
             </Link>

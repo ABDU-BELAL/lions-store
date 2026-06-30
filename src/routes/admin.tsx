@@ -345,10 +345,10 @@ function ProductsTab({ initialCollectionId, onBack }: { initialCollectionId?: st
   const { data } = useQuery({ queryKey: ["admin-products"], queryFn: () => list() });
   const { data: collections = [] } = useQuery({ queryKey: ["admin-collections"], queryFn: () => colsList() });
   const [filter, setFilter] = useState<string>(initialCollectionId ?? "");
-  type EditState = { id?: string; title: string; title_en: string; description: string; description_en: string; image_url: string; category: string; price: number; is_active: boolean; is_offer: boolean; sort_order: number; collection_id: string | null; quantity_enabled: boolean; unit_size: number; unit_label: string; min_quantity: string; max_quantity: string; provider: "" | "brand1" | "x3"; provider_product_id: string; auto_fulfill_enabled: boolean; purchase_field_mode: "game_id" | "subscription" | "none" };
+  type EditState = { id?: string; title: string; title_en: string; description: string; description_en: string; image_url: string; category: string; price: number; is_active: boolean; in_stock: boolean; is_offer: boolean; sort_order: number; collection_id: string | null; quantity_enabled: boolean; unit_size: number; unit_label: string; min_quantity: string; max_quantity: string; provider: "" | "brand1" | "x3"; provider_product_id: string; auto_fulfill_enabled: boolean; purchase_field_mode: "game_id" | "subscription" | "none" };
   const [editing, setEditing] = useState<null | EditState>(null);
 
-  const blank = (): EditState => ({ title: "", title_en: "", description: "", description_en: "", image_url: "", category: "games", price: 0, is_active: true, is_offer: false, sort_order: 0, collection_id: filter || null, quantity_enabled: false, unit_size: 1, unit_label: "", min_quantity: "", max_quantity: "", provider: "", provider_product_id: "", auto_fulfill_enabled: false, purchase_field_mode: "game_id" });
+  const blank = (): EditState => ({ title: "", title_en: "", description: "", description_en: "", image_url: "", category: "games", price: 0, is_active: true, in_stock: true, is_offer: false, sort_order: 0, collection_id: filter || null, quantity_enabled: false, unit_size: 1, unit_label: "", min_quantity: "", max_quantity: "", provider: "", provider_product_id: "", auto_fulfill_enabled: false, purchase_field_mode: "game_id" });
 
   const save = useMutation({
     mutationFn: async () => {
@@ -358,7 +358,7 @@ function ProductsTab({ initialCollectionId, onBack }: { initialCollectionId?: st
         description: editing!.description || undefined,
         description_en: editing!.description_en.trim() || null,
         image_url: editing!.image_url || undefined,
-        category: editing!.category, price: editing!.price, is_active: editing!.is_active, is_offer: editing!.is_offer, sort_order: editing!.sort_order,
+        category: editing!.category, price: editing!.price, is_active: editing!.is_active, in_stock: editing!.in_stock, is_offer: editing!.is_offer, sort_order: editing!.sort_order,
         collection_id: editing!.collection_id || null,
         quantity_enabled: editing!.quantity_enabled,
         unit_size: editing!.quantity_enabled ? Number(editing!.unit_size) || 1 : 1,
@@ -452,10 +452,10 @@ function ProductsTab({ initialCollectionId, onBack }: { initialCollectionId?: st
           <div key={p.id} className="rounded-2xl bg-card/70 border border-border p-4">
             {p.image_url && <img src={p.image_url} alt={p.title} className="aspect-video w-full object-cover rounded-xl mb-2" />}
             <p className="font-extrabold">{p.title}</p>
-            <p className="text-xs text-muted-foreground">{p.category} • {p.is_active ? "مفعّل" : "متوقف"}{p.is_offer ? " • عرض" : ""}</p>
+            <p className="text-xs text-muted-foreground">{p.category} • {p.is_active ? "مفعّل" : "متوقف"}{(p as { in_stock?: boolean }).in_stock === false ? " • نفد المخزون" : ""}{p.is_offer ? " • عرض" : ""}</p>
             <p className="mt-1 font-black text-gold-gradient">EG {Number(p.price).toLocaleString()}</p>
             <div className="mt-3 flex gap-2">
-              <button onClick={() => setEditing({ id: p.id, title: p.title, title_en: (p as { title_en?: string | null }).title_en ?? "", description: p.description ?? "", description_en: (p as { description_en?: string | null }).description_en ?? "", image_url: p.image_url ?? "", category: p.category, price: Number(p.price), is_active: p.is_active, is_offer: p.is_offer, sort_order: p.sort_order, collection_id: p.collection_id ?? null, quantity_enabled: (p as { quantity_enabled?: boolean }).quantity_enabled ?? false, unit_size: Number((p as { unit_size?: number }).unit_size ?? 1), unit_label: (p as { unit_label?: string | null }).unit_label ?? "", min_quantity: (p as { min_quantity?: number | null }).min_quantity != null ? String((p as { min_quantity?: number | null }).min_quantity) : "", max_quantity: (p as { max_quantity?: number | null }).max_quantity != null ? String((p as { max_quantity?: number | null }).max_quantity) : "", provider: (((p as { provider?: string | null }).provider === "brand1" || (p as { provider?: string | null }).provider === "x3") ? (p as { provider?: "brand1"|"x3" }).provider! : ""), provider_product_id: (p as { provider_product_id?: string | null }).provider_product_id ?? "", auto_fulfill_enabled: (p as { auto_fulfill_enabled?: boolean }).auto_fulfill_enabled ?? false, purchase_field_mode: (((p as { purchase_field_mode?: string }).purchase_field_mode as "game_id" | "subscription" | "none") ?? "game_id") })} className="flex-1 rounded-lg bg-secondary py-1.5 text-sm font-bold">تعديل / Edit</button>
+              <button onClick={() => setEditing({ id: p.id, title: p.title, title_en: (p as { title_en?: string | null }).title_en ?? "", description: p.description ?? "", description_en: (p as { description_en?: string | null }).description_en ?? "", image_url: p.image_url ?? "", category: p.category, price: Number(p.price), is_active: p.is_active, in_stock: (p as { in_stock?: boolean }).in_stock ?? true, is_offer: p.is_offer, sort_order: p.sort_order, collection_id: p.collection_id ?? null, quantity_enabled: (p as { quantity_enabled?: boolean }).quantity_enabled ?? false, unit_size: Number((p as { unit_size?: number }).unit_size ?? 1), unit_label: (p as { unit_label?: string | null }).unit_label ?? "", min_quantity: (p as { min_quantity?: number | null }).min_quantity != null ? String((p as { min_quantity?: number | null }).min_quantity) : "", max_quantity: (p as { max_quantity?: number | null }).max_quantity != null ? String((p as { max_quantity?: number | null }).max_quantity) : "", provider: (((p as { provider?: string | null }).provider === "brand1" || (p as { provider?: string | null }).provider === "x3") ? (p as { provider?: "brand1"|"x3" }).provider! : ""), provider_product_id: (p as { provider_product_id?: string | null }).provider_product_id ?? "", auto_fulfill_enabled: (p as { auto_fulfill_enabled?: boolean }).auto_fulfill_enabled ?? false, purchase_field_mode: (((p as { purchase_field_mode?: string }).purchase_field_mode as "game_id" | "subscription" | "none") ?? "game_id") })} className="flex-1 rounded-lg bg-secondary py-1.5 text-sm font-bold">تعديل / Edit</button>
               <button onClick={() => confirm("متأكد؟") && remove.mutate(p.id)} className="rounded-lg bg-destructive text-white px-3 py-1.5 text-sm font-bold"><Trash2 className="size-4" /></button>
             </div>
           </div>
@@ -531,11 +531,17 @@ function ProductsTab({ initialCollectionId, onBack }: { initialCollectionId?: st
               </p>
             </div>
 
-            <div className="flex items-center gap-4 text-sm">
+            <div className="flex items-center gap-4 text-sm flex-wrap">
               <label className="flex items-center gap-2"><input type="checkbox" checked={editing.is_active} onChange={(e) => setEditing({ ...editing, is_active: e.target.checked })} /> مفعّل</label>
+              <label className="flex items-center gap-2"><input type="checkbox" checked={editing.in_stock} onChange={(e) => setEditing({ ...editing, in_stock: e.target.checked })} /> متوفر بالمخزون / In stock</label>
               <label className="flex items-center gap-2"><input type="checkbox" checked={editing.is_offer} onChange={(e) => setEditing({ ...editing, is_offer: e.target.checked })} /> عرض</label>
               <input type="number" placeholder="الترتيب" value={editing.sort_order} onChange={(e) => setEditing({ ...editing, sort_order: Number(e.target.value) })} className="ml-auto w-20 rounded-xl bg-secondary px-3 py-2" />
             </div>
+            {!editing.in_stock && (
+              <div className="rounded-xl bg-destructive/15 border border-destructive text-destructive text-xs font-bold p-2 text-center">
+                نفد المخزون — لن يستطيع العملاء شراء هذا المنتج / Out of stock — customers cannot purchase
+              </div>
+            )}
 
             {editing.id ? (
               <div className="rounded-xl border border-gold/40 bg-gold/5 p-3 space-y-2">
