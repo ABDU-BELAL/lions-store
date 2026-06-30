@@ -11,7 +11,7 @@ import {
   verifyAdminAccess, adminListOrders, decideOrder,
   adminListUsers, adminAdjustBalance, adminSetUserBanned,
   adminListDiscounts, adminUpsertDiscount, adminDeleteDiscount,
-  adminBrand1TestConnection, adminBrand1ListProducts, adminSetProductProvider,
+  adminBrand1TestConnection, adminBrand1ListProducts, adminSetProductProvider, adminX3TestConnection, adminX3ListProducts,
 } from "@/lib/admin.functions";
 import { listVipTiers, adminUpdateVipTier, adminAssignVip, adminRevokeVip } from "@/lib/vip.functions";
 import { VipBadge } from "@/components/VipBadge";
