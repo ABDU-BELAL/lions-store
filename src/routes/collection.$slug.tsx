@@ -131,10 +131,12 @@ function CollectionPage() {
               return (
                 <button
                   key={pp.id}
-                  onClick={() => { if (!user) { toast.error(t("سجّل دخول أولًا", "Sign in first")); return; } setSelected(pp); }}
-                  className="group relative rounded-2xl overflow-hidden bg-dark-gradient shadow-card border border-gold/20 transition-transform hover:-translate-y-1 hover:shadow-gold"
+                  disabled={pp.in_stock === false}
+                  onClick={() => { if (pp.in_stock === false) { toast.error(t("نفد المخزون", "Out of stock")); return; } if (!user) { toast.error(t("سجّل دخول أولًا", "Sign in first")); return; } setSelected(pp); }}
+                  className={`group relative rounded-2xl overflow-hidden bg-dark-gradient shadow-card border border-gold/20 transition-transform hover:-translate-y-1 hover:shadow-gold disabled:cursor-not-allowed ${pp.in_stock === false ? "opacity-75" : ""}`}
                 >
                   {pp.is_offer && <span className={`absolute top-2 ${dir === "rtl" ? "right-2" : "left-2"} z-20 text-[10px] font-extrabold bg-destructive text-destructive-foreground rounded-full px-2 py-1`}>{t("عرض", "Offer")}</span>}
+                  {pp.in_stock === false && <span className={`absolute top-2 ${dir === "rtl" ? "left-2" : "right-2"} z-20 text-[10px] font-extrabold bg-destructive text-destructive-foreground rounded-full px-2 py-1`}>{t("نفد المخزون", "Out of stock")}</span>}
                   <FramedImage src={pp.image_url} alt={title} />
                   <div className="px-4 pb-4 pt-1 text-center">
                     <h3 className="text-sm font-extrabold text-gold-gradient line-clamp-1">{title}</h3>
