@@ -542,9 +542,10 @@ function ProductsTab({ initialCollectionId, onBack }: { initialCollectionId?: st
                 <p className="text-sm font-extrabold text-gold-gradient">⚡ التنفيذ التلقائي / Auto-fulfillment</p>
                 <p className="text-[11px] text-muted-foreground">يربط المنتج بمزود API. عند الشراء يتم تنفيذ الطلب تلقائياً. لو فشل أو انتظر +20 دقيقة، يتم استرداد الرصيد للعميل تلقائياً.</p>
                 <div className="grid grid-cols-2 gap-2">
-                  <select value={editing.provider} onChange={(e) => setEditing({ ...editing, provider: e.target.value as "" | "brand1" })} className="rounded-xl bg-secondary px-3 py-2 text-sm">
+                  <select value={editing.provider} onChange={(e) => setEditing({ ...editing, provider: e.target.value as "" | "brand1" | "x3", provider_product_id: "" })} className="rounded-xl bg-secondary px-3 py-2 text-sm">
                     <option value="">بدون مزود</option>
                     <option value="brand1">Brand1 Card</option>
+                    <option value="x3">X3 Store</option>
                   </select>
                   <label className="flex items-center gap-2 text-sm font-bold rounded-xl bg-secondary px-3 py-2">
                     <input type="checkbox" checked={editing.auto_fulfill_enabled} onChange={(e) => setEditing({ ...editing, auto_fulfill_enabled: e.target.checked })} />
@@ -565,6 +566,35 @@ function ProductsTab({ initialCollectionId, onBack }: { initialCollectionId?: st
                       >
                         <option value="">— اختر منتج Brand1 —</option>
                         {brand1Products.data.products.map((bp) => (
+                          <option key={bp.id} value={bp.id}>
+                            #{bp.id} • {bp.name} {bp.price ? `($${bp.price})` : ""}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                    <input
+                      placeholder="أو اكتب الـ ID يدوياً"
+                      dir="ltr"
+                      value={editing.provider_product_id}
+                      onChange={(e) => setEditing({ ...editing, provider_product_id: e.target.value })}
+                      className="w-full rounded-xl bg-secondary px-3 py-2 text-sm"
+                    />
+                  </>
+                )}
+                {editing.provider === "x3" && (
+                  <>
+                    {x3Products.isLoading && <p className="text-xs text-muted-foreground">جاري تحميل منتجات X3...</p>}
+                    {x3Products.data && !x3Products.data.ok && (
+                      <p className="text-xs text-destructive">تعذر جلب المنتجات: {x3Products.data.error ?? "تأكد من التوكن والـ IPs في لوحة X3"}</p>
+                    )}
+                    {x3Products.data?.ok && (
+                      <select
+                        value={editing.provider_product_id}
+                        onChange={(e) => setEditing({ ...editing, provider_product_id: e.target.value })}
+                        className="w-full rounded-xl bg-secondary px-3 py-2 text-sm"
+                      >
+                        <option value="">— اختر منتج X3 —</option>
+                        {x3Products.data.products.map((bp) => (
                           <option key={bp.id} value={bp.id}>
                             #{bp.id} • {bp.name} {bp.price ? `($${bp.price})` : ""}
                           </option>
