@@ -1,9 +1,12 @@
 // Auto-fulfillment orchestration. Server-only — invoked from server fns + cron route.
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { brand1NewOrder, brand1CheckOrder } from "./brand1.server";
+import { brand1NewOrder, brand1CheckOrder, brand1CheckByUuid } from "./brand1.server";
+import { x3NewOrder, x3CheckOrder, x3CheckByUuid } from "./x3.server";
 import { notifyTelegram, escapeTelegramHtml } from "./telegram.server";
 
 const MAX_WAIT_MINUTES = 20;
+
+type ProviderName = "brand1" | "x3";
 
 function newUuid(): string {
   return crypto.randomUUID();
@@ -25,7 +28,53 @@ interface OrderRow {
   provider_attempts: number | null;
 }
 
+interface NewOrderResult {
+  ok: boolean;
+  orderId?: string;
+  status?: string;
+  errorMessage?: string;
+  raw: Record<string, unknown>;
+}
+
+interface CheckResult {
+  status?: string;
+  orderId?: string;
+  raw: Record<string, unknown>;
+}
+
+async function providerNewOrder(provider: ProviderName, args: { providerProductId: string; qty: number; playerId?: string; orderUuid: string }): Promise<NewOrderResult> {
+  if (provider === "x3") return x3NewOrder(args);
+  return brand1NewOrder(args);
+}
+
+async function providerCheck(provider: ProviderName, providerOrderId: string): Promise<CheckResult> {
+  if (provider === "x3") return x3CheckOrder(providerOrderId);
+  return brand1CheckOrder(providerOrderId);
+}
+
+async function providerCheckByUuid(provider: ProviderName, uuid: string): Promise<CheckResult> {
+  try {
+    if (provider === "x3") return await x3CheckByUuid(uuid);
+    return await brand1CheckByUuid(uuid);
+  } catch (e) {
+    return { raw: { error: e instanceof Error ? e.message : "check failed" } };
+  }
+}
+
 async function refundOrder(order: OrderRow, reason: string) {
+  // Mark refunded flag first to prevent any chance of double-refund.
+  const { data: marked, error: markErr } = await supabaseAdmin
+    .from("orders")
+    .update({ refunded: true, refunded_at: new Date().toISOString(), refund_reason: reason })
+    .eq("id", order.id)
+    .or("refunded.is.null,refunded.eq.false")
+    .select("id")
+    .maybeSingle();
+  if (markErr) { console.error("[fulfillment] refund mark failed", markErr); throw new Error("Refund mark failed"); }
+  if (!marked) {
+    // Already refunded — skip.
+    return;
+  }
   const { error } = await supabaseAdmin.rpc("credit_wallet", {
     p_user_id: order.user_id,
     p_amount: Number(order.amount),
@@ -35,7 +84,9 @@ async function refundOrder(order: OrderRow, reason: string) {
     p_ref_id: order.id,
   });
   if (error) {
-    console.error("[fulfillment] refund failed", error);
+    console.error("[fulfillment] refund credit failed", error);
+    // Roll back the refunded flag so a future poll can retry.
+    await supabaseAdmin.from("orders").update({ refunded: false, refunded_at: null, refund_reason: null }).eq("id", order.id);
     throw new Error("Refund failed: " + error.message);
   }
   notifyTelegram(
@@ -43,32 +94,36 @@ async function refundOrder(order: OrderRow, reason: string) {
   ).catch(() => {});
 }
 
+async function alertAdmin(message: string) {
+  notifyTelegram(`⚠️ <b>تنبيه</b>\n${message}`).catch(() => {});
+}
+
 /** Called immediately after a customer purchase. Returns true if an auto-attempt was made. */
 export async function tryAutoFulfillOrder(orderId: string): Promise<{ attempted: boolean; finalStatus?: string }> {
-  // Load order + product mapping
   const { data: order } = await supabaseAdmin
     .from("orders")
     .select("id, user_id, product_id, product_title, amount, status, game_user_id, quantity, provider, provider_order_id, provider_uuid, provider_started_at, provider_attempts")
     .eq("id", orderId)
     .maybeSingle();
   if (!order || order.status !== "pending" || !order.product_id) return { attempted: false };
-  if (order.provider) return { attempted: false }; // already attempted
+  if (order.provider) return { attempted: false };
 
   const { data: product } = await supabaseAdmin
     .from("products")
     .select("id, auto_fulfill_enabled, provider, provider_product_id")
     .eq("id", order.product_id)
     .maybeSingle();
-  if (!product?.auto_fulfill_enabled || product.provider !== "brand1" || !product.provider_product_id) {
+  if (!product?.auto_fulfill_enabled || !product.provider || !product.provider_product_id) {
     return { attempted: false };
   }
+  const provider = product.provider as ProviderName;
+  if (provider !== "brand1" && provider !== "x3") return { attempted: false };
 
   const uuid = newUuid();
-  // Reserve provider fields atomically before calling out.
   const { error: upErr } = await supabaseAdmin
     .from("orders")
     .update({
-      provider: "brand1",
+      provider,
       provider_uuid: uuid,
       provider_started_at: new Date().toISOString(),
       provider_attempts: 1,
@@ -81,14 +136,13 @@ export async function tryAutoFulfillOrder(orderId: string): Promise<{ attempted:
   }
 
   const qty = Number(order.quantity ?? 1) || 1;
-  const result = await brand1NewOrder({
+  const result = await providerNewOrder(provider, {
     providerProductId: String(product.provider_product_id),
     qty,
     playerId: order.game_user_id ?? undefined,
     orderUuid: uuid,
   });
 
-  // Persist provider response
   await supabaseAdmin
     .from("orders")
     .update({
@@ -99,8 +153,40 @@ export async function tryAutoFulfillOrder(orderId: string): Promise<{ attempted:
     })
     .eq("id", orderId);
 
-  if (!result.ok) {
-    // Provider rejected the request outright — auto refund
+  // CRITICAL: If newOrder failed (network/timeout/no orderId), the provider may
+  // STILL have created the order due to idempotency on order_uuid. Verify by
+  // checking the uuid before refunding — otherwise we'd refund a fulfilled order.
+  if (!result.ok || !result.orderId) {
+    const recovered = await providerCheckByUuid(provider, uuid);
+    if (recovered.orderId || recovered.status) {
+      await supabaseAdmin
+        .from("orders")
+        .update({
+          provider_order_id: recovered.orderId ?? null,
+          provider_status: recovered.status ?? null,
+          provider_reply: recovered.raw as never,
+          provider_last_checked_at: new Date().toISOString(),
+        })
+        .eq("id", orderId);
+      if (recovered.status === "accept") {
+        await supabaseAdmin.from("orders").update({ status: "completed" }).eq("id", orderId).eq("status", "pending");
+        notifyTelegram(`✅ تنفيذ تلقائي ناجح (استرداد بعد فشل شبكة): ${escapeTelegramHtml(order.product_title)}`).catch(() => {});
+        return { attempted: true, finalStatus: "completed" };
+      }
+      if (recovered.status === "reject") {
+        await supabaseAdmin.from("orders").update({ status: "rejected" }).eq("id", orderId).eq("status", "pending");
+        await refundOrder(order as OrderRow, "Provider rejected (recovered)");
+        return { attempted: true, finalStatus: "rejected" };
+      }
+      // wait — leave pending; poll will follow up safely.
+      return { attempted: true, finalStatus: "pending" };
+    }
+    // Provider truly has no record. Only refund when we're certain (no orderId AND uuid not found).
+    if (!result.ok && result.errorMessage?.toLowerCase().includes("network")) {
+      // Network failure with no record on provider side — leave pending; poll will re-verify.
+      alertAdmin(`فشل شبكة أثناء طلب التنفيذ التلقائي — الطلب معلّق للمراجعة\n#order_${orderId.slice(0,8)} uuid=${uuid}`);
+      return { attempted: true, finalStatus: "pending" };
+    }
     await supabaseAdmin.from("orders").update({ status: "rejected" }).eq("id", orderId).eq("status", "pending");
     await refundOrder(order as OrderRow, result.errorMessage ?? "Provider error");
     return { attempted: true, finalStatus: "rejected" };
@@ -116,7 +202,6 @@ export async function tryAutoFulfillOrder(orderId: string): Promise<{ attempted:
     await refundOrder(order as OrderRow, "Provider rejected");
     return { attempted: true, finalStatus: "rejected" };
   }
-  // status === wait → stays pending, cron will poll
   return { attempted: true, finalStatus: "pending" };
 }
 
@@ -126,27 +211,53 @@ export async function pollPendingProviderOrders(): Promise<{ checked: number; co
     .from("orders")
     .select("id, user_id, product_id, product_title, amount, status, game_user_id, quantity, provider, provider_order_id, provider_uuid, provider_started_at, provider_attempts")
     .eq("status", "pending")
-    .eq("provider", "brand1")
+    .in("provider", ["brand1", "x3"])
     .limit(50);
   if (!rows || rows.length === 0) return { checked: 0, completed: 0, refunded: 0, stillPending: 0 };
 
   let completed = 0, refunded = 0, stillPending = 0;
   for (const order of rows as OrderRow[]) {
     try {
+      const provider = order.provider as ProviderName;
       const startedAt = order.provider_started_at ? new Date(order.provider_started_at).getTime() : Date.now();
       const ageMin = (Date.now() - startedAt) / 60000;
 
-      // No provider_order_id means newOrder never returned one — treat as failure and refund.
+      // If we don't have a provider_order_id, first try recovering via uuid (idempotency).
+      // Do NOT refund just because newOrder didn't return one — the order may exist on the provider side.
       if (!order.provider_order_id) {
-        if (ageMin >= 1) {
-          await supabaseAdmin.from("orders").update({ status: "rejected" }).eq("id", order.id).eq("status", "pending");
-          await refundOrder(order, "No provider order id");
-          refunded++;
-        } else { stillPending++; }
-        continue;
+        if (!order.provider_uuid) {
+          // Should not happen, but if no uuid either, mark and alert.
+          if (ageMin >= MAX_WAIT_MINUTES) {
+            await supabaseAdmin.from("orders").update({ status: "rejected" }).eq("id", order.id).eq("status", "pending");
+            await refundOrder(order, "No provider_uuid (timeout)");
+            refunded++;
+          } else { stillPending++; }
+          continue;
+        }
+        const rec = await providerCheckByUuid(provider, order.provider_uuid);
+        if (rec.orderId) {
+          await supabaseAdmin.from("orders").update({
+            provider_order_id: rec.orderId,
+            provider_status: rec.status ?? null,
+            provider_reply: rec.raw as never,
+            provider_last_checked_at: new Date().toISOString(),
+            provider_attempts: (order.provider_attempts ?? 0) + 1,
+          }).eq("id", order.id);
+          order.provider_order_id = rec.orderId;
+          // fall through to status handling below
+        } else {
+          // Not found yet. After MAX_WAIT_MINUTES, alert admin instead of auto-refund.
+          if (ageMin >= MAX_WAIT_MINUTES) {
+            alertAdmin(`طلب لم يصل للمزود بعد ${Math.floor(ageMin)} دقيقة — للمراجعة اليدوية\n#order_${order.id.slice(0,8)} uuid=${order.provider_uuid}`);
+            stillPending++;
+          } else {
+            stillPending++;
+          }
+          continue;
+        }
       }
 
-      const chk = await brand1CheckOrder(order.provider_order_id);
+      const chk = await providerCheck(provider, order.provider_order_id!);
       await supabaseAdmin
         .from("orders")
         .update({
@@ -166,6 +277,15 @@ export async function pollPendingProviderOrders(): Promise<{ checked: number; co
         await refundOrder(order, "Provider rejected (poll)");
         refunded++;
       } else if (ageMin >= MAX_WAIT_MINUTES) {
+        // Before refunding on timeout, do a final uuid-check to be safe against status caching.
+        if (order.provider_uuid) {
+          const finalCheck = await providerCheckByUuid(provider, order.provider_uuid);
+          if (finalCheck.status === "accept") {
+            await supabaseAdmin.from("orders").update({ status: "completed" }).eq("id", order.id).eq("status", "pending");
+            completed++;
+            continue;
+          }
+        }
         await supabaseAdmin.from("orders").update({ status: "rejected" }).eq("id", order.id).eq("status", "pending");
         await refundOrder(order, `Timeout after ${MAX_WAIT_MINUTES} minutes`);
         refunded++;

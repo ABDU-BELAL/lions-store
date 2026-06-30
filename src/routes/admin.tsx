@@ -11,7 +11,7 @@ import {
   verifyAdminAccess, adminListOrders, decideOrder,
   adminListUsers, adminAdjustBalance, adminSetUserBanned,
   adminListDiscounts, adminUpsertDiscount, adminDeleteDiscount,
-  adminBrand1TestConnection, adminBrand1ListProducts, adminSetProductProvider,
+  adminBrand1TestConnection, adminBrand1ListProducts, adminSetProductProvider, adminX3TestConnection, adminX3ListProducts,
 } from "@/lib/admin.functions";
 import { listVipTiers, adminUpdateVipTier, adminAssignVip, adminRevokeVip } from "@/lib/vip.functions";
 import { VipBadge } from "@/components/VipBadge";
@@ -338,12 +338,14 @@ function ProductsTab({ initialCollectionId, onBack }: { initialCollectionId?: st
   const colsList = useServerFn(adminListCollections);
   const testBrand1 = useServerFn(adminBrand1TestConnection);
   const listBrand1 = useServerFn(adminBrand1ListProducts);
+  const testX3 = useServerFn(adminX3TestConnection);
+  const listX3 = useServerFn(adminX3ListProducts);
   const setProvider = useServerFn(adminSetProductProvider);
   const qc = useQueryClient();
   const { data } = useQuery({ queryKey: ["admin-products"], queryFn: () => list() });
   const { data: collections = [] } = useQuery({ queryKey: ["admin-collections"], queryFn: () => colsList() });
   const [filter, setFilter] = useState<string>(initialCollectionId ?? "");
-  type EditState = { id?: string; title: string; title_en: string; description: string; description_en: string; image_url: string; category: string; price: number; is_active: boolean; is_offer: boolean; sort_order: number; collection_id: string | null; quantity_enabled: boolean; unit_size: number; unit_label: string; min_quantity: string; max_quantity: string; provider: "" | "brand1"; provider_product_id: string; auto_fulfill_enabled: boolean; purchase_field_mode: "game_id" | "subscription" | "none" };
+  type EditState = { id?: string; title: string; title_en: string; description: string; description_en: string; image_url: string; category: string; price: number; is_active: boolean; is_offer: boolean; sort_order: number; collection_id: string | null; quantity_enabled: boolean; unit_size: number; unit_label: string; min_quantity: string; max_quantity: string; provider: "" | "brand1" | "x3"; provider_product_id: string; auto_fulfill_enabled: boolean; purchase_field_mode: "game_id" | "subscription" | "none" };
   const [editing, setEditing] = useState<null | EditState>(null);
 
   const blank = (): EditState => ({ title: "", title_en: "", description: "", description_en: "", image_url: "", category: "games", price: 0, is_active: true, is_offer: false, sort_order: 0, collection_id: filter || null, quantity_enabled: false, unit_size: 1, unit_label: "", min_quantity: "", max_quantity: "", provider: "", provider_product_id: "", auto_fulfill_enabled: false, purchase_field_mode: "game_id" });
@@ -365,7 +367,6 @@ function ProductsTab({ initialCollectionId, onBack }: { initialCollectionId?: st
         max_quantity: editing!.quantity_enabled && editing!.max_quantity ? Number(editing!.max_quantity) : null,
         purchase_field_mode: editing!.purchase_field_mode,
       } } });
-      // Save provider mapping only for already-existing products.
       if (editing?.id) {
         await setProvider({ data: {
           productId: editing.id,
@@ -383,7 +384,16 @@ function ProductsTab({ initialCollectionId, onBack }: { initialCollectionId?: st
     mutationFn: () => testBrand1({ data: undefined }),
     onSuccess: (r) => {
       if (r.ok) toast.success("اتصال Brand1 يعمل ✓");
-      else toast.error("فشل الاتصال: " + (r.error ?? "تأكد من السماح لكل الـ IPs في لوحة المزود"));
+      else toast.error("فشل Brand1: " + (r.error ?? "تأكد من السماح لكل الـ IPs"));
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const testConnX3 = useMutation({
+    mutationFn: () => testX3({ data: undefined }),
+    onSuccess: (r) => {
+      if (r.ok) toast.success("اتصال X3 يعمل ✓");
+      else toast.error("فشل X3: " + (r.error ?? "تأكد من التوكن والـ IPs"));
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -391,9 +401,17 @@ function ProductsTab({ initialCollectionId, onBack }: { initialCollectionId?: st
   const brand1Products = useQuery({
     queryKey: ["brand1-products"],
     queryFn: () => listBrand1(),
-    enabled: !!editing?.id,
+    enabled: !!editing?.id && editing?.provider === "brand1",
     staleTime: 5 * 60_000,
   });
+
+  const x3Products = useQuery({
+    queryKey: ["x3-products"],
+    queryFn: () => listX3(),
+    enabled: !!editing?.id && editing?.provider === "x3",
+    staleTime: 5 * 60_000,
+  });
+
 
 
   const remove = useMutation({
@@ -417,7 +435,10 @@ function ProductsTab({ initialCollectionId, onBack }: { initialCollectionId?: st
       <div className="flex items-center gap-2 mb-4 flex-wrap">
         <button onClick={() => setEditing(blank())} className="rounded-full bg-gold-gradient text-primary-foreground font-bold px-4 py-2 text-sm flex items-center gap-2"><Plus className="size-4" /> منتج جديد</button>
         <button onClick={() => testConn.mutate()} disabled={testConn.isPending} className="rounded-full bg-secondary border border-border px-4 py-2 text-sm font-bold">
-          {testConn.isPending ? "..." : "اختبار اتصال Brand1"}
+          {testConn.isPending ? "..." : "اختبار Brand1"}
+        </button>
+        <button onClick={() => testConnX3.mutate()} disabled={testConnX3.isPending} className="rounded-full bg-secondary border border-border px-4 py-2 text-sm font-bold">
+          {testConnX3.isPending ? "..." : "اختبار X3"}
         </button>
         {!initialCollectionId && (
           <select value={filter} onChange={(e) => setFilter(e.target.value)} className="rounded-full bg-secondary border border-border px-3 py-2 text-sm">
@@ -434,7 +455,7 @@ function ProductsTab({ initialCollectionId, onBack }: { initialCollectionId?: st
             <p className="text-xs text-muted-foreground">{p.category} • {p.is_active ? "مفعّل" : "متوقف"}{p.is_offer ? " • عرض" : ""}</p>
             <p className="mt-1 font-black text-gold-gradient">EG {Number(p.price).toLocaleString()}</p>
             <div className="mt-3 flex gap-2">
-              <button onClick={() => setEditing({ id: p.id, title: p.title, title_en: (p as { title_en?: string | null }).title_en ?? "", description: p.description ?? "", description_en: (p as { description_en?: string | null }).description_en ?? "", image_url: p.image_url ?? "", category: p.category, price: Number(p.price), is_active: p.is_active, is_offer: p.is_offer, sort_order: p.sort_order, collection_id: p.collection_id ?? null, quantity_enabled: (p as { quantity_enabled?: boolean }).quantity_enabled ?? false, unit_size: Number((p as { unit_size?: number }).unit_size ?? 1), unit_label: (p as { unit_label?: string | null }).unit_label ?? "", min_quantity: (p as { min_quantity?: number | null }).min_quantity != null ? String((p as { min_quantity?: number | null }).min_quantity) : "", max_quantity: (p as { max_quantity?: number | null }).max_quantity != null ? String((p as { max_quantity?: number | null }).max_quantity) : "", provider: ((p as { provider?: string | null }).provider === "brand1" ? "brand1" : ""), provider_product_id: (p as { provider_product_id?: string | null }).provider_product_id ?? "", auto_fulfill_enabled: (p as { auto_fulfill_enabled?: boolean }).auto_fulfill_enabled ?? false, purchase_field_mode: (((p as { purchase_field_mode?: string }).purchase_field_mode as "game_id" | "subscription" | "none") ?? "game_id") })} className="flex-1 rounded-lg bg-secondary py-1.5 text-sm font-bold">تعديل / Edit</button>
+              <button onClick={() => setEditing({ id: p.id, title: p.title, title_en: (p as { title_en?: string | null }).title_en ?? "", description: p.description ?? "", description_en: (p as { description_en?: string | null }).description_en ?? "", image_url: p.image_url ?? "", category: p.category, price: Number(p.price), is_active: p.is_active, is_offer: p.is_offer, sort_order: p.sort_order, collection_id: p.collection_id ?? null, quantity_enabled: (p as { quantity_enabled?: boolean }).quantity_enabled ?? false, unit_size: Number((p as { unit_size?: number }).unit_size ?? 1), unit_label: (p as { unit_label?: string | null }).unit_label ?? "", min_quantity: (p as { min_quantity?: number | null }).min_quantity != null ? String((p as { min_quantity?: number | null }).min_quantity) : "", max_quantity: (p as { max_quantity?: number | null }).max_quantity != null ? String((p as { max_quantity?: number | null }).max_quantity) : "", provider: (((p as { provider?: string | null }).provider === "brand1" || (p as { provider?: string | null }).provider === "x3") ? (p as { provider?: "brand1"|"x3" }).provider! : ""), provider_product_id: (p as { provider_product_id?: string | null }).provider_product_id ?? "", auto_fulfill_enabled: (p as { auto_fulfill_enabled?: boolean }).auto_fulfill_enabled ?? false, purchase_field_mode: (((p as { purchase_field_mode?: string }).purchase_field_mode as "game_id" | "subscription" | "none") ?? "game_id") })} className="flex-1 rounded-lg bg-secondary py-1.5 text-sm font-bold">تعديل / Edit</button>
               <button onClick={() => confirm("متأكد؟") && remove.mutate(p.id)} className="rounded-lg bg-destructive text-white px-3 py-1.5 text-sm font-bold"><Trash2 className="size-4" /></button>
             </div>
           </div>
@@ -521,9 +542,10 @@ function ProductsTab({ initialCollectionId, onBack }: { initialCollectionId?: st
                 <p className="text-sm font-extrabold text-gold-gradient">⚡ التنفيذ التلقائي / Auto-fulfillment</p>
                 <p className="text-[11px] text-muted-foreground">يربط المنتج بمزود API. عند الشراء يتم تنفيذ الطلب تلقائياً. لو فشل أو انتظر +20 دقيقة، يتم استرداد الرصيد للعميل تلقائياً.</p>
                 <div className="grid grid-cols-2 gap-2">
-                  <select value={editing.provider} onChange={(e) => setEditing({ ...editing, provider: e.target.value as "" | "brand1" })} className="rounded-xl bg-secondary px-3 py-2 text-sm">
+                  <select value={editing.provider} onChange={(e) => setEditing({ ...editing, provider: e.target.value as "" | "brand1" | "x3", provider_product_id: "" })} className="rounded-xl bg-secondary px-3 py-2 text-sm">
                     <option value="">بدون مزود</option>
                     <option value="brand1">Brand1 Card</option>
+                    <option value="x3">X3 Store</option>
                   </select>
                   <label className="flex items-center gap-2 text-sm font-bold rounded-xl bg-secondary px-3 py-2">
                     <input type="checkbox" checked={editing.auto_fulfill_enabled} onChange={(e) => setEditing({ ...editing, auto_fulfill_enabled: e.target.checked })} />
@@ -544,6 +566,35 @@ function ProductsTab({ initialCollectionId, onBack }: { initialCollectionId?: st
                       >
                         <option value="">— اختر منتج Brand1 —</option>
                         {brand1Products.data.products.map((bp) => (
+                          <option key={bp.id} value={bp.id}>
+                            #{bp.id} • {bp.name} {bp.price ? `($${bp.price})` : ""}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                    <input
+                      placeholder="أو اكتب الـ ID يدوياً"
+                      dir="ltr"
+                      value={editing.provider_product_id}
+                      onChange={(e) => setEditing({ ...editing, provider_product_id: e.target.value })}
+                      className="w-full rounded-xl bg-secondary px-3 py-2 text-sm"
+                    />
+                  </>
+                )}
+                {editing.provider === "x3" && (
+                  <>
+                    {x3Products.isLoading && <p className="text-xs text-muted-foreground">جاري تحميل منتجات X3...</p>}
+                    {x3Products.data && !x3Products.data.ok && (
+                      <p className="text-xs text-destructive">تعذر جلب المنتجات: {x3Products.data.error ?? "تأكد من التوكن والـ IPs في لوحة X3"}</p>
+                    )}
+                    {x3Products.data?.ok && (
+                      <select
+                        value={editing.provider_product_id}
+                        onChange={(e) => setEditing({ ...editing, provider_product_id: e.target.value })}
+                        className="w-full rounded-xl bg-secondary px-3 py-2 text-sm"
+                      >
+                        <option value="">— اختر منتج X3 —</option>
+                        {x3Products.data.products.map((bp) => (
                           <option key={bp.id} value={bp.id}>
                             #{bp.id} • {bp.name} {bp.price ? `($${bp.price})` : ""}
                           </option>
