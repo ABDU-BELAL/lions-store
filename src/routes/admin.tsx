@@ -531,11 +531,17 @@ function ProductsTab({ initialCollectionId, onBack }: { initialCollectionId?: st
               </p>
             </div>
 
-            <div className="flex items-center gap-4 text-sm">
+            <div className="flex items-center gap-4 text-sm flex-wrap">
               <label className="flex items-center gap-2"><input type="checkbox" checked={editing.is_active} onChange={(e) => setEditing({ ...editing, is_active: e.target.checked })} /> مفعّل</label>
+              <label className="flex items-center gap-2"><input type="checkbox" checked={editing.in_stock} onChange={(e) => setEditing({ ...editing, in_stock: e.target.checked })} /> متوفر بالمخزون / In stock</label>
               <label className="flex items-center gap-2"><input type="checkbox" checked={editing.is_offer} onChange={(e) => setEditing({ ...editing, is_offer: e.target.checked })} /> عرض</label>
               <input type="number" placeholder="الترتيب" value={editing.sort_order} onChange={(e) => setEditing({ ...editing, sort_order: Number(e.target.value) })} className="ml-auto w-20 rounded-xl bg-secondary px-3 py-2" />
             </div>
+            {!editing.in_stock && (
+              <div className="rounded-xl bg-destructive/15 border border-destructive text-destructive text-xs font-bold p-2 text-center">
+                نفد المخزون — لن يستطيع العملاء شراء هذا المنتج / Out of stock — customers cannot purchase
+              </div>
+            )}
 
             {editing.id ? (
               <div className="rounded-xl border border-gold/40 bg-gold/5 p-3 space-y-2">
