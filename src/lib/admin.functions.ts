@@ -542,8 +542,8 @@ export const adminDeleteDiscount = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-// -------- Brand1 auto-fulfillment (admin) --------
-const providerEnum = z.enum(["brand1"]);
+// -------- Provider auto-fulfillment (admin) --------
+const providerEnum = z.enum(["brand1", "x3"]);
 
 export const adminBrand1TestConnection = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -579,6 +579,40 @@ export const adminBrand1ListProducts = createServerFn({ method: "GET" })
     }
   });
 
+export const adminX3TestConnection = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context.userId);
+    const { x3Profile } = await import("./x3.server");
+    try {
+      const profile = await x3Profile();
+      return { ok: true as const, profileJson: JSON.stringify(profile) };
+    } catch (e) {
+      return { ok: false as const, error: e instanceof Error ? e.message : "Unknown error" };
+    }
+  });
+
+export const adminX3ListProducts = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context.userId);
+    const { x3ListProducts } = await import("./x3.server");
+    try {
+      const products = await x3ListProducts();
+      return {
+        ok: true as const,
+        products: products.map((p) => ({
+          id: String(p.id),
+          name: String(p.name ?? ""),
+          price: p.price != null ? String(p.price) : "",
+          categoryName: p.category_name ? String(p.category_name) : "",
+        })),
+      };
+    } catch (e) {
+      return { ok: false as const, products: [], error: e instanceof Error ? e.message : "Unknown error" };
+    }
+  });
+
 export const adminSetProductProvider = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) =>
@@ -591,14 +625,12 @@ export const adminSetProductProvider = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId);
-    // Enforce: if auto-fulfill on, both provider and providerProductId must be set.
     if (data.autoFulfillEnabled && (!data.provider || !data.providerProductId)) {
       throw new Error("لتفعيل التنفيذ التلقائي، اختر المزود ورقم المنتج لديه");
     }
 
-    // Sync min/max qty from Brand1 so customer purchases match provider limits.
     const updates: {
-      provider: "brand1" | null;
+      provider: "brand1" | "x3" | null;
       provider_product_id: string | null;
       auto_fulfill_enabled: boolean;
       min_quantity?: number;
@@ -608,12 +640,19 @@ export const adminSetProductProvider = createServerFn({ method: "POST" })
       provider_product_id: data.providerProductId,
       auto_fulfill_enabled: data.autoFulfillEnabled,
     };
-    if (data.provider === "brand1" && data.providerProductId) {
+    if (data.provider && data.providerProductId) {
       try {
-        const { brand1GetProduct } = await import("./brand1.server");
-        const p = await brand1GetProduct(data.providerProductId);
-        if (p?.qty_min != null) updates.min_quantity = p.qty_min;
-        if (p?.qty_max != null) updates.max_quantity = p.qty_max;
+        if (data.provider === "brand1") {
+          const { brand1GetProduct } = await import("./brand1.server");
+          const p = await brand1GetProduct(data.providerProductId);
+          if (p?.qty_min != null) updates.min_quantity = p.qty_min;
+          if (p?.qty_max != null) updates.max_quantity = p.qty_max;
+        } else if (data.provider === "x3") {
+          const { x3GetProduct } = await import("./x3.server");
+          const p = await x3GetProduct(data.providerProductId);
+          if (p?.qty_min != null) updates.min_quantity = p.qty_min;
+          if (p?.qty_max != null) updates.max_quantity = p.qty_max;
+        }
       } catch (e) {
         console.error("[adminSetProductProvider] qty sync failed", e);
       }
@@ -626,6 +665,7 @@ export const adminSetProductProvider = createServerFn({ method: "POST" })
     if (error) { console.error("[adminSetProductProvider]", error); throw new Error("حدث خطأ"); }
     return { ok: true };
   });
+
 
 
 
