@@ -435,7 +435,10 @@ function ProductsTab({ initialCollectionId, onBack }: { initialCollectionId?: st
       <div className="flex items-center gap-2 mb-4 flex-wrap">
         <button onClick={() => setEditing(blank())} className="rounded-full bg-gold-gradient text-primary-foreground font-bold px-4 py-2 text-sm flex items-center gap-2"><Plus className="size-4" /> منتج جديد</button>
         <button onClick={() => testConn.mutate()} disabled={testConn.isPending} className="rounded-full bg-secondary border border-border px-4 py-2 text-sm font-bold">
-          {testConn.isPending ? "..." : "اختبار اتصال Brand1"}
+          {testConn.isPending ? "..." : "اختبار Brand1"}
+        </button>
+        <button onClick={() => testConnX3.mutate()} disabled={testConnX3.isPending} className="rounded-full bg-secondary border border-border px-4 py-2 text-sm font-bold">
+          {testConnX3.isPending ? "..." : "اختبار X3"}
         </button>
         {!initialCollectionId && (
           <select value={filter} onChange={(e) => setFilter(e.target.value)} className="rounded-full bg-secondary border border-border px-3 py-2 text-sm">
