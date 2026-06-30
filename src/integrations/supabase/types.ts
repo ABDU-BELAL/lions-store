@@ -223,6 +223,7 @@ export type Database = {
           description_en: string | null
           id: string
           image_url: string | null
+          in_stock: boolean
           is_active: boolean
           is_offer: boolean
           max_quantity: number | null
@@ -248,6 +249,7 @@ export type Database = {
           description_en?: string | null
           id?: string
           image_url?: string | null
+          in_stock?: boolean
           is_active?: boolean
           is_offer?: boolean
           max_quantity?: number | null
@@ -273,6 +275,7 @@ export type Database = {
           description_en?: string | null
           id?: string
           image_url?: string | null
+          in_stock?: boolean
           is_active?: boolean
           is_offer?: boolean
           max_quantity?: number | null
