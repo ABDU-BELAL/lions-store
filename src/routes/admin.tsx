@@ -358,7 +358,7 @@ function ProductsTab({ initialCollectionId, onBack }: { initialCollectionId?: st
         description: editing!.description || undefined,
         description_en: editing!.description_en.trim() || null,
         image_url: editing!.image_url || undefined,
-        category: editing!.category, price: editing!.price, is_active: editing!.is_active, is_offer: editing!.is_offer, sort_order: editing!.sort_order,
+        category: editing!.category, price: editing!.price, is_active: editing!.is_active, in_stock: editing!.in_stock, is_offer: editing!.is_offer, sort_order: editing!.sort_order,
         collection_id: editing!.collection_id || null,
         quantity_enabled: editing!.quantity_enabled,
         unit_size: editing!.quantity_enabled ? Number(editing!.unit_size) || 1 : 1,
