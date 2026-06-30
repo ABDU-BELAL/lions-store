@@ -338,12 +338,14 @@ function ProductsTab({ initialCollectionId, onBack }: { initialCollectionId?: st
   const colsList = useServerFn(adminListCollections);
   const testBrand1 = useServerFn(adminBrand1TestConnection);
   const listBrand1 = useServerFn(adminBrand1ListProducts);
+  const testX3 = useServerFn(adminX3TestConnection);
+  const listX3 = useServerFn(adminX3ListProducts);
   const setProvider = useServerFn(adminSetProductProvider);
   const qc = useQueryClient();
   const { data } = useQuery({ queryKey: ["admin-products"], queryFn: () => list() });
   const { data: collections = [] } = useQuery({ queryKey: ["admin-collections"], queryFn: () => colsList() });
   const [filter, setFilter] = useState<string>(initialCollectionId ?? "");
-  type EditState = { id?: string; title: string; title_en: string; description: string; description_en: string; image_url: string; category: string; price: number; is_active: boolean; is_offer: boolean; sort_order: number; collection_id: string | null; quantity_enabled: boolean; unit_size: number; unit_label: string; min_quantity: string; max_quantity: string; provider: "" | "brand1"; provider_product_id: string; auto_fulfill_enabled: boolean; purchase_field_mode: "game_id" | "subscription" | "none" };
+  type EditState = { id?: string; title: string; title_en: string; description: string; description_en: string; image_url: string; category: string; price: number; is_active: boolean; is_offer: boolean; sort_order: number; collection_id: string | null; quantity_enabled: boolean; unit_size: number; unit_label: string; min_quantity: string; max_quantity: string; provider: "" | "brand1" | "x3"; provider_product_id: string; auto_fulfill_enabled: boolean; purchase_field_mode: "game_id" | "subscription" | "none" };
   const [editing, setEditing] = useState<null | EditState>(null);
 
   const blank = (): EditState => ({ title: "", title_en: "", description: "", description_en: "", image_url: "", category: "games", price: 0, is_active: true, is_offer: false, sort_order: 0, collection_id: filter || null, quantity_enabled: false, unit_size: 1, unit_label: "", min_quantity: "", max_quantity: "", provider: "", provider_product_id: "", auto_fulfill_enabled: false, purchase_field_mode: "game_id" });
@@ -365,7 +367,6 @@ function ProductsTab({ initialCollectionId, onBack }: { initialCollectionId?: st
         max_quantity: editing!.quantity_enabled && editing!.max_quantity ? Number(editing!.max_quantity) : null,
         purchase_field_mode: editing!.purchase_field_mode,
       } } });
-      // Save provider mapping only for already-existing products.
       if (editing?.id) {
         await setProvider({ data: {
           productId: editing.id,
@@ -383,7 +384,16 @@ function ProductsTab({ initialCollectionId, onBack }: { initialCollectionId?: st
     mutationFn: () => testBrand1({ data: undefined }),
     onSuccess: (r) => {
       if (r.ok) toast.success("اتصال Brand1 يعمل ✓");
-      else toast.error("فشل الاتصال: " + (r.error ?? "تأكد من السماح لكل الـ IPs في لوحة المزود"));
+      else toast.error("فشل Brand1: " + (r.error ?? "تأكد من السماح لكل الـ IPs"));
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const testConnX3 = useMutation({
+    mutationFn: () => testX3({ data: undefined }),
+    onSuccess: (r) => {
+      if (r.ok) toast.success("اتصال X3 يعمل ✓");
+      else toast.error("فشل X3: " + (r.error ?? "تأكد من التوكن والـ IPs"));
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -391,9 +401,17 @@ function ProductsTab({ initialCollectionId, onBack }: { initialCollectionId?: st
   const brand1Products = useQuery({
     queryKey: ["brand1-products"],
     queryFn: () => listBrand1(),
-    enabled: !!editing?.id,
+    enabled: !!editing?.id && editing?.provider === "brand1",
     staleTime: 5 * 60_000,
   });
+
+  const x3Products = useQuery({
+    queryKey: ["x3-products"],
+    queryFn: () => listX3(),
+    enabled: !!editing?.id && editing?.provider === "x3",
+    staleTime: 5 * 60_000,
+  });
+
 
 
   const remove = useMutation({
