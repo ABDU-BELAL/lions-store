@@ -27,6 +27,7 @@ type ColProduct = {
   price: number; image_url: string | null; is_offer: boolean; category: string;
   quantity_enabled?: boolean; unit_size?: number; unit_label?: string | null; min_quantity?: number | null; max_quantity?: number | null;
   purchase_field_mode?: "game_id" | "subscription" | "none";
+  in_stock?: boolean;
 };
 
 function CollectionPage() {
