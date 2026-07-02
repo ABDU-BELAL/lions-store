@@ -62,6 +62,7 @@ function SearchPage() {
       <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
         {results.map((p) => {
           const title = pickLocalized(p.title, (p as { title_en?: string | null }).title_en, lang);
+          const oos = (p as { in_stock?: boolean }).in_stock === false;
           return (
             <ProductCard
               key={p.id}
@@ -69,6 +70,7 @@ function SearchPage() {
               image={p.image_url || "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=400&q=80"}
               to="/shop"
               search={{ q: title }}
+              outOfStock={oos}
             />
           );
         })}
