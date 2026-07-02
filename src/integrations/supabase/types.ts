@@ -683,24 +683,15 @@ export type Database = {
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
       is_banned: { Args: { _user_id: string }; Returns: boolean }
-      process_purchase:
-        | {
-            Args: {
-              p_game_user_id?: string
-              p_product_id: string
-              p_user_id: string
-            }
-            Returns: string
-          }
-        | {
-            Args: {
-              p_game_user_id?: string
-              p_product_id: string
-              p_quantity?: number
-              p_user_id: string
-            }
-            Returns: string
-          }
+      process_purchase: {
+        Args: {
+          p_game_user_id?: string
+          p_product_id: string
+          p_quantity?: number
+          p_user_id: string
+        }
+        Returns: string
+      }
       purchase_product: {
         Args: { p_game_user_id?: string; p_product_id: string }
         Returns: string
