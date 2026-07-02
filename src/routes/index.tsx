@@ -161,8 +161,9 @@ function Home() {
           <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
             {featured.map((p) => {
               const title = pickLocalized(p.title, (p as { title_en?: string | null }).title_en, lang);
+              const oos = (p as { in_stock?: boolean }).in_stock === false;
               return (
-                <ProductCard key={p.id} title={title} image={p.image_url || logo.url} to="/shop" search={{ q: title }} />
+                <ProductCard key={p.id} title={title} image={p.image_url || logo.url} to="/shop" search={{ q: title }} outOfStock={oos} />
               );
             })}
           </div>
@@ -175,8 +176,9 @@ function Home() {
           <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
             {offerItems.map((o) => {
               const title = pickLocalized(o.title, (o as { title_en?: string | null }).title_en, lang);
+              const oos = (o as { in_stock?: boolean }).in_stock === false;
               return (
-                <ProductCard key={o.id} title={title} image={o.image_url || logo.url} to="/shop" search={{ q: title }} />
+                <ProductCard key={o.id} title={title} image={o.image_url || logo.url} to="/shop" search={{ q: title }} outOfStock={oos} />
               );
             })}
           </div>
