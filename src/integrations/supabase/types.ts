@@ -390,16 +390,19 @@ export type Database = {
         Row: {
           added_at: string
           chat_id: string
+          enabled: boolean
           title: string | null
         }
         Insert: {
           added_at?: string
           chat_id: string
+          enabled?: boolean
           title?: string | null
         }
         Update: {
           added_at?: string
           chat_id?: string
+          enabled?: boolean
           title?: string | null
         }
         Relationships: []
