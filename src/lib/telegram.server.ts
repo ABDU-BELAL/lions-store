@@ -21,7 +21,10 @@ async function getChatIds(): Promise<string[]> {
   let dbIds: string[] = [];
   try {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data } = await supabaseAdmin.from("telegram_chats").select("chat_id");
+    const { data } = await supabaseAdmin
+      .from("telegram_chats")
+      .select("chat_id, enabled")
+      .neq("enabled", false);
     dbIds = (data ?? []).map((r: { chat_id: string }) => r.chat_id);
   } catch (e) {
     console.error("Failed to load telegram_chats", e);
