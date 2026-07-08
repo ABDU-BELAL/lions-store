@@ -523,7 +523,8 @@ function ProductsTab({ initialCollectionId, onBack }: { initialCollectionId?: st
                 className="w-full rounded-xl bg-secondary px-3 py-2 text-sm"
               >
                 <option value="game_id">ID اللاعب / الحساب (افتراضي) — Player / Account ID</option>
-                <option value="subscription">اشتراك: بريد إلكتروني + ملاحظة — Subscription (email + note)</option>
+                <option value="subscription">اشتراك: بريد إلكتروني + كلمة مرور — Subscription (email + password)</option>
+                <option value="link">رابط بروفايل / حساب — Profile / account link</option>
                 <option value="none">بدون أي حقل — None</option>
               </select>
               <p className="text-[11px] text-muted-foreground">
