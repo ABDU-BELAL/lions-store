@@ -52,18 +52,20 @@ export const purchaseProduct = createServerFn({ method: "POST" })
       .select("purchase_field_mode")
       .eq("id", data.productId)
       .maybeSingle();
-    const mode = (modeRow?.purchase_field_mode as "game_id" | "subscription" | "none" | undefined) ?? "game_id";
+    const mode = (modeRow?.purchase_field_mode as "game_id" | "subscription" | "link" | "none" | undefined) ?? "game_id";
     const trimmed = (data.gameUserId ?? "").trim();
     if (mode === "game_id") {
       if (!trimmed) throw new Error("ID is missing");
     } else if (mode === "subscription") {
       if (!trimmed) throw new Error("Email is missing");
-      // Expect format: "email | password"
       const parts = trimmed.split(/\s\|\s/);
       const email = (parts[0] ?? "").trim();
       const password = (parts[1] ?? "").trim();
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error("Invalid email");
       if (!password) throw new Error("Password is missing");
+    } else if (mode === "link") {
+      if (!trimmed) throw new Error("Link is required");
+      if (!/^https?:\/\/.+/i.test(trimmed)) throw new Error("Invalid link");
     }
     const gameUserIdToStore = mode === "none" ? null : trimmed;
 
@@ -111,6 +113,8 @@ export const purchaseProduct = createServerFn({ method: "POST" })
                     const password = (parts[1] ?? "").trim();
                     return `📧 ${escapeTelegramHtml(email)}\n🔑 ${escapeTelegramHtml(password)}\n`;
                   })()
+                : mode === "link"
+                ? `🔗 ${escapeTelegramHtml(data.gameUserId)}\n`
                 : `🆔 ${escapeTelegramHtml(data.gameUserId)}\n`)
             : "") +
           `#order_${String(orderId).slice(0, 8)}`,

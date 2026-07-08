@@ -32,7 +32,7 @@ export type Product = {
   unit_label: string | null;
   min_quantity: number | null;
   max_quantity: number | null;
-  purchase_field_mode: "game_id" | "subscription" | "none";
+  purchase_field_mode: "game_id" | "subscription" | "link" | "none";
   in_stock: boolean;
 };
 
@@ -92,12 +92,14 @@ function ProductPage() {
   const title = pickLocalized(p.title, p.title_en, lang);
   const description = pickLocalized(p.description, p.description_en, lang);
 
-  const fieldMode: "game_id" | "subscription" | "none" = p.purchase_field_mode ?? "game_id";
+  const fieldMode: "game_id" | "subscription" | "link" | "none" = p.purchase_field_mode ?? "game_id";
   const [gameId, setGameId] = useState("");
   const [subEmail, setSubEmail] = useState("");
   const [subPassword, setSubPassword] = useState("");
+  const [profileLink, setProfileLink] = useState("");
   const [idError, setIdError] = useState(false);
   const [pwError, setPwError] = useState(false);
+  const [linkError, setLinkError] = useState(false);
   const qtyEnabled = !!p.quantity_enabled;
   const unitSize = Number(p.unit_size ?? 1) || 1;
   const unitLabel = p.unit_label ?? "";
@@ -260,6 +262,25 @@ function ProductPage() {
             </div>
           )}
 
+          {user && fieldMode === "link" && (
+            <div className="mt-4">
+              <label className="text-xs font-bold mb-1 block">
+                {t("رابط الحساب / البروفايل", "Profile / account link")} <span className="text-destructive">*</span>
+              </label>
+              <input
+                type="url"
+                value={profileLink}
+                onChange={(e) => { setProfileLink(e.target.value); if (linkError) setLinkError(false); }}
+                placeholder="https://..."
+                className={`w-full rounded-xl bg-secondary/60 border px-4 py-3 ${linkError ? "border-destructive ring-1 ring-destructive" : "border-border"}`}
+                dir="ltr"
+              />
+              {linkError && (
+                <p className="mt-1 text-xs font-semibold text-destructive">{t("الرابط مطلوب", "Link is required")}</p>
+              )}
+            </div>
+          )}
+
           {!p.in_stock ? (
             <div className="mt-6 w-full text-center rounded-xl bg-destructive/15 border border-destructive text-destructive font-extrabold py-3">
               {t("نفد المخزون", "Out of stock")}
@@ -286,6 +307,11 @@ function ProductPage() {
                   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setIdError(true); toast.error(t("بريد إلكتروني غير صالح", "Invalid email")); return; }
                   if (!pw) { setPwError(true); toast.error(t("كلمة المرور مفقودة", "Password is missing")); return; }
                   payload = `${email} | ${pw}`;
+                } else if (fieldMode === "link") {
+                  const link = profileLink.trim();
+                  if (!link) { setLinkError(true); toast.error(t("الرابط مطلوب", "Link is required")); return; }
+                  if (!/^https?:\/\/.+/i.test(link)) { setLinkError(true); toast.error(t("رابط غير صالح", "Invalid link")); return; }
+                  payload = link;
                 }
                 mutation.mutate({ productId: p.id, gameUserId: payload, quantity: qtyEnabled ? qtyNum : undefined });
               }}
