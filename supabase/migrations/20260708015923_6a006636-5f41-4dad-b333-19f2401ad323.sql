@@ -1,0 +1,2 @@
+ALTER TABLE public.products DROP CONSTRAINT products_purchase_field_mode_check;
+ALTER TABLE public.products ADD CONSTRAINT products_purchase_field_mode_check CHECK (purchase_field_mode = ANY (ARRAY['game_id'::text, 'subscription'::text, 'link'::text, 'none'::text]));
