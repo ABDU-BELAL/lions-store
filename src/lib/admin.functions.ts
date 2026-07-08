@@ -140,7 +140,7 @@ const productSchema = z.object({
   unit_label: z.string().trim().max(40).nullable().optional(),
   min_quantity: z.number().positive().max(1_000_000_000).nullable().optional(),
   max_quantity: z.number().positive().max(1_000_000_000).nullable().optional(),
-  purchase_field_mode: z.enum(["game_id", "subscription", "none"]).optional(),
+  purchase_field_mode: z.enum(["game_id", "subscription", "link", "none"]).optional(),
 });
 
 
