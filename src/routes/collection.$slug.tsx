@@ -239,7 +239,7 @@ function PurchaseModal({ selected, onClose, gameId, setGameId, subPassword, setS
                 <span className="font-extrabold text-gold-gradient">{format(balance)}</span>
               </div>
               {(() => {
-                const fieldMode = (selected.purchase_field_mode ?? "game_id") as "game_id" | "subscription" | "none";
+                const fieldMode = (selected.purchase_field_mode ?? "game_id") as "game_id" | "subscription" | "link" | "none";
                 return (
                   <>
                     {fieldMode !== "none" && (
@@ -248,11 +248,13 @@ function PurchaseModal({ selected, onClose, gameId, setGameId, subPassword, setS
                           <label className="text-xs font-bold mb-1 block">
                             {fieldMode === "subscription"
                               ? <>{t("البريد الإلكتروني للاشتراك", "Subscription email")} <span className="text-destructive">*</span></>
+                              : fieldMode === "link"
+                              ? <>{t("رابط الحساب / البروفايل", "Profile URL")} <span className="text-destructive">*</span></>
                               : <>{selected.category === "games" ? t("ID اللاعب", "Player ID") : t("ID الحساب / رقم التعريف", "Account ID")} <span className="text-destructive">*</span></>}
                           </label>
-                          <input type={fieldMode === "subscription" ? "email" : "text"} value={gameId} onChange={(e) => { setGameId(e.target.value); if (idError) setIdError(false); }} placeholder={fieldMode === "subscription" ? "you@example.com" : "123456789"} className={`w-full rounded-xl bg-secondary/60 border px-4 py-3 ${idError ? "border-destructive ring-1 ring-destructive" : "border-border"}`} />
+                          <input type={fieldMode === "subscription" ? "email" : fieldMode === "link" ? "url" : "text"} value={gameId} onChange={(e) => { setGameId(e.target.value); if (idError) setIdError(false); }} placeholder={fieldMode === "subscription" ? "you@example.com" : fieldMode === "link" ? "https://..." : "123456789"} dir={fieldMode === "link" ? "ltr" : undefined} className={`w-full rounded-xl bg-secondary/60 border px-4 py-3 ${idError ? "border-destructive ring-1 ring-destructive" : "border-border"}`} />
                           {idError && (
-                            <p className="mt-1 text-xs font-semibold text-destructive">{fieldMode === "subscription" ? t("بريد إلكتروني غير صالح", "Invalid email") : t("الـ ID مفقود", "ID is missing")}</p>
+                            <p className="mt-1 text-xs font-semibold text-destructive">{fieldMode === "subscription" ? t("بريد إلكتروني غير صالح", "Invalid email") : fieldMode === "link" ? t("الرابط مطلوب", "Link is required") : t("الـ ID مفقود", "ID is missing")}</p>
                           )}
                         </div>
                         {fieldMode === "subscription" && (
@@ -280,6 +282,11 @@ function PurchaseModal({ selected, onClose, gameId, setGameId, subPassword, setS
                           if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setIdError(true); toast.error(t("بريد إلكتروني غير صالح", "Invalid email")); return; }
                           if (!pw) { setPwError(true); toast.error(t("كلمة المرور مفقودة", "Password is missing")); return; }
                           payload = `${email} | ${pw}`;
+                        } else if (fieldMode === "link") {
+                          const link = gameId.trim();
+                          if (!link) { setIdError(true); toast.error(t("الرابط مطلوب", "Link is required")); return; }
+                          if (!/^https?:\/\/.+/i.test(link)) { setIdError(true); toast.error(t("رابط غير صالح", "Invalid link")); return; }
+                          payload = link;
                         }
                         mutation.mutate({ productId: selected.id, gameUserId: payload, quantity: qtyEnabled ? qtyNum : undefined });
                       }} className="mt-5 w-full rounded-xl bg-gold-gradient text-primary-foreground font-extrabold py-3 shadow-gold disabled:opacity-50">
