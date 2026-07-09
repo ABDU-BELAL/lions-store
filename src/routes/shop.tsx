@@ -320,7 +320,7 @@ function ShopPage() {
             </div>
 
             {(() => {
-              const fieldMode = ((sel as { purchase_field_mode?: string }).purchase_field_mode ?? "game_id") as "game_id" | "subscription" | "none";
+              const fieldMode = ((sel as { purchase_field_mode?: string }).purchase_field_mode ?? "game_id") as "game_id" | "subscription" | "link" | "none";
               return (
                 <>
                   {fieldMode !== "none" && (
@@ -329,18 +329,21 @@ function ShopPage() {
                         <label className="text-xs font-bold mb-1 block">
                           {fieldMode === "subscription"
                             ? <>{t("البريد الإلكتروني للاشتراك", "Subscription email")} <span className="text-destructive">*</span></>
+                            : fieldMode === "link"
+                            ? <>{t("رابط الحساب / البروفايل", "Profile URL")} <span className="text-destructive">*</span></>
                             : <>{sel.category === "games" ? t("ID اللاعب", "Player ID") : t("ID الحساب / رقم التعريف", "Account ID")} <span className="text-destructive">*</span></>}
                         </label>
                         <input
-                          type={fieldMode === "subscription" ? "email" : "text"}
+                          type={fieldMode === "subscription" ? "email" : fieldMode === "link" ? "url" : "text"}
                           value={gameId}
                           onChange={(e) => { setGameId(e.target.value); if (idError) setIdError(false); }}
-                          placeholder={fieldMode === "subscription" ? "you@example.com" : t("مثلاً: 123456789", "e.g. 123456789")}
+                          placeholder={fieldMode === "subscription" ? "you@example.com" : fieldMode === "link" ? "https://..." : t("مثلاً: 123456789", "e.g. 123456789")}
+                          dir={fieldMode === "link" ? "ltr" : undefined}
                           className={`w-full rounded-xl bg-secondary/60 border px-4 py-3 focus:outline-none focus:ring-2 ${idError ? "border-destructive ring-1 ring-destructive focus:ring-destructive/60" : "border-border focus:ring-gold/50"}`}
                         />
                         {idError && (
                           <p className="mt-1 text-xs font-semibold text-destructive">
-                            {fieldMode === "subscription" ? t("بريد إلكتروني غير صالح", "Invalid email") : t("الـ ID مفقود", "ID is missing")}
+                            {fieldMode === "subscription" ? t("بريد إلكتروني غير صالح", "Invalid email") : fieldMode === "link" ? t("الرابط مطلوب", "Link is required") : t("الـ ID مفقود", "ID is missing")}
                           </p>
                         )}
                       </div>
@@ -382,6 +385,11 @@ function ShopPage() {
                           if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setIdError(true); toast.error(t("بريد إلكتروني غير صالح", "Invalid email")); return; }
                           if (!pw) { setPwError(true); toast.error(t("كلمة المرور مفقودة", "Password is missing")); return; }
                           payload = `${email} | ${pw}`;
+                        } else if (fieldMode === "link") {
+                          const link = gameId.trim();
+                          if (!link) { setIdError(true); toast.error(t("الرابط مطلوب", "Link is required")); return; }
+                          if (!/^https?:\/\/.+/i.test(link)) { setIdError(true); toast.error(t("رابط غير صالح", "Invalid link")); return; }
+                          payload = link;
                         }
                         mutation.mutate({ productId: sel.id, gameUserId: payload, quantity: qtyEnabled ? qtyNum : undefined });
                       }}
