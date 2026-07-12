@@ -48,10 +48,11 @@ export function ProductCard({ title, image, badge, to, search, params, outOfStoc
 
   if (to && !outOfStock) {
     return (
-      <Link to={to as never} search={search as never} className="group relative block w-full text-right cursor-pointer">
+      <Link to={to as never} params={params as never} search={search as never} className="group relative block w-full text-right cursor-pointer">
         {inner}
       </Link>
     );
+
   }
 
   return <div className={`group relative block w-full text-right ${outOfStock ? "cursor-not-allowed" : ""}`} aria-disabled={outOfStock || undefined}>{inner}</div>;
