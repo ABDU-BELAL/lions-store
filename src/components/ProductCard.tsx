@@ -8,10 +8,12 @@ interface Props {
   badge?: string;
   to?: string;
   search?: Record<string, string | undefined>;
+  params?: Record<string, string>;
   outOfStock?: boolean;
 }
 
-export function ProductCard({ title, image, badge, to, search, outOfStock }: Props) {
+export function ProductCard({ title, image, badge, to, search, params, outOfStock }: Props) {
+
   const { t, dir } = useLang();
   const inner = (
     <div className={`relative rounded-2xl overflow-hidden bg-dark-gradient shadow-card border border-gold/20 transition-transform group-hover:-translate-y-1 group-hover:shadow-gold ${outOfStock ? "opacity-80" : ""}`}>
@@ -46,10 +48,11 @@ export function ProductCard({ title, image, badge, to, search, outOfStock }: Pro
 
   if (to && !outOfStock) {
     return (
-      <Link to={to as never} search={search as never} className="group relative block w-full text-right cursor-pointer">
+      <Link to={to as never} params={params as never} search={search as never} className="group relative block w-full text-right cursor-pointer">
         {inner}
       </Link>
     );
+
   }
 
   return <div className={`group relative block w-full text-right ${outOfStock ? "cursor-not-allowed" : ""}`} aria-disabled={outOfStock || undefined}>{inner}</div>;

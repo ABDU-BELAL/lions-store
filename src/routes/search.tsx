@@ -68,11 +68,12 @@ function SearchPage() {
               key={p.id}
               title={title}
               image={p.image_url || "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=400&q=80"}
-              to="/shop"
-              search={{ q: title }}
+              to="/product/$id"
+              params={{ id: p.id }}
               outOfStock={oos}
             />
           );
+
         })}
         {!products.isLoading && results.length === 0 && (
           <p className="col-span-full text-center text-muted-foreground py-12">{t("لا توجد نتائج", "No results")}</p>
