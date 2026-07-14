@@ -180,7 +180,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
       </a>
 
       <nav className="fixed bottom-0 inset-x-0 z-40 backdrop-blur-xl bg-background/90 border-t border-border">
-        <div className="mx-auto max-w-6xl px-2 grid grid-cols-5">
+        <div className="mx-auto max-w-6xl px-2 grid grid-cols-4">
           {nav.map(({ to, label, icon: Icon }) => {
             const active = to === "/" ? path === "/" : path.startsWith(to);
             return (
