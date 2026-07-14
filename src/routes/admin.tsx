@@ -1154,7 +1154,7 @@ function UsersTab() {
 
             <div className="mt-3">
               <label className="text-xs font-bold mb-1 block">المبلغ ({editCurrency})</label>
-              <input type="number" min="0" step="any" value={amount} onChange={(e) => setAmount(e.target.value)}
+              <input type="number" step="any" {...(mode === "set" ? {} : { min: "0" })} value={amount} onChange={(e) => setAmount(e.target.value)}
                 className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3" />
               {editCurrency === "USD" && (
                 <p className="mt-1 text-xs text-muted-foreground">

@@ -392,9 +392,12 @@ export const adminAdjustBalance = createServerFn({ method: "POST" })
     z.object({
       userId: z.string().uuid(),
       mode: z.enum(["set", "add", "subtract"]),
-      amount: z.number().finite().min(0).max(10_000_000),
+      amount: z.number().finite().min(-10_000_000).max(10_000_000),
       note: z.string().trim().max(200).optional(),
-    }).parse(input),
+    }).refine(
+      (v) => v.mode === "set" || v.amount >= 0,
+      { message: "amount must be non-negative for add/subtract", path: ["amount"] },
+    ).parse(input),
   )
   .handler(async ({ data, context }) => {
     // Super admin only — regular admins cannot modify balances
