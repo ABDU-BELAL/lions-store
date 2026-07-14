@@ -33,7 +33,6 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
   const nav = [
     { to: "/", label: t("الرئيسية", "Home"), icon: Home },
-    { to: "/shop", label: t("المتجر", "Shop"), icon: ShoppingBag },
     { to: "/topup", label: t("شحن", "Top-up"), icon: Wallet },
     { to: "/transactions", label: t("المعاملات", "Transactions"), icon: Receipt },
     { to: "/search", label: t("بحث", "Search"), icon: Search },
