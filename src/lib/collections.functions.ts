@@ -22,6 +22,17 @@ export const listActiveCollections = createServerFn({ method: "GET" }).handler(a
   return signMany("products", data ?? []);
 });
 
+// All active collections (both top-level and subcategories) — used for search.
+export const listAllActiveCollections = createServerFn({ method: "GET" }).handler(async () => {
+  const { data } = await supabaseAdmin
+    .from("collections")
+    .select("id, slug, title, title_en, image_url, sort_order, parent_id")
+    .eq("is_active", true)
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: false });
+  return signMany("products", data ?? []);
+});
+
 export const getCollectionBySlug = createServerFn({ method: "GET" })
   .inputValidator((input) => z.object({ slug: z.string().trim().min(1).max(80) }).parse(input))
   .handler(async ({ data }) => {
