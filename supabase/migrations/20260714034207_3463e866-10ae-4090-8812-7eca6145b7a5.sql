@@ -1,0 +1,1 @@
+ALTER TABLE public.wallets DROP CONSTRAINT IF EXISTS wallets_balance_check;
