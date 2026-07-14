@@ -1,5 +1,5 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { Home, ShoppingBag, Receipt, Search, Menu, Plus, LogIn, LogOut, Shield, Wallet, User, Languages } from "lucide-react";
+import { Home, Receipt, Search, Menu, Plus, LogIn, LogOut, Shield, Wallet, User, Languages } from "lucide-react";
 import type { ReactNode } from "react";
 import logo from "@/assets/logo.jpeg.asset.json";
 import { useState } from "react";
@@ -33,7 +33,6 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
   const nav = [
     { to: "/", label: t("الرئيسية", "Home"), icon: Home },
-    { to: "/shop", label: t("المتجر", "Shop"), icon: ShoppingBag },
     { to: "/topup", label: t("شحن", "Top-up"), icon: Wallet },
     { to: "/transactions", label: t("المعاملات", "Transactions"), icon: Receipt },
     { to: "/search", label: t("بحث", "Search"), icon: Search },
@@ -181,7 +180,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
       </a>
 
       <nav className="fixed bottom-0 inset-x-0 z-40 backdrop-blur-xl bg-background/90 border-t border-border">
-        <div className="mx-auto max-w-6xl px-2 grid grid-cols-5">
+        <div className="mx-auto max-w-6xl px-2 grid grid-cols-4">
           {nav.map(({ to, label, icon: Icon }) => {
             const active = to === "/" ? path === "/" : path.startsWith(to);
             return (
