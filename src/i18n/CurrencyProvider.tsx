@@ -74,8 +74,20 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
     return `USD ${usd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
 
+  const formatDual = (egpAmount: number, usdOverride?: number | null) => {
+    const n = Number(egpAmount) || 0;
+    if (currency === "EGP") {
+      return `EGP ${n.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+    }
+    const usd = usdOverride != null && Number(usdOverride) > 0
+      ? Number(usdOverride)
+      : (rate ? n / rate : null);
+    if (usd == null) return `EGP ${n.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+    return `USD ${usd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  };
+
   return (
-    <CurrencyContext.Provider value={{ currency, setCurrency, rate, format }}>
+    <CurrencyContext.Provider value={{ currency, setCurrency, rate, format, formatDual }}>
       {children}
     </CurrencyContext.Provider>
   );
