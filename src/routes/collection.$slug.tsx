@@ -181,6 +181,7 @@ type ModalProps = {
 };
 
 function PurchaseModal({ selected, onClose, gameId, setGameId, subPassword, setSubPassword, idError, setIdError, pwError, setPwError, quantity, setQuantity, balance, mutation, t, lang, dir, format }: ModalProps) {
+  const { formatDual } = useCurrency();
   const { percent: discountPct } = useEffectiveDiscount(selected.id);
   const qtyEnabled = !!selected.quantity_enabled;
   const unitSize = Number(selected.unit_size ?? 1) || 1;
@@ -190,6 +191,9 @@ function PurchaseModal({ selected, onClose, gameId, setGameId, subPassword, setS
   const qtyNum = Number(quantity) || 0;
   const baseTotal = qtyEnabled ? Math.round((qtyNum / unitSize) * Number(selected.price) * 100) / 100 : Number(selected.price);
   const total = discountPct > 0 ? Math.round(baseTotal * (1 - discountPct / 100) * 100) / 100 : baseTotal;
+  const priceUsd = selected.price_usd != null ? Number(selected.price_usd) : null;
+  const baseTotalUsd = priceUsd != null ? (qtyEnabled ? Math.round((qtyNum / unitSize) * priceUsd * 100) / 100 : priceUsd) : null;
+  const totalUsd = baseTotalUsd != null ? (discountPct > 0 ? Math.round(baseTotalUsd * (1 - discountPct / 100) * 100) / 100 : baseTotalUsd) : null;
   const qtyValid = !qtyEnabled || (qtyNum > 0 && (minQty == null || qtyNum >= minQty) && (maxQty == null || qtyNum <= maxQty));
   const selTitle = pickLocalized(selected.title, selected.title_en, lang);
   const selDesc = pickLocalized(selected.description, selected.description_en, lang);
@@ -205,16 +209,22 @@ function PurchaseModal({ selected, onClose, gameId, setGameId, subPassword, setS
                 )}
                 {qtyEnabled ? (
                   <p className="text-base font-bold text-gold mt-1">
-                    {discountPct > 0 && <span className="text-xs text-muted-foreground line-through me-2">{format(Number(selected.price))}</span>}
-                    {format(discountPct > 0 ? Math.round(Number(selected.price) * (1 - discountPct / 100) * 100) / 100 : Number(selected.price))}
+                    {discountPct > 0 && <span className="text-xs text-muted-foreground line-through me-2">{formatDual(Number(selected.price), priceUsd)}</span>}
+                    {formatDual(
+                      discountPct > 0 ? Math.round(Number(selected.price) * (1 - discountPct / 100) * 100) / 100 : Number(selected.price),
+                      priceUsd != null ? (discountPct > 0 ? Math.round(priceUsd * (1 - discountPct / 100) * 100) / 100 : priceUsd) : null,
+                    )}
                     <span className="text-xs text-muted-foreground"> / {t("كل", "per")} {unitSize.toLocaleString()} {unitLabel || t("وحدة", "unit")}</span>
                     {discountPct > 0 && <span className="ms-2 text-[10px] font-extrabold bg-gold-gradient text-primary-foreground rounded-full px-2 py-0.5">−{discountPct}%</span>}
                   </p>
                 ) : (
                   <div className="mt-1">
-                    {discountPct > 0 && <p className="text-sm text-muted-foreground line-through">{format(Number(selected.price))}</p>}
+                    {discountPct > 0 && <p className="text-sm text-muted-foreground line-through">{formatDual(Number(selected.price), priceUsd)}</p>}
                     <p className="text-3xl font-black text-gold flex items-center justify-center gap-2">
-                      {format(discountPct > 0 ? Math.round(Number(selected.price) * (1 - discountPct / 100) * 100) / 100 : Number(selected.price))}
+                      {formatDual(
+                        discountPct > 0 ? Math.round(Number(selected.price) * (1 - discountPct / 100) * 100) / 100 : Number(selected.price),
+                        priceUsd != null ? (discountPct > 0 ? Math.round(priceUsd * (1 - discountPct / 100) * 100) / 100 : priceUsd) : null,
+                      )}
                       {discountPct > 0 && <span className="text-[10px] font-extrabold bg-gold-gradient text-primary-foreground rounded-full px-2 py-0.5">−{discountPct}%</span>}
                     </p>
                   </div>
