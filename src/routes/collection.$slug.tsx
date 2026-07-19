@@ -240,7 +240,7 @@ function PurchaseModal({ selected, onClose, gameId, setGameId, subPassword, setS
                   <input type="number" min={minQty ?? 1} max={maxQty ?? undefined} step="any" value={quantity} onChange={(e) => setQuantity(e.target.value)} placeholder={String(minQty ?? unitSize)} className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3" />
                   <div className="mt-3 flex items-center justify-between rounded-xl bg-gold/10 border border-gold/30 p-3">
                     <span className="text-sm text-muted-foreground">{t("الإجمالي", "Total")}</span>
-                    <span className="text-2xl font-black text-gold-gradient">{format(total)}</span>
+                    <span className="text-2xl font-black text-gold-gradient">{formatDual(total, totalUsd)}</span>
                   </div>
                 </div>
               )}
