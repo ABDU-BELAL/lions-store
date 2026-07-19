@@ -670,6 +670,30 @@ export const adminSetProductProvider = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+// -------- USD exchange rate (manual, super admin only) --------
+const DEFAULT_USD_RATE = 50;
+
+export const getUsdRate = createServerFn({ method: "GET" }).handler(async () => {
+  const { data } = await supabaseAdmin
+    .from("site_settings").select("value").eq("key", "usd_rate").maybeSingle();
+  const raw = (data?.value as { rate?: number; updated_at?: string } | null) ?? null;
+  const rate = raw && typeof raw.rate === "number" && raw.rate > 0 ? raw.rate : DEFAULT_USD_RATE;
+  return { rate, updated_at: raw?.updated_at ?? null };
+});
+
+export const adminUpdateUsdRate = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ rate: z.number().positive().max(100000) }).parse(input))
+  .handler(async ({ data, context }) => {
+    await assertSuperAdmin(context.userId);
+    const value = { rate: data.rate, updated_at: new Date().toISOString() };
+    const { error } = await supabaseAdmin
+      .from("site_settings").upsert({ key: "usd_rate", value }, { onConflict: "key" });
+    if (error) { console.error("[db]", error); throw new Error("حدث خطأ، حاول مرة أخرى"); }
+    return { ok: true, ...value };
+  });
+
+
 
 
 
