@@ -484,7 +484,8 @@ function ProductsTab({ initialCollectionId, onBack }: { initialCollectionId?: st
                 <option value="other">أخرى</option>
               </select>
             </div>
-            <input type="number" required min={0} step="0.01" placeholder={editing.quantity_enabled ? `السعر لكل ${editing.unit_size || 1} ${editing.unit_label || "وحدة"}` : "السعر"} value={editing.price} onChange={(e) => setEditing({ ...editing, price: Number(e.target.value) })} className="w-full rounded-xl bg-secondary px-3 py-2" />
+            <input type="number" required min={0} step="0.01" placeholder={editing.quantity_enabled ? `السعر لكل ${editing.unit_size || 1} ${editing.unit_label || "وحدة"} (EGP)` : "السعر (EGP)"} value={editing.price} onChange={(e) => setEditing({ ...editing, price: Number(e.target.value) })} className="w-full rounded-xl bg-secondary px-3 py-2" />
+            <input type="number" min={0} step="0.01" placeholder="السعر بالدولار (USD) — اختياري" value={editing.price_usd} onChange={(e) => setEditing({ ...editing, price_usd: e.target.value })} className="mt-2 w-full rounded-xl bg-secondary px-3 py-2" />
 
             <div className="rounded-xl border border-border bg-secondary/40 p-3 space-y-2">
               <label className="flex items-center gap-2 text-sm font-bold">
