@@ -10,6 +10,12 @@ type Ctx = {
   rate: number | null;
   /** Format an EGP amount in the currently selected currency. */
   format: (egpAmount: number) => string;
+  /**
+   * Format a price using an explicit USD override when the user is viewing USD.
+   * Falls back to converting `egpAmount` when no override is provided.
+   * Use for products that have both an EGP and a USD list price.
+   */
+  formatDual: (egpAmount: number, usdOverride?: number | null) => string;
 };
 
 const CurrencyContext = createContext<Ctx | null>(null);
