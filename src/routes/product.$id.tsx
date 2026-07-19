@@ -110,6 +110,9 @@ function ProductPage() {
   const qtyNum = Number(quantity) || 0;
   const basePrice = qtyEnabled ? Math.round((qtyNum / unitSize) * Number(p.price) * 100) / 100 : Number(p.price);
   const totalPrice = discountPct > 0 ? Math.round(basePrice * (1 - discountPct / 100) * 100) / 100 : basePrice;
+  const priceUsd = p.price_usd != null ? Number(p.price_usd) : null;
+  const baseUsd = priceUsd != null ? (qtyEnabled ? Math.round((qtyNum / unitSize) * priceUsd * 100) / 100 : priceUsd) : null;
+  const totalUsd = baseUsd != null ? (discountPct > 0 ? Math.round(baseUsd * (1 - discountPct / 100) * 100) / 100 : baseUsd) : null;
   const qtyValid = !qtyEnabled || (qtyNum > 0 && (minQty == null || qtyNum >= minQty) && (maxQty == null || qtyNum <= maxQty));
   const BackArrow = dir === "rtl" ? ArrowRight : ArrowLeft;
 
