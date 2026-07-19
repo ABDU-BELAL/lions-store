@@ -158,9 +158,12 @@ function ProductPage() {
           {qtyEnabled ? (
             <p className="mt-6 text-lg font-bold text-gold">
               {discountPct > 0 && (
-                <span className="text-sm text-muted-foreground line-through mr-2">{format(Number(p.price))}</span>
+                <span className="text-sm text-muted-foreground line-through mr-2">{formatDual(Number(p.price), priceUsd)}</span>
               )}
-              {format((discountPct > 0 ? Math.round(Number(p.price) * (1 - discountPct / 100) * 100) / 100 : Number(p.price)))}
+              {formatDual(
+                (discountPct > 0 ? Math.round(Number(p.price) * (1 - discountPct / 100) * 100) / 100 : Number(p.price)),
+                priceUsd != null ? (discountPct > 0 ? Math.round(priceUsd * (1 - discountPct / 100) * 100) / 100 : priceUsd) : null,
+              )}
               <span className="text-sm text-muted-foreground"> / {t("كل", "per")} {unitSize.toLocaleString()} {unitLabel || t("وحدة", "unit")}</span>
               {discountPct > 0 && (
                 <span className="ml-2 text-xs font-extrabold bg-gold-gradient text-primary-foreground rounded-full px-2 py-0.5">-{discountPct}%</span>
@@ -169,10 +172,10 @@ function ProductPage() {
           ) : (
             <div className="mt-6">
               {discountPct > 0 && (
-                <p className="text-base text-muted-foreground line-through">{format(Number(p.price))}</p>
+                <p className="text-base text-muted-foreground line-through">{formatDual(Number(p.price), priceUsd)}</p>
               )}
               <p className="text-4xl font-black text-gold flex items-center gap-2">
-                {format(totalPrice)}
+                {formatDual(totalPrice, totalUsd)}
                 {discountPct > 0 && (
                   <span className="text-xs font-extrabold bg-gold-gradient text-primary-foreground rounded-full px-2 py-1">{t("خصم", "Discount")} -{discountPct}%</span>
                 )}
