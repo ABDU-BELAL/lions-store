@@ -143,7 +143,7 @@ function CollectionPage() {
                     {description && (
                       <p className="mt-1 text-[11px] text-muted-foreground line-clamp-2 whitespace-pre-line">{description}</p>
                     )}
-                    <CardPrice productId={pp.id} price={Number(pp.price)} />
+                    <CardPrice productId={pp.id} price={Number(pp.price)} priceUsd={pp.price_usd ?? null} />
                   </div>
                   <div className="absolute inset-x-0 top-0 h-1 bg-gold-gradient opacity-80" />
                 </button>
