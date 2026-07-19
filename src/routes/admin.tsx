@@ -12,6 +12,7 @@ import {
   adminListUsers, adminAdjustBalance, adminSetUserBanned,
   adminListDiscounts, adminUpsertDiscount, adminDeleteDiscount,
   adminBrand1TestConnection, adminBrand1ListProducts, adminSetProductProvider, adminX3TestConnection, adminX3ListProducts,
+  getUsdRate, adminUpdateUsdRate,
 } from "@/lib/admin.functions";
 import { listVipTiers, adminUpdateVipTier, adminAssignVip, adminRevokeVip } from "@/lib/vip.functions";
 import { VipBadge } from "@/components/VipBadge";
@@ -23,7 +24,7 @@ import {
   adminUploadProductImage, getHomeSettings, adminUpdateHomeSettings,
 } from "@/lib/collections.functions";
 import { getPaymentMethods, adminUpdatePaymentMethods } from "@/lib/topup.functions";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Users, Wallet, ShoppingBag, Package, CheckCircle2, XCircle, Trash2, Plus, Crown, Shield, Image as ImageIcon, Upload, Settings as SettingsIcon, Layers } from "lucide-react";
 import { useCurrency } from "@/i18n/CurrencyProvider";
@@ -104,7 +105,7 @@ function AdminPage() {
       {tab === "collections" && <CollectionsTab />}
       {tab === "products" && <ProductsTab />}
       {tab === "banners" && <BannersTab />}
-      {tab === "settings" && <SettingsTab />}
+      {tab === "settings" && <SettingsTab isSuper={!!account.data.isSuperAdmin} />}
       {tab === "payments" && account.data.isSuperAdmin && <PaymentMethodsTab />}
       {tab === "users" && account.data.isSuperAdmin && <UsersTab />}
       {tab === "discounts" && account.data.isSuperAdmin && <DiscountsTab />}
@@ -729,7 +730,7 @@ function CollectionsTab() {
   );
 }
 
-function SettingsTab() {
+function SettingsTab({ isSuper }: { isSuper: boolean }) {
   const getFn = useServerFn(getHomeSettings);
   const updateFn = useServerFn(adminUpdateHomeSettings);
   const qc = useQueryClient();
@@ -744,7 +745,7 @@ function SettingsTab() {
   const toggle = (k: keyof typeof state) => setLocal({ ...state, [k]: !state[k] });
 
   return (
-    <div className="max-w-md">
+    <div className="max-w-md space-y-4">
       <div className="rounded-2xl bg-card/70 border border-border p-5 space-y-4">
         <h3 className="text-lg font-extrabold text-gold-gradient flex items-center gap-2"><SettingsIcon className="size-5" /> أقسام الصفحة الرئيسية</h3>
         <label className="flex items-center justify-between cursor-pointer">
@@ -761,9 +762,53 @@ function SettingsTab() {
         </label>
         <button disabled={save.isPending} onClick={() => save.mutate()} className="w-full rounded-xl bg-gold-gradient text-primary-foreground font-extrabold py-2 disabled:opacity-50">{save.isPending ? "..." : "حفظ"}</button>
       </div>
+
+      {isSuper && <UsdRateCard />}
     </div>
   );
 }
+
+function UsdRateCard() {
+  const getFn = useServerFn(getUsdRate);
+  const updateFn = useServerFn(adminUpdateUsdRate);
+  const qc = useQueryClient();
+  const q = useQuery({ queryKey: ["usd-rate-admin"], queryFn: () => getFn() });
+  const [val, setVal] = useState<string>("");
+  useEffect(() => { if (q.data && val === "") setVal(String(q.data.rate)); }, [q.data]);
+  const save = useMutation({
+    mutationFn: () => updateFn({ data: { rate: Number(val) } }),
+    onSuccess: () => { toast.success("تم تحديث سعر الدولار"); qc.invalidateQueries({ queryKey: ["usd-rate-admin"] }); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const rate = Number(val);
+  const valid = Number.isFinite(rate) && rate > 0;
+  return (
+    <div className="rounded-2xl bg-card/70 border border-border p-5 space-y-3">
+      <h3 className="text-lg font-extrabold text-gold-gradient">سعر الدولار (يدوي) — USD → EGP</h3>
+      <p className="text-xs text-muted-foreground">
+        يتم استخدام هذا السعر لتحويل الأسعار عندما يختار المستخدم عرض الموقع بالدولار. لن يتم تحديثه تلقائياً — فقط السوبر أدمن يقدر يغيره.
+      </p>
+      {q.data?.updated_at && (
+        <p className="text-[11px] text-muted-foreground">آخر تحديث: {new Date(q.data.updated_at).toLocaleString()}</p>
+      )}
+      <div className="flex items-center gap-2">
+        <span className="text-sm">1 USD =</span>
+        <input
+          type="number" step="0.01" min="0"
+          value={val} onChange={(e) => setVal(e.target.value)}
+          className="w-32 rounded-lg bg-secondary px-3 py-2 text-sm"
+        />
+        <span className="text-sm">EGP</span>
+      </div>
+      <button
+        disabled={!valid || save.isPending || Number(val) === q.data?.rate}
+        onClick={() => save.mutate()}
+        className="w-full rounded-xl bg-gold-gradient text-primary-foreground font-extrabold py-2 disabled:opacity-50"
+      >{save.isPending ? "..." : "حفظ سعر الدولار"}</button>
+    </div>
+  );
+}
+
 
 
 

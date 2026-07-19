@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { getUsdRate } from "@/lib/admin.functions";
 
 export type Currency = "EGP" | "USD";
 
@@ -15,7 +16,7 @@ const CurrencyContext = createContext<Ctx | null>(null);
 
 const STORAGE_KEY = "lion_currency";
 const RATE_KEY = "lion_usd_egp_rate";
-const RATE_TTL_MS = 20 * 60 * 1000; // 20 minutes
+const RATE_TTL_MS = 10 * 60 * 1000; // 10 minutes cache; rate is manual so refresh is only for admin edits
 
 function readInitial(): Currency {
   if (typeof window === "undefined") return "EGP";
@@ -34,16 +35,6 @@ function readCachedRate(): number | null {
   } catch { return null; }
 }
 
-async function fetchRate(): Promise<number | null> {
-  try {
-    const res = await fetch("https://open.er-api.com/v6/latest/USD");
-    if (!res.ok) return null;
-    const json = await res.json();
-    const r = json?.rates?.EGP;
-    return typeof r === "number" && r > 0 ? r : null;
-  } catch { return null; }
-}
-
 export function CurrencyProvider({ children }: { children: ReactNode }) {
   const [currency, setCurrencyState] = useState<Currency>("EGP");
   const [rate, setRate] = useState<number | null>(null);
@@ -52,12 +43,15 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
     setCurrencyState(readInitial());
     const cached = readCachedRate();
     if (cached) setRate(cached);
-    fetchRate().then((r) => {
-      if (r) {
-        setRate(r);
-        try { window.localStorage.setItem(RATE_KEY, JSON.stringify({ rate: r, at: Date.now() })); } catch { /* ignore */ }
-      }
-    });
+    // Fetch the manually-set rate from the server (super admin controlled).
+    getUsdRate()
+      .then((r) => {
+        if (r?.rate && r.rate > 0) {
+          setRate(r.rate);
+          try { window.localStorage.setItem(RATE_KEY, JSON.stringify({ rate: r.rate, at: Date.now() })); } catch { /* ignore */ }
+        }
+      })
+      .catch(() => { /* keep cached/null */ });
   }, []);
 
   const setCurrency = (c: Currency) => {
