@@ -104,7 +104,7 @@ function AdminPage() {
       {tab === "collections" && <CollectionsTab />}
       {tab === "products" && <ProductsTab />}
       {tab === "banners" && <BannersTab />}
-      {tab === "settings" && <SettingsTab />}
+      {tab === "settings" && <SettingsTab isSuper={!!account.data.isSuperAdmin} />}
       {tab === "payments" && account.data.isSuperAdmin && <PaymentMethodsTab />}
       {tab === "users" && account.data.isSuperAdmin && <UsersTab />}
       {tab === "discounts" && account.data.isSuperAdmin && <DiscountsTab />}
