@@ -229,6 +229,7 @@ export type Database = {
           max_quantity: number | null
           min_quantity: number | null
           price: number
+          price_usd: number | null
           provider: string | null
           provider_product_id: string | null
           purchase_field_mode: string
@@ -255,6 +256,7 @@ export type Database = {
           max_quantity?: number | null
           min_quantity?: number | null
           price: number
+          price_usd?: number | null
           provider?: string | null
           provider_product_id?: string | null
           purchase_field_mode?: string
@@ -281,6 +283,7 @@ export type Database = {
           max_quantity?: number | null
           min_quantity?: number | null
           price?: number
+          price_usd?: number | null
           provider?: string | null
           provider_product_id?: string | null
           purchase_field_mode?: string
