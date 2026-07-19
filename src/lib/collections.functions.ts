@@ -66,7 +66,7 @@ export const getCollectionBySlug = createServerFn({ method: "GET" })
 
     const { data: products } = await supabaseAdmin
       .from("products")
-      .select("id, title, title_en, description, description_en, price, image_url, is_offer, category, sort_order, quantity_enabled, unit_size, unit_label, min_quantity, max_quantity, purchase_field_mode, in_stock")
+      .select("id, title, title_en, description, description_en, price, price_usd, image_url, is_offer, category, sort_order, quantity_enabled, unit_size, unit_label, min_quantity, max_quantity, purchase_field_mode, in_stock")
       .eq("collection_id", col.id)
       .eq("is_active", true)
       .order("sort_order", { ascending: true })
