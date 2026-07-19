@@ -324,7 +324,7 @@ function ProductPage() {
               }}
               className="mt-6 w-full rounded-xl bg-gold-gradient text-primary-foreground font-extrabold py-3 shadow-gold disabled:opacity-50"
             >
-              {mutation.isPending ? "..." : qtyEnabled ? `${t("أكد الشراء", "Confirm")} — ${format(totalPrice)}` : t("أكد الشراء", "Confirm purchase")}
+              {mutation.isPending ? "..." : qtyEnabled ? `${t("أكد الشراء", "Confirm")} — ${formatDual(totalPrice, totalUsd)}` : t("أكد الشراء", "Confirm purchase")}
             </button>
           )}
         </div>
