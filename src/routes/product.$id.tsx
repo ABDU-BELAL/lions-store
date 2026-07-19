@@ -84,7 +84,7 @@ function ProductPage() {
   const accountFn = useServerFn(getMyAccount);
   const purchaseFn = useServerFn(purchaseProduct);
   const { t, lang, dir } = useLang();
-  const { format } = useCurrency();
+  const { format, formatDual } = useCurrency();
 
   const account = useQuery({ queryKey: ["account"], queryFn: () => accountFn(), enabled: !!user });
   const { percent: discountPct } = useEffectiveDiscount(product.id);
