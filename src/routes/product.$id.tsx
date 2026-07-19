@@ -24,6 +24,7 @@ export type Product = {
   description_en: string | null;
   category: string;
   price: number;
+  price_usd: number | null;
   image_url: string;
   is_offer: boolean;
   collection_id: string | null;
@@ -41,7 +42,7 @@ export const getProductById = createServerFn({ method: "GET" })
   .handler(async ({ data }): Promise<Product | null> => {
     const { data: product, error } = await supabaseAdmin
       .from("products")
-      .select("id, title, title_en, description, description_en, category, price, image_url, is_offer, collection_id, quantity_enabled, unit_size, unit_label, min_quantity, max_quantity, purchase_field_mode, in_stock")
+      .select("id, title, title_en, description, description_en, category, price, price_usd, image_url, is_offer, collection_id, quantity_enabled, unit_size, unit_label, min_quantity, max_quantity, purchase_field_mode, in_stock")
       .eq("id", data.id)
       .eq("is_active", true)
       .maybeSingle();
@@ -83,7 +84,7 @@ function ProductPage() {
   const accountFn = useServerFn(getMyAccount);
   const purchaseFn = useServerFn(purchaseProduct);
   const { t, lang, dir } = useLang();
-  const { format } = useCurrency();
+  const { format, formatDual } = useCurrency();
 
   const account = useQuery({ queryKey: ["account"], queryFn: () => accountFn(), enabled: !!user });
   const { percent: discountPct } = useEffectiveDiscount(product.id);
@@ -109,6 +110,9 @@ function ProductPage() {
   const qtyNum = Number(quantity) || 0;
   const basePrice = qtyEnabled ? Math.round((qtyNum / unitSize) * Number(p.price) * 100) / 100 : Number(p.price);
   const totalPrice = discountPct > 0 ? Math.round(basePrice * (1 - discountPct / 100) * 100) / 100 : basePrice;
+  const priceUsd = p.price_usd != null ? Number(p.price_usd) : null;
+  const baseUsd = priceUsd != null ? (qtyEnabled ? Math.round((qtyNum / unitSize) * priceUsd * 100) / 100 : priceUsd) : null;
+  const totalUsd = baseUsd != null ? (discountPct > 0 ? Math.round(baseUsd * (1 - discountPct / 100) * 100) / 100 : baseUsd) : null;
   const qtyValid = !qtyEnabled || (qtyNum > 0 && (minQty == null || qtyNum >= minQty) && (maxQty == null || qtyNum <= maxQty));
   const BackArrow = dir === "rtl" ? ArrowRight : ArrowLeft;
 
@@ -154,9 +158,12 @@ function ProductPage() {
           {qtyEnabled ? (
             <p className="mt-6 text-lg font-bold text-gold">
               {discountPct > 0 && (
-                <span className="text-sm text-muted-foreground line-through mr-2">{format(Number(p.price))}</span>
+                <span className="text-sm text-muted-foreground line-through mr-2">{formatDual(Number(p.price), priceUsd)}</span>
               )}
-              {format((discountPct > 0 ? Math.round(Number(p.price) * (1 - discountPct / 100) * 100) / 100 : Number(p.price)))}
+              {formatDual(
+                (discountPct > 0 ? Math.round(Number(p.price) * (1 - discountPct / 100) * 100) / 100 : Number(p.price)),
+                priceUsd != null ? (discountPct > 0 ? Math.round(priceUsd * (1 - discountPct / 100) * 100) / 100 : priceUsd) : null,
+              )}
               <span className="text-sm text-muted-foreground"> / {t("كل", "per")} {unitSize.toLocaleString()} {unitLabel || t("وحدة", "unit")}</span>
               {discountPct > 0 && (
                 <span className="ml-2 text-xs font-extrabold bg-gold-gradient text-primary-foreground rounded-full px-2 py-0.5">-{discountPct}%</span>
@@ -165,10 +172,10 @@ function ProductPage() {
           ) : (
             <div className="mt-6">
               {discountPct > 0 && (
-                <p className="text-base text-muted-foreground line-through">{format(Number(p.price))}</p>
+                <p className="text-base text-muted-foreground line-through">{formatDual(Number(p.price), priceUsd)}</p>
               )}
               <p className="text-4xl font-black text-gold flex items-center gap-2">
-                {format(totalPrice)}
+                {formatDual(totalPrice, totalUsd)}
                 {discountPct > 0 && (
                   <span className="text-xs font-extrabold bg-gold-gradient text-primary-foreground rounded-full px-2 py-1">{t("خصم", "Discount")} -{discountPct}%</span>
                 )}
@@ -198,7 +205,7 @@ function ProductPage() {
               />
               <div className="mt-3 flex items-center justify-between rounded-xl bg-gold/10 border border-gold/30 p-3">
                 <span className="text-sm text-muted-foreground">{t("الإجمالي", "Total")}</span>
-                <span className="text-2xl font-black text-gold-gradient">{format(totalPrice)}</span>
+                <span className="text-2xl font-black text-gold-gradient">{formatDual(totalPrice, totalUsd)}</span>
               </div>
             </div>
           )}
@@ -317,7 +324,7 @@ function ProductPage() {
               }}
               className="mt-6 w-full rounded-xl bg-gold-gradient text-primary-foreground font-extrabold py-3 shadow-gold disabled:opacity-50"
             >
-              {mutation.isPending ? "..." : qtyEnabled ? `${t("أكد الشراء", "Confirm")} — ${format(totalPrice)}` : t("أكد الشراء", "Confirm purchase")}
+              {mutation.isPending ? "..." : qtyEnabled ? `${t("أكد الشراء", "Confirm")} — ${formatDual(totalPrice, totalUsd)}` : t("أكد الشراء", "Confirm purchase")}
             </button>
           )}
         </div>

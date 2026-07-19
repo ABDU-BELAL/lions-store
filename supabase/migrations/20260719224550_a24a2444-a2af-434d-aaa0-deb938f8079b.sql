@@ -1,0 +1,1 @@
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS price_usd numeric NULL CHECK (price_usd IS NULL OR price_usd >= 0);

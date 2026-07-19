@@ -10,6 +10,12 @@ type Ctx = {
   rate: number | null;
   /** Format an EGP amount in the currently selected currency. */
   format: (egpAmount: number) => string;
+  /**
+   * Format a price using an explicit USD override when the user is viewing USD.
+   * Falls back to converting `egpAmount` when no override is provided.
+   * Use for products that have both an EGP and a USD list price.
+   */
+  formatDual: (egpAmount: number, usdOverride?: number | null) => string;
 };
 
 const CurrencyContext = createContext<Ctx | null>(null);
@@ -68,8 +74,20 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
     return `USD ${usd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
 
+  const formatDual = (egpAmount: number, usdOverride?: number | null) => {
+    const n = Number(egpAmount) || 0;
+    if (currency === "EGP") {
+      return `EGP ${n.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+    }
+    const usd = usdOverride != null && Number(usdOverride) > 0
+      ? Number(usdOverride)
+      : (rate ? n / rate : null);
+    if (usd == null) return `EGP ${n.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+    return `USD ${usd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  };
+
   return (
-    <CurrencyContext.Provider value={{ currency, setCurrency, rate, format }}>
+    <CurrencyContext.Provider value={{ currency, setCurrency, rate, format, formatDual }}>
       {children}
     </CurrencyContext.Provider>
   );
