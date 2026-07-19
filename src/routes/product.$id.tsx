@@ -24,6 +24,7 @@ export type Product = {
   description_en: string | null;
   category: string;
   price: number;
+  price_usd: number | null;
   image_url: string;
   is_offer: boolean;
   collection_id: string | null;
