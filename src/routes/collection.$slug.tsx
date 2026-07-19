@@ -300,7 +300,7 @@ function PurchaseModal({ selected, onClose, gameId, setGameId, subPassword, setS
                         }
                         mutation.mutate({ productId: selected.id, gameUserId: payload, quantity: qtyEnabled ? qtyNum : undefined });
                       }} className="mt-5 w-full rounded-xl bg-gold-gradient text-primary-foreground font-extrabold py-3 shadow-gold disabled:opacity-50">
-                        {mutation.isPending ? "..." : qtyEnabled ? `${t("أكد الشراء", "Confirm")} — ${format(total)}` : t("أكد الشراء", "Confirm purchase")}
+                        {mutation.isPending ? "..." : qtyEnabled ? `${t("أكد الشراء", "Confirm")} — ${formatDual(total, totalUsd)}` : t("أكد الشراء", "Confirm purchase")}
                       </button>
                     )}
                   </>
