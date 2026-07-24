@@ -11,7 +11,7 @@ import {
   verifyAdminAccess, adminListOrders, decideOrder,
   adminListUsers, adminAdjustBalance, adminSetUserBanned,
   adminListDiscounts, adminUpsertDiscount, adminDeleteDiscount,
-  adminBrand1TestConnection, adminBrand1ListProducts, adminSetProductProvider, adminX3TestConnection, adminX3ListProducts,
+  adminBrand1TestConnection, adminBrand1ListProducts, adminSetProductProvider, adminX3TestConnection, adminX3ListProducts, adminYassenTestConnection, adminYassenListProducts,
   getUsdRate, adminUpdateUsdRate,
 } from "@/lib/admin.functions";
 import { listVipTiers, adminUpdateVipTier, adminAssignVip, adminRevokeVip } from "@/lib/vip.functions";
@@ -341,12 +341,14 @@ function ProductsTab({ initialCollectionId, onBack }: { initialCollectionId?: st
   const listBrand1 = useServerFn(adminBrand1ListProducts);
   const testX3 = useServerFn(adminX3TestConnection);
   const listX3 = useServerFn(adminX3ListProducts);
+  const testYassen = useServerFn(adminYassenTestConnection);
+  const listYassen = useServerFn(adminYassenListProducts);
   const setProvider = useServerFn(adminSetProductProvider);
   const qc = useQueryClient();
   const { data } = useQuery({ queryKey: ["admin-products"], queryFn: () => list() });
   const { data: collections = [] } = useQuery({ queryKey: ["admin-collections"], queryFn: () => colsList() });
   const [filter, setFilter] = useState<string>(initialCollectionId ?? "");
-  type EditState = { id?: string; title: string; title_en: string; description: string; description_en: string; image_url: string; category: string; price: number; price_usd: string; is_active: boolean; in_stock: boolean; is_offer: boolean; sort_order: number; collection_id: string | null; quantity_enabled: boolean; unit_size: number; unit_label: string; min_quantity: string; max_quantity: string; provider: "" | "brand1" | "x3"; provider_product_id: string; auto_fulfill_enabled: boolean; purchase_field_mode: "game_id" | "subscription" | "link" | "none" };
+  type EditState = { id?: string; title: string; title_en: string; description: string; description_en: string; image_url: string; category: string; price: number; price_usd: string; is_active: boolean; in_stock: boolean; is_offer: boolean; sort_order: number; collection_id: string | null; quantity_enabled: boolean; unit_size: number; unit_label: string; min_quantity: string; max_quantity: string; provider: "" | "brand1" | "x3" | "yassen"; provider_product_id: string; auto_fulfill_enabled: boolean; purchase_field_mode: "game_id" | "subscription" | "link" | "none" };
   const [editing, setEditing] = useState<null | EditState>(null);
 
   const blank = (): EditState => ({ title: "", title_en: "", description: "", description_en: "", image_url: "", category: "games", price: 0, price_usd: "", is_active: true, in_stock: true, is_offer: false, sort_order: 0, collection_id: filter || null, quantity_enabled: false, unit_size: 1, unit_label: "", min_quantity: "", max_quantity: "", provider: "", provider_product_id: "", auto_fulfill_enabled: false, purchase_field_mode: "game_id" });
@@ -399,6 +401,15 @@ function ProductsTab({ initialCollectionId, onBack }: { initialCollectionId?: st
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const testConnYassen = useMutation({
+    mutationFn: () => testYassen({ data: undefined }),
+    onSuccess: (r) => {
+      if (r.ok) toast.success("اتصال Yassen يعمل ✓");
+      else toast.error("فشل Yassen: " + (r.error ?? "تأكد من التوكن والـ IPs"));
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const brand1Products = useQuery({
     queryKey: ["brand1-products"],
     queryFn: () => listBrand1(),
@@ -410,6 +421,13 @@ function ProductsTab({ initialCollectionId, onBack }: { initialCollectionId?: st
     queryKey: ["x3-products"],
     queryFn: () => listX3(),
     enabled: !!editing?.id && editing?.provider === "x3",
+    staleTime: 5 * 60_000,
+  });
+
+  const yassenProducts = useQuery({
+    queryKey: ["yassen-products"],
+    queryFn: () => listYassen(),
+    enabled: !!editing?.id && editing?.provider === "yassen",
     staleTime: 5 * 60_000,
   });
 
@@ -440,6 +458,9 @@ function ProductsTab({ initialCollectionId, onBack }: { initialCollectionId?: st
         </button>
         <button onClick={() => testConnX3.mutate()} disabled={testConnX3.isPending} className="rounded-full bg-secondary border border-border px-4 py-2 text-sm font-bold">
           {testConnX3.isPending ? "..." : "اختبار X3"}
+        </button>
+        <button onClick={() => testConnYassen.mutate()} disabled={testConnYassen.isPending} className="rounded-full bg-secondary border border-border px-4 py-2 text-sm font-bold">
+          {testConnYassen.isPending ? "..." : "اختبار Yassen"}
         </button>
         {!initialCollectionId && (
           <select value={filter} onChange={(e) => setFilter(e.target.value)} className="rounded-full bg-secondary border border-border px-3 py-2 text-sm">
