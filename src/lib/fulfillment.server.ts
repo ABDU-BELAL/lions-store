@@ -2,11 +2,12 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { brand1NewOrder, brand1CheckOrder, brand1CheckByUuid } from "./brand1.server";
 import { x3NewOrder, x3CheckOrder, x3CheckByUuid } from "./x3.server";
+import { yassenNewOrder, yassenCheckOrder, yassenCheckByUuid } from "./yassen.server";
 import { notifyTelegram, escapeTelegramHtml } from "./telegram.server";
 
 const MAX_WAIT_MINUTES = 20;
 
-type ProviderName = "brand1" | "x3";
+type ProviderName = "brand1" | "x3" | "yassen";
 
 function newUuid(): string {
   return crypto.randomUUID();
@@ -44,17 +45,20 @@ interface CheckResult {
 
 async function providerNewOrder(provider: ProviderName, args: { providerProductId: string; qty: number; playerId?: string; orderUuid: string }): Promise<NewOrderResult> {
   if (provider === "x3") return x3NewOrder(args);
+  if (provider === "yassen") return yassenNewOrder(args);
   return brand1NewOrder(args);
 }
 
 async function providerCheck(provider: ProviderName, providerOrderId: string): Promise<CheckResult> {
   if (provider === "x3") return x3CheckOrder(providerOrderId);
+  if (provider === "yassen") return yassenCheckOrder(providerOrderId);
   return brand1CheckOrder(providerOrderId);
 }
 
 async function providerCheckByUuid(provider: ProviderName, uuid: string): Promise<CheckResult> {
   try {
     if (provider === "x3") return await x3CheckByUuid(uuid);
+    if (provider === "yassen") return await yassenCheckByUuid(uuid);
     return await brand1CheckByUuid(uuid);
   } catch (e) {
     return { raw: { error: e instanceof Error ? e.message : "check failed" } };
@@ -117,7 +121,7 @@ export async function tryAutoFulfillOrder(orderId: string): Promise<{ attempted:
     return { attempted: false };
   }
   const provider = product.provider as ProviderName;
-  if (provider !== "brand1" && provider !== "x3") return { attempted: false };
+  if (provider !== "brand1" && provider !== "x3" && provider !== "yassen") return { attempted: false };
 
   const uuid = newUuid();
   const { error: upErr } = await supabaseAdmin
@@ -211,7 +215,7 @@ export async function pollPendingProviderOrders(): Promise<{ checked: number; co
     .from("orders")
     .select("id, user_id, product_id, product_title, amount, status, game_user_id, quantity, provider, provider_order_id, provider_uuid, provider_started_at, provider_attempts")
     .eq("status", "pending")
-    .in("provider", ["brand1", "x3"])
+    .in("provider", ["brand1", "x3", "yassen"])
     .limit(50);
   if (!rows || rows.length === 0) return { checked: 0, completed: 0, refunded: 0, stillPending: 0 };
 
