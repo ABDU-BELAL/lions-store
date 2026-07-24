@@ -691,6 +691,11 @@ export const adminSetProductProvider = createServerFn({ method: "POST" })
           const p = await x3GetProduct(data.providerProductId);
           if (p?.qty_min != null) updates.min_quantity = p.qty_min;
           if (p?.qty_max != null) updates.max_quantity = p.qty_max;
+        } else if (data.provider === "yassen") {
+          const { yassenGetProduct } = await import("./yassen.server");
+          const p = await yassenGetProduct(data.providerProductId);
+          if (p?.qty_min != null) updates.min_quantity = p.qty_min;
+          if (p?.qty_max != null) updates.max_quantity = p.qty_max;
         }
       } catch (e) {
         console.error("[adminSetProductProvider] qty sync failed", e);
