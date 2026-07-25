@@ -2,7 +2,7 @@
 // Docs: https://api.yassen-card.com/api-docs
 // Structurally identical to Brand1 / X3 (api-token header, same endpoints).
 
-const BASE = process.env.YASSEN_API_BASE || "https://yassen-card.com";
+const BASE = process.env.YASSEN_API_BASE || "https://api.yassen-card.com";
 const TOKEN = process.env.YASSEN_API_TOKEN || "";
 
 type Json = Record<string, unknown>;
