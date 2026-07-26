@@ -160,11 +160,27 @@ export const adminUpsertProduct = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId);
+    const payload: typeof data.data = { ...data.data };
+    const hasEgp = Number(payload.price) > 0;
+    const hasUsd = payload.price_usd != null && Number(payload.price_usd) > 0;
+    if (!hasEgp && !hasUsd) {
+      throw new Error("أدخل السعر بالجنيه أو بالدولار على الأقل / Enter EGP or USD price");
+    }
+    // Look up manual USD→EGP rate for auto-conversion when only one side is provided.
+    const { data: rateRow } = await supabaseAdmin.from("site_settings").select("value").eq("key", "usd_rate").maybeSingle();
+    const rate = Number((rateRow?.value as { rate?: number } | null)?.rate ?? 0);
+    if (!hasEgp && hasUsd) {
+      if (!(rate > 0)) throw new Error("حدد سعر الدولار اليدوي أولًا / Set the manual USD rate first");
+      payload.price = Math.round(Number(payload.price_usd) * rate * 100) / 100;
+    }
+    if (hasEgp && !hasUsd && rate > 0) {
+      payload.price_usd = Math.round((Number(payload.price) / rate) * 100) / 100;
+    }
     if (data.id) {
-      const { error } = await supabaseAdmin.from("products").update(data.data).eq("id", data.id);
+      const { error } = await supabaseAdmin.from("products").update(payload).eq("id", data.id);
       if (error) { console.error("[db]", error); throw new Error("حدث خطأ، حاول مرة أخرى"); };
     } else {
-      const { error } = await supabaseAdmin.from("products").insert(data.data);
+      const { error } = await supabaseAdmin.from("products").insert(payload);
       if (error) { console.error("[db]", error); throw new Error("حدث خطأ، حاول مرة أخرى"); };
     }
     return { ok: true };
