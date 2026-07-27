@@ -133,6 +133,7 @@ const productSchema = z.object({
   price_usd: z.number().min(0).max(1_000_000).nullable().optional(),
   is_active: z.boolean().optional(),
   in_stock: z.boolean().optional(),
+  show_frame: z.boolean().optional(),
   is_offer: z.boolean().optional(),
   sort_order: z.number().int().optional(),
   collection_id: z.string().uuid().nullable().optional(),

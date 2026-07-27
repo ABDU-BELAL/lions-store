@@ -58,6 +58,7 @@ export type Database = {
           image_url: string | null
           is_active: boolean
           parent_id: string | null
+          show_frame: boolean
           show_on_home: boolean
           slug: string
           sort_order: number
@@ -72,6 +73,7 @@ export type Database = {
           image_url?: string | null
           is_active?: boolean
           parent_id?: string | null
+          show_frame?: boolean
           show_on_home?: boolean
           slug: string
           sort_order?: number
@@ -86,6 +88,7 @@ export type Database = {
           image_url?: string | null
           is_active?: boolean
           parent_id?: string | null
+          show_frame?: boolean
           show_on_home?: boolean
           slug?: string
           sort_order?: number
@@ -234,6 +237,7 @@ export type Database = {
           provider_product_id: string | null
           purchase_field_mode: string
           quantity_enabled: boolean
+          show_frame: boolean
           sort_order: number
           title: string
           title_en: string | null
@@ -261,6 +265,7 @@ export type Database = {
           provider_product_id?: string | null
           purchase_field_mode?: string
           quantity_enabled?: boolean
+          show_frame?: boolean
           sort_order?: number
           title: string
           title_en?: string | null
@@ -288,6 +293,7 @@ export type Database = {
           provider_product_id?: string | null
           purchase_field_mode?: string
           quantity_enabled?: boolean
+          show_frame?: boolean
           sort_order?: number
           title?: string
           title_en?: string | null

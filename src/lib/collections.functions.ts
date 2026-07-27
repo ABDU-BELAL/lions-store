@@ -14,7 +14,7 @@ async function assertAdmin(userId: string) {
 export const listActiveCollections = createServerFn({ method: "GET" }).handler(async () => {
   const { data } = await supabaseAdmin
     .from("collections")
-    .select("id, slug, title, title_en, image_url, sort_order, show_on_home")
+    .select("id, slug, title, title_en, image_url, sort_order, show_on_home, show_frame")
     .eq("is_active", true)
     .is("parent_id", null)
     .order("sort_order", { ascending: true })
@@ -26,7 +26,7 @@ export const listActiveCollections = createServerFn({ method: "GET" }).handler(a
 export const listAllActiveCollections = createServerFn({ method: "GET" }).handler(async () => {
   const { data } = await supabaseAdmin
     .from("collections")
-    .select("id, slug, title, title_en, image_url, sort_order, parent_id")
+    .select("id, slug, title, title_en, image_url, sort_order, parent_id, show_frame")
     .eq("is_active", true)
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: false });
@@ -38,7 +38,7 @@ export const getCollectionBySlug = createServerFn({ method: "GET" })
   .handler(async ({ data }) => {
     const { data: col } = await supabaseAdmin
       .from("collections")
-      .select("id, slug, title, title_en, image_url, is_active, parent_id")
+      .select("id, slug, title, title_en, image_url, is_active, parent_id, show_frame")
       .eq("slug", data.slug)
       .maybeSingle();
     if (!col || !col.is_active) return null;
@@ -57,7 +57,7 @@ export const getCollectionBySlug = createServerFn({ method: "GET" })
     // Child subcategories
     const { data: childrenRaw } = await supabaseAdmin
       .from("collections")
-      .select("id, slug, title, title_en, image_url, sort_order")
+      .select("id, slug, title, title_en, image_url, sort_order, show_frame")
       .eq("parent_id", col.id)
       .eq("is_active", true)
       .order("sort_order", { ascending: true })
@@ -66,7 +66,7 @@ export const getCollectionBySlug = createServerFn({ method: "GET" })
 
     const { data: products } = await supabaseAdmin
       .from("products")
-      .select("id, title, title_en, description, description_en, price, price_usd, image_url, is_offer, category, sort_order, quantity_enabled, unit_size, unit_label, min_quantity, max_quantity, purchase_field_mode, in_stock")
+      .select("id, title, title_en, description, description_en, price, price_usd, image_url, is_offer, category, sort_order, quantity_enabled, unit_size, unit_label, min_quantity, max_quantity, purchase_field_mode, in_stock, show_frame")
       .eq("collection_id", col.id)
       .eq("is_active", true)
       .order("sort_order", { ascending: true })
@@ -87,6 +87,7 @@ const collectionSchema = z.object({
   is_active: z.boolean().optional(),
   show_on_home: z.boolean().optional(),
   parent_id: z.string().uuid().nullable().optional(),
+  show_frame: z.boolean().optional(),
 });
 
 export const adminListCollections = createServerFn({ method: "GET" })

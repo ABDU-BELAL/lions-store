@@ -35,6 +35,7 @@ export type Product = {
   max_quantity: number | null;
   purchase_field_mode: "game_id" | "subscription" | "link" | "none";
   in_stock: boolean;
+  show_frame: boolean;
 };
 
 export const getProductById = createServerFn({ method: "GET" })
@@ -42,7 +43,7 @@ export const getProductById = createServerFn({ method: "GET" })
   .handler(async ({ data }): Promise<Product | null> => {
     const { data: product, error } = await supabaseAdmin
       .from("products")
-      .select("id, title, title_en, description, description_en, category, price, price_usd, image_url, is_offer, collection_id, quantity_enabled, unit_size, unit_label, min_quantity, max_quantity, purchase_field_mode, in_stock")
+      .select("id, title, title_en, description, description_en, category, price, price_usd, image_url, is_offer, collection_id, quantity_enabled, unit_size, unit_label, min_quantity, max_quantity, purchase_field_mode, in_stock, show_frame")
       .eq("id", data.id)
       .eq("is_active", true)
       .maybeSingle();
@@ -143,7 +144,7 @@ function ProductPage() {
 
       <div className="grid md:grid-cols-2 gap-8 items-start">
         <div className="rounded-3xl bg-dark-gradient border-gold p-6 shadow-card">
-          <FramedImage src={p.image_url} alt={title} />
+          <FramedImage src={p.image_url} alt={title} framed={p.show_frame !== false} />
         </div>
 
         <div className="rounded-3xl bg-card/70 border border-border p-6 shadow-card">

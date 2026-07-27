@@ -348,10 +348,10 @@ function ProductsTab({ initialCollectionId, onBack }: { initialCollectionId?: st
   const { data } = useQuery({ queryKey: ["admin-products"], queryFn: () => list() });
   const { data: collections = [] } = useQuery({ queryKey: ["admin-collections"], queryFn: () => colsList() });
   const [filter, setFilter] = useState<string>(initialCollectionId ?? "");
-  type EditState = { id?: string; title: string; title_en: string; description: string; description_en: string; image_url: string; category: string; price: number; price_usd: string; is_active: boolean; in_stock: boolean; is_offer: boolean; sort_order: number; collection_id: string | null; quantity_enabled: boolean; unit_size: number; unit_label: string; min_quantity: string; max_quantity: string; provider: "" | "brand1" | "x3" | "yassen"; provider_product_id: string; auto_fulfill_enabled: boolean; purchase_field_mode: "game_id" | "subscription" | "link" | "none" };
+  type EditState = { id?: string; title: string; title_en: string; description: string; description_en: string; image_url: string; category: string; price: number; price_usd: string; is_active: boolean; in_stock: boolean; show_frame: boolean; is_offer: boolean; sort_order: number; collection_id: string | null; quantity_enabled: boolean; unit_size: number; unit_label: string; min_quantity: string; max_quantity: string; provider: "" | "brand1" | "x3" | "yassen"; provider_product_id: string; auto_fulfill_enabled: boolean; purchase_field_mode: "game_id" | "subscription" | "link" | "none" };
   const [editing, setEditing] = useState<null | EditState>(null);
 
-  const blank = (): EditState => ({ title: "", title_en: "", description: "", description_en: "", image_url: "", category: "games", price: 0, price_usd: "", is_active: true, in_stock: true, is_offer: false, sort_order: 0, collection_id: filter || null, quantity_enabled: false, unit_size: 1, unit_label: "", min_quantity: "", max_quantity: "", provider: "", provider_product_id: "", auto_fulfill_enabled: false, purchase_field_mode: "game_id" });
+  const blank = (): EditState => ({ title: "", title_en: "", description: "", description_en: "", image_url: "", category: "games", price: 0, price_usd: "", is_active: true, in_stock: true, show_frame: true, is_offer: false, sort_order: 0, collection_id: filter || null, quantity_enabled: false, unit_size: 1, unit_label: "", min_quantity: "", max_quantity: "", provider: "", provider_product_id: "", auto_fulfill_enabled: false, purchase_field_mode: "game_id" });
 
   const save = useMutation({
     mutationFn: async () => {
@@ -361,7 +361,7 @@ function ProductsTab({ initialCollectionId, onBack }: { initialCollectionId?: st
         description: editing!.description || undefined,
         description_en: editing!.description_en.trim() || null,
         image_url: editing!.image_url || undefined,
-        category: editing!.category, price: editing!.price, price_usd: editing!.price_usd.trim() === "" ? null : Number(editing!.price_usd), is_active: editing!.is_active, in_stock: editing!.in_stock, is_offer: editing!.is_offer, sort_order: editing!.sort_order,
+        category: editing!.category, price: editing!.price, price_usd: editing!.price_usd.trim() === "" ? null : Number(editing!.price_usd), is_active: editing!.is_active, in_stock: editing!.in_stock, show_frame: editing!.show_frame, is_offer: editing!.is_offer, sort_order: editing!.sort_order,
         collection_id: editing!.collection_id || null,
         quantity_enabled: editing!.quantity_enabled,
         unit_size: editing!.quantity_enabled ? Number(editing!.unit_size) || 1 : 1,
@@ -477,7 +477,7 @@ function ProductsTab({ initialCollectionId, onBack }: { initialCollectionId?: st
             <p className="text-xs text-muted-foreground">{p.category} • {p.is_active ? "مفعّل" : "متوقف"}{(p as { in_stock?: boolean }).in_stock === false ? " • نفد المخزون" : ""}{p.is_offer ? " • عرض" : ""}</p>
             <p className="mt-1 font-black text-gold-gradient">EG {Number(p.price).toLocaleString()}</p>
             <div className="mt-3 flex gap-2">
-              <button onClick={() => setEditing({ id: p.id, title: p.title, title_en: (p as { title_en?: string | null }).title_en ?? "", description: p.description ?? "", description_en: (p as { description_en?: string | null }).description_en ?? "", image_url: p.image_url ?? "", category: p.category, price: Number(p.price), price_usd: (p as { price_usd?: number | null }).price_usd != null ? String((p as { price_usd?: number | null }).price_usd) : "", is_active: p.is_active, in_stock: (p as { in_stock?: boolean }).in_stock ?? true, is_offer: p.is_offer, sort_order: p.sort_order, collection_id: p.collection_id ?? null, quantity_enabled: (p as { quantity_enabled?: boolean }).quantity_enabled ?? false, unit_size: Number((p as { unit_size?: number }).unit_size ?? 1), unit_label: (p as { unit_label?: string | null }).unit_label ?? "", min_quantity: (p as { min_quantity?: number | null }).min_quantity != null ? String((p as { min_quantity?: number | null }).min_quantity) : "", max_quantity: (p as { max_quantity?: number | null }).max_quantity != null ? String((p as { max_quantity?: number | null }).max_quantity) : "", provider: ((["brand1","x3","yassen"].includes((p as { provider?: string | null }).provider ?? "")) ? (p as { provider: "brand1"|"x3"|"yassen" }).provider : ""), provider_product_id: (p as { provider_product_id?: string | null }).provider_product_id ?? "", auto_fulfill_enabled: (p as { auto_fulfill_enabled?: boolean }).auto_fulfill_enabled ?? false, purchase_field_mode: (((p as { purchase_field_mode?: string }).purchase_field_mode as "game_id" | "subscription" | "link" | "none") ?? "game_id") })} className="flex-1 rounded-lg bg-secondary py-1.5 text-sm font-bold">تعديل / Edit</button>
+              <button onClick={() => setEditing({ id: p.id, title: p.title, title_en: (p as { title_en?: string | null }).title_en ?? "", description: p.description ?? "", description_en: (p as { description_en?: string | null }).description_en ?? "", image_url: p.image_url ?? "", category: p.category, price: Number(p.price), price_usd: (p as { price_usd?: number | null }).price_usd != null ? String((p as { price_usd?: number | null }).price_usd) : "", is_active: p.is_active, in_stock: (p as { in_stock?: boolean }).in_stock ?? true, show_frame: (p as { show_frame?: boolean }).show_frame ?? true, is_offer: p.is_offer, sort_order: p.sort_order, collection_id: p.collection_id ?? null, quantity_enabled: (p as { quantity_enabled?: boolean }).quantity_enabled ?? false, unit_size: Number((p as { unit_size?: number }).unit_size ?? 1), unit_label: (p as { unit_label?: string | null }).unit_label ?? "", min_quantity: (p as { min_quantity?: number | null }).min_quantity != null ? String((p as { min_quantity?: number | null }).min_quantity) : "", max_quantity: (p as { max_quantity?: number | null }).max_quantity != null ? String((p as { max_quantity?: number | null }).max_quantity) : "", provider: ((["brand1","x3","yassen"].includes((p as { provider?: string | null }).provider ?? "")) ? (p as { provider: "brand1"|"x3"|"yassen" }).provider : ""), provider_product_id: (p as { provider_product_id?: string | null }).provider_product_id ?? "", auto_fulfill_enabled: (p as { auto_fulfill_enabled?: boolean }).auto_fulfill_enabled ?? false, purchase_field_mode: (((p as { purchase_field_mode?: string }).purchase_field_mode as "game_id" | "subscription" | "link" | "none") ?? "game_id") })} className="flex-1 rounded-lg bg-secondary py-1.5 text-sm font-bold">تعديل / Edit</button>
               <button onClick={() => confirm("متأكد؟") && remove.mutate(p.id)} className="rounded-lg bg-destructive text-white px-3 py-1.5 text-sm font-bold"><Trash2 className="size-4" /></button>
             </div>
           </div>
@@ -558,6 +558,7 @@ function ProductsTab({ initialCollectionId, onBack }: { initialCollectionId?: st
             <div className="flex items-center gap-4 text-sm flex-wrap">
               <label className="flex items-center gap-2"><input type="checkbox" checked={editing.is_active} onChange={(e) => setEditing({ ...editing, is_active: e.target.checked })} /> مفعّل</label>
               <label className="flex items-center gap-2"><input type="checkbox" checked={editing.in_stock} onChange={(e) => setEditing({ ...editing, in_stock: e.target.checked })} /> متوفر بالمخزون / In stock</label>
+              <label className="flex items-center gap-2"><input type="checkbox" checked={editing.show_frame !== false} onChange={(e) => setEditing({ ...editing, show_frame: e.target.checked })} /> إطار الصورة / Show frame</label>
               <label className="flex items-center gap-2"><input type="checkbox" checked={editing.is_offer} onChange={(e) => setEditing({ ...editing, is_offer: e.target.checked })} /> عرض</label>
               <input type="number" placeholder="الترتيب" value={editing.sort_order} onChange={(e) => setEditing({ ...editing, sort_order: Number(e.target.value) })} className="ml-auto w-20 rounded-xl bg-secondary px-3 py-2" />
             </div>
@@ -692,11 +693,11 @@ function CollectionsTab() {
   const del = useServerFn(adminDeleteCollection);
   const qc = useQueryClient();
   const { data = [] } = useQuery({ queryKey: ["admin-collections"], queryFn: () => list() });
-  type EditState = { id?: string; slug: string; title: string; title_en: string; description_en: string; image_url: string; sort_order: number; is_active: boolean; show_on_home: boolean; parent_id: string | null };
+  type EditState = { id?: string; slug: string; title: string; title_en: string; description_en: string; image_url: string; sort_order: number; is_active: boolean; show_on_home: boolean; show_frame: boolean; parent_id: string | null };
   const [editing, setEditing] = useState<null | EditState>(null);
   const [manageId, setManageId] = useState<string | null>(null);
 
-  const blank = (): EditState => ({ slug: "", title: "", title_en: "", description_en: "", image_url: "", sort_order: 0, is_active: true, show_on_home: true, parent_id: null });
+  const blank = (): EditState => ({ slug: "", title: "", title_en: "", description_en: "", image_url: "", sort_order: 0, is_active: true, show_on_home: true, show_frame: true, parent_id: null });
 
   // Only top-level collections can be parents
   const parentOptions = data.filter((c) => !(c as { parent_id?: string | null }).parent_id);
@@ -709,7 +710,7 @@ function CollectionsTab() {
       title_en: editing!.title_en.trim() || null,
       description_en: editing!.description_en.trim() || null,
       image_url: editing!.image_url || null,
-      sort_order: editing!.sort_order, is_active: editing!.is_active, show_on_home: editing!.show_on_home,
+      sort_order: editing!.sort_order, is_active: editing!.is_active, show_on_home: editing!.show_on_home, show_frame: editing!.show_frame,
       parent_id: editing!.parent_id,
     } } }),
     onSuccess: () => { toast.success("تم / Saved"); setEditing(null); qc.invalidateQueries({ queryKey: ["admin-collections"] }); qc.invalidateQueries({ queryKey: ["collections-active"] }); qc.invalidateQueries({ queryKey: ["home-collections"] }); },
@@ -739,7 +740,7 @@ function CollectionsTab() {
               {parentRow && <p className="text-[11px] text-gold/80 mt-0.5">↑ {parentRow.title}</p>}
               <div className="mt-3 flex gap-2 flex-wrap">
                 <button onClick={() => setManageId(c.id)} className="flex-1 rounded-lg bg-gold-gradient text-primary-foreground py-1.5 text-sm font-bold flex items-center justify-center gap-1"><Package className="size-4" /> المنتجات</button>
-                <button onClick={() => setEditing({ id: c.id, slug: c.slug, title: c.title, title_en: (c as { title_en?: string | null }).title_en ?? "", description_en: (c as { description_en?: string | null }).description_en ?? "", image_url: c.image_url ?? "", sort_order: c.sort_order, is_active: c.is_active, show_on_home: c.show_on_home, parent_id: cParentId })} className="rounded-lg bg-secondary px-3 py-1.5 text-sm font-bold">تعديل / Edit</button>
+                <button onClick={() => setEditing({ id: c.id, slug: c.slug, title: c.title, title_en: (c as { title_en?: string | null }).title_en ?? "", description_en: (c as { description_en?: string | null }).description_en ?? "", image_url: c.image_url ?? "", sort_order: c.sort_order, is_active: c.is_active, show_on_home: c.show_on_home, show_frame: (c as { show_frame?: boolean }).show_frame ?? true, parent_id: cParentId })} className="rounded-lg bg-secondary px-3 py-1.5 text-sm font-bold">تعديل / Edit</button>
                 <button onClick={() => confirm("متأكد؟") && remove.mutate(c.id)} className="rounded-lg bg-destructive text-white px-3 py-1.5 text-sm font-bold"><Trash2 className="size-4" /></button>
               </div>
             </div>
@@ -769,6 +770,7 @@ function CollectionsTab() {
             <div className="flex items-center gap-4 text-sm flex-wrap">
               <label className="flex items-center gap-2"><input type="checkbox" checked={editing.is_active} onChange={(e) => setEditing({ ...editing, is_active: e.target.checked })} /> مفعّل</label>
               <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={!!editing.show_on_home} onChange={(e) => setEditing({ ...editing, show_on_home: e.target.checked })} /> في الرئيسية / Show on home</label>
+              <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={editing.show_frame !== false} onChange={(e) => setEditing({ ...editing, show_frame: e.target.checked })} /> إطار الصورة / Show frame</label>
               <input type="number" placeholder="الترتيب" value={editing.sort_order} onChange={(e) => setEditing({ ...editing, sort_order: Number(e.target.value) })} className="ml-auto w-20 rounded-xl bg-secondary px-3 py-2" />
             </div>
             <div className="flex gap-2">
