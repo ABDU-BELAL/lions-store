@@ -108,7 +108,7 @@ function CollectionPage() {
             const chTitle = pickLocalized(ch.title, ch.title_en, lang);
             return (
               <Link key={ch.id} to="/collection/$slug" params={{ slug: ch.slug }} className="group rounded-2xl overflow-hidden bg-dark-gradient border border-gold/30 hover:border-gold/70 hover:shadow-gold transition text-center">
-                <FramedImage src={ch.image_url} alt={chTitle} />
+                <FramedImage src={ch.image_url} alt={chTitle} framed={(ch as { show_frame?: boolean }).show_frame !== false} />
                 <p className="font-extrabold text-sm p-3 text-gold-gradient">{chTitle}</p>
               </Link>
             );
@@ -137,7 +137,7 @@ function CollectionPage() {
                 >
                   {pp.is_offer && <span className={`absolute top-2 ${dir === "rtl" ? "right-2" : "left-2"} z-20 text-[10px] font-extrabold bg-destructive text-destructive-foreground rounded-full px-2 py-1`}>{t("عرض", "Offer")}</span>}
                   {pp.in_stock === false && <span className={`absolute top-2 ${dir === "rtl" ? "left-2" : "right-2"} z-20 text-[10px] font-extrabold bg-destructive text-destructive-foreground rounded-full px-2 py-1`}>{t("نفد المخزون", "Out of stock")}</span>}
-                  <FramedImage src={pp.image_url} alt={title} />
+                  <FramedImage src={pp.image_url} alt={title} framed={(pp as { show_frame?: boolean }).show_frame !== false} />
                   <div className="px-4 pb-4 pt-1 text-center">
                     <h3 className="text-sm font-extrabold text-gold-gradient line-clamp-1">{title}</h3>
                     {description && (

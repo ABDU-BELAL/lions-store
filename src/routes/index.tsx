@@ -141,7 +141,7 @@ function Home() {
               const title = pickLocalized(c.title, (c as { title_en?: string | null }).title_en, lang);
               return (
                 <Link key={c.id} to="/collection/$slug" params={{ slug: c.slug }} className="group rounded-2xl overflow-hidden bg-dark-gradient border border-gold/30 hover:border-gold/70 hover:shadow-gold transition">
-                  <FramedImage src={c.image_url} alt={title} />
+                  <FramedImage src={c.image_url} alt={title} framed={(c as { show_frame?: boolean }).show_frame !== false} />
                   <p className="font-extrabold text-center p-3 text-gold-gradient">{title}</p>
                 </Link>
               );
