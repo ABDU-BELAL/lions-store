@@ -163,7 +163,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
         <Link to="/about" className="hover:text-gold">{t("من نحن", "About us")}</Link>
         <span className="opacity-30">•</span>
         <a href="https://www.instagram.com/t_kv0/" target="_blank" rel="noopener noreferrer" className="hover:text-gold">
-          {t("تطوير وبرمجة: Abdelrahman Abdin", "Developed by: Abdelrahman Abdin")}
+          {t("تطوير وبرمجة: Abdelrahman Mohamed Selim", "Developed by: Abdelrahman Mohamed Selim")}
         </a>
       </footer>
 
