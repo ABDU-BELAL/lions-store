@@ -30,6 +30,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProductIdRouteImport } from './routes/product.$id'
 import { Route as CollectionSlugRouteImport } from './routes/collection.$slug'
 import { Route as ApiPublicTelegramWebhookRouteImport } from './routes/api/public/telegram/webhook'
+import { Route as ApiPublicImgSplatRouteImport } from './routes/api/public/img/$'
 import { Route as ApiPublicHooksFulfillmentPollRouteImport } from './routes/api/public/hooks/fulfillment-poll'
 
 const TransactionsRoute = TransactionsRouteImport.update({
@@ -138,6 +139,11 @@ const ApiPublicTelegramWebhookRoute =
     path: '/api/public/telegram/webhook',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicImgSplatRoute = ApiPublicImgSplatRouteImport.update({
+  id: '/api/public/img/$',
+  path: '/api/public/img/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicHooksFulfillmentPollRoute =
   ApiPublicHooksFulfillmentPollRouteImport.update({
     id: '/api/public/hooks/fulfillment-poll',
@@ -167,6 +173,7 @@ export interface FileRoutesByFullPath {
   '/collection/$slug': typeof CollectionSlugRoute
   '/product/$id': typeof ProductIdRoute
   '/api/public/hooks/fulfillment-poll': typeof ApiPublicHooksFulfillmentPollRoute
+  '/api/public/img/$': typeof ApiPublicImgSplatRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
 }
 export interface FileRoutesByTo {
@@ -191,6 +198,7 @@ export interface FileRoutesByTo {
   '/collection/$slug': typeof CollectionSlugRoute
   '/product/$id': typeof ProductIdRoute
   '/api/public/hooks/fulfillment-poll': typeof ApiPublicHooksFulfillmentPollRoute
+  '/api/public/img/$': typeof ApiPublicImgSplatRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
 }
 export interface FileRoutesById {
@@ -216,6 +224,7 @@ export interface FileRoutesById {
   '/collection/$slug': typeof CollectionSlugRoute
   '/product/$id': typeof ProductIdRoute
   '/api/public/hooks/fulfillment-poll': typeof ApiPublicHooksFulfillmentPollRoute
+  '/api/public/img/$': typeof ApiPublicImgSplatRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
 }
 export interface FileRouteTypes {
@@ -242,6 +251,7 @@ export interface FileRouteTypes {
     | '/collection/$slug'
     | '/product/$id'
     | '/api/public/hooks/fulfillment-poll'
+    | '/api/public/img/$'
     | '/api/public/telegram/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -266,6 +276,7 @@ export interface FileRouteTypes {
     | '/collection/$slug'
     | '/product/$id'
     | '/api/public/hooks/fulfillment-poll'
+    | '/api/public/img/$'
     | '/api/public/telegram/webhook'
   id:
     | '__root__'
@@ -290,6 +301,7 @@ export interface FileRouteTypes {
     | '/collection/$slug'
     | '/product/$id'
     | '/api/public/hooks/fulfillment-poll'
+    | '/api/public/img/$'
     | '/api/public/telegram/webhook'
   fileRoutesById: FileRoutesById
 }
@@ -315,6 +327,7 @@ export interface RootRouteChildren {
   CollectionSlugRoute: typeof CollectionSlugRoute
   ProductIdRoute: typeof ProductIdRoute
   ApiPublicHooksFulfillmentPollRoute: typeof ApiPublicHooksFulfillmentPollRoute
+  ApiPublicImgSplatRoute: typeof ApiPublicImgSplatRoute
   ApiPublicTelegramWebhookRoute: typeof ApiPublicTelegramWebhookRoute
 }
 
@@ -467,6 +480,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicTelegramWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/img/$': {
+      id: '/api/public/img/$'
+      path: '/api/public/img/$'
+      fullPath: '/api/public/img/$'
+      preLoaderRoute: typeof ApiPublicImgSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/fulfillment-poll': {
       id: '/api/public/hooks/fulfillment-poll'
       path: '/api/public/hooks/fulfillment-poll'
@@ -499,6 +519,7 @@ const rootRouteChildren: RootRouteChildren = {
   CollectionSlugRoute: CollectionSlugRoute,
   ProductIdRoute: ProductIdRoute,
   ApiPublicHooksFulfillmentPollRoute: ApiPublicHooksFulfillmentPollRoute,
+  ApiPublicImgSplatRoute: ApiPublicImgSplatRoute,
   ApiPublicTelegramWebhookRoute: ApiPublicTelegramWebhookRoute,
 }
 export const routeTree = rootRouteImport
