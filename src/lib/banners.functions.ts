@@ -2,8 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-
-const SIGNED_TTL = 60 * 60 * 24 * 7; // 7 days
+import { signPaths } from "@/lib/storage.server";
 
 async function assertAdmin(userId: string) {
   const { data } = await supabaseAdmin
@@ -15,14 +14,10 @@ async function assertAdmin(userId: string) {
 }
 
 async function withSignedUrl<T extends { image_url: string }>(rows: T[]): Promise<T[]> {
-  return Promise.all(
-    rows.map(async (r) => {
-      if (/^https?:\/\//i.test(r.image_url)) return r;
-      const { data } = await supabaseAdmin.storage.from("banners").createSignedUrl(r.image_url, SIGNED_TTL);
-      return { ...r, image_url: data?.signedUrl ?? r.image_url };
-    }),
-  );
+  const map = await signPaths("banners", rows.map((r) => r.image_url));
+  return rows.map((r) => ({ ...r, image_url: map.get(r.image_url) ?? r.image_url }));
 }
+
 
 export const listActiveBanners = createServerFn({ method: "GET" }).handler(async () => {
   const { data, error } = await supabaseAdmin
