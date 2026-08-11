@@ -68,22 +68,22 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
   const format = (egpAmount: number) => {
     const n = Number(egpAmount) || 0;
     if (currency === "EGP" || !rate) {
-      return `EGP ${n.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+      return `EGP ${n.toLocaleString(undefined, { maximumFractionDigits: 6 })}`;
     }
     const usd = n / rate;
-    return `USD ${usd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    return `USD ${usd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}`;
   };
 
   const formatDual = (egpAmount: number, usdOverride?: number | null) => {
     const n = Number(egpAmount) || 0;
     if (currency === "EGP") {
-      return `EGP ${n.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+      return `EGP ${n.toLocaleString(undefined, { maximumFractionDigits: 6 })}`;
     }
     const usd = usdOverride != null && Number(usdOverride) > 0
       ? Number(usdOverride)
       : (rate ? n / rate : null);
-    if (usd == null) return `EGP ${n.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
-    return `USD ${usd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    if (usd == null) return `EGP ${n.toLocaleString(undefined, { maximumFractionDigits: 6 })}`;
+    return `USD ${usd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}`;
   };
 
   return (
