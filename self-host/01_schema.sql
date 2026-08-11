@@ -2085,3 +2085,6 @@ ALTER TABLE public.products ADD COLUMN IF NOT EXISTS show_frame boolean NOT NULL
 ALTER TABLE public.products DROP CONSTRAINT IF EXISTS products_provider_check;
 ALTER TABLE public.products ADD CONSTRAINT products_provider_check CHECK (provider IS NULL OR provider IN ('brand1','x3','yassen','sama'));
 
+
+ALTER TABLE public.products DROP CONSTRAINT IF EXISTS products_provider_check;
+ALTER TABLE public.products ADD CONSTRAINT products_provider_check CHECK (provider IS NULL OR provider IN ('brand1','x3','yassen','sama','wisam'));

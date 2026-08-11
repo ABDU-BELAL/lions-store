@@ -4,11 +4,12 @@ import { brand1NewOrder, brand1CheckOrder, brand1CheckByUuid } from "./brand1.se
 import { x3NewOrder, x3CheckOrder, x3CheckByUuid } from "./x3.server";
 import { yassenNewOrder, yassenCheckOrder, yassenCheckByUuid } from "./yassen.server";
 import { samaNewOrder, samaCheckOrder, samaCheckByUuid } from "./sama.server";
+import { wisamNewOrder, wisamCheckOrder, wisamCheckByUuid } from "./wisam.server";
 import { notifyTelegram, escapeTelegramHtml } from "./telegram.server";
 
 const MAX_WAIT_MINUTES = 20;
 
-type ProviderName = "brand1" | "x3" | "yassen" | "sama";
+type ProviderName = "brand1" | "x3" | "yassen" | "sama" | "wisam";
 
 function newUuid(): string {
   return crypto.randomUUID();
@@ -48,6 +49,7 @@ async function providerNewOrder(provider: ProviderName, args: { providerProductI
   if (provider === "x3") return x3NewOrder(args);
   if (provider === "yassen") return yassenNewOrder(args);
   if (provider === "sama") return samaNewOrder(args);
+  if (provider === "wisam") return wisamNewOrder(args);
   return brand1NewOrder(args);
 }
 
@@ -55,6 +57,7 @@ async function providerCheck(provider: ProviderName, providerOrderId: string): P
   if (provider === "x3") return x3CheckOrder(providerOrderId);
   if (provider === "yassen") return yassenCheckOrder(providerOrderId);
   if (provider === "sama") return samaCheckOrder(providerOrderId);
+  if (provider === "wisam") return wisamCheckOrder(providerOrderId);
   return brand1CheckOrder(providerOrderId);
 }
 
@@ -63,6 +66,7 @@ async function providerCheckByUuid(provider: ProviderName, uuid: string): Promis
     if (provider === "x3") return await x3CheckByUuid(uuid);
     if (provider === "yassen") return await yassenCheckByUuid(uuid);
     if (provider === "sama") return await samaCheckByUuid(uuid);
+    if (provider === "wisam") return await wisamCheckByUuid(uuid);
     return await brand1CheckByUuid(uuid);
   } catch (e) {
     return { raw: { error: e instanceof Error ? e.message : "check failed" } };
@@ -125,7 +129,7 @@ export async function tryAutoFulfillOrder(orderId: string): Promise<{ attempted:
     return { attempted: false };
   }
   const provider = product.provider as ProviderName;
-  if (provider !== "brand1" && provider !== "x3" && provider !== "yassen" && provider !== "sama") return { attempted: false };
+  if (provider !== "brand1" && provider !== "x3" && provider !== "yassen" && provider !== "sama" && provider !== "wisam") return { attempted: false };
 
   const uuid = newUuid();
   const { error: upErr } = await supabaseAdmin
@@ -219,7 +223,7 @@ export async function pollPendingProviderOrders(): Promise<{ checked: number; co
     .from("orders")
     .select("id, user_id, product_id, product_title, amount, status, game_user_id, quantity, provider, provider_order_id, provider_uuid, provider_started_at, provider_attempts")
     .eq("status", "pending")
-    .in("provider", ["brand1", "x3", "yassen", "sama"])
+    .in("provider", ["brand1", "x3", "yassen", "sama", "wisam"])
     .limit(50);
   if (!rows || rows.length === 0) return { checked: 0, completed: 0, refunded: 0, stillPending: 0 };
 
