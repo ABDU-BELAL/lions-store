@@ -744,6 +744,35 @@ function ProductsTab({ initialCollectionId, onBack }: { initialCollectionId?: st
                     />
                   </>
                 )}
+                {editing.provider === "wisam" && (
+                  <>
+                    {wisamProducts.isLoading && <p className="text-xs text-muted-foreground">جاري تحميل منتجات Wisam...</p>}
+                    {wisamProducts.data && !wisamProducts.data.ok && (
+                      <p className="text-xs text-destructive">تعذر جلب المنتجات: {wisamProducts.data.error ?? "تأكد من التوكن والـ IPs في لوحة Wisam"}</p>
+                    )}
+                    {wisamProducts.data?.ok && (
+                      <select
+                        value={editing.provider_product_id}
+                        onChange={(e) => setEditing({ ...editing, provider_product_id: e.target.value })}
+                        className="w-full rounded-xl bg-secondary px-3 py-2 text-sm"
+                      >
+                        <option value="">— اختر منتج Wisam —</option>
+                        {wisamProducts.data.products.map((bp) => (
+                          <option key={bp.id} value={bp.id}>
+                            #{bp.id} • {bp.name} {bp.price ? `($${bp.price})` : ""}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                    <input
+                      placeholder="أو اكتب الـ ID يدوياً"
+                      dir="ltr"
+                      value={editing.provider_product_id}
+                      onChange={(e) => setEditing({ ...editing, provider_product_id: e.target.value })}
+                      className="w-full rounded-xl bg-secondary px-3 py-2 text-sm"
+                    />
+                  </>
+                )}
               </div>
             ) : (
               <p className="text-xs text-muted-foreground">احفظ المنتج أولاً ثم افتحه لإعداد التنفيذ التلقائي.</p>
