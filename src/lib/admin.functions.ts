@@ -565,7 +565,7 @@ export const adminDeleteDiscount = createServerFn({ method: "POST" })
   });
 
 // -------- Provider auto-fulfillment (admin) --------
-const providerEnum = z.enum(["brand1", "x3", "yassen", "sama"]);
+const providerEnum = z.enum(["brand1", "x3", "yassen", "sama", "wisam"]);
 
 export const adminBrand1TestConnection = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -703,6 +703,40 @@ export const adminSamaListProducts = createServerFn({ method: "GET" })
     }
   });
 
+export const adminWisamTestConnection = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context.userId);
+    const { wisamProfile } = await import("./wisam.server");
+    try {
+      const profile = await wisamProfile();
+      return { ok: true as const, profileJson: JSON.stringify(profile) };
+    } catch (e) {
+      return { ok: false as const, error: e instanceof Error ? e.message : "Unknown error" };
+    }
+  });
+
+export const adminWisamListProducts = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context.userId);
+    const { wisamListProducts } = await import("./wisam.server");
+    try {
+      const products = await wisamListProducts();
+      return {
+        ok: true as const,
+        products: products.map((p) => ({
+          id: String(p.id),
+          name: String(p.name ?? ""),
+          price: p.price != null ? String(p.price) : "",
+          categoryName: p.category_name ? String(p.category_name) : "",
+        })),
+      };
+    } catch (e) {
+      return { ok: false as const, products: [], error: e instanceof Error ? e.message : "Unknown error" };
+    }
+  });
+
 export const adminSetProductProvider = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) =>
@@ -720,7 +754,7 @@ export const adminSetProductProvider = createServerFn({ method: "POST" })
     }
 
     const updates: {
-      provider: "brand1" | "x3" | "yassen" | "sama" | null;
+      provider: "brand1" | "x3" | "yassen" | "sama" | "wisam" | null;
       provider_product_id: string | null;
       auto_fulfill_enabled: boolean;
       min_quantity?: number;
@@ -745,6 +779,11 @@ export const adminSetProductProvider = createServerFn({ method: "POST" })
         } else if (data.provider === "sama") {
           const { samaGetProduct } = await import("./sama.server");
           const p = await samaGetProduct(data.providerProductId);
+          if (p?.qty_min != null) updates.min_quantity = p.qty_min;
+          if (p?.qty_max != null) updates.max_quantity = p.qty_max;
+        } else if (data.provider === "wisam") {
+          const { wisamGetProduct } = await import("./wisam.server");
+          const p = await wisamGetProduct(data.providerProductId);
           if (p?.qty_min != null) updates.min_quantity = p.qty_min;
           if (p?.qty_max != null) updates.max_quantity = p.qty_max;
         } else if (data.provider === "yassen") {
