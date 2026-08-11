@@ -129,8 +129,8 @@ const productSchema = z.object({
   description_en: z.string().trim().max(1000).optional().nullable(),
   image_url: z.string().trim().max(1000).optional(),
   category: z.string().trim().min(1).max(60),
-  price: z.number().min(0).max(1_000_000),
-  price_usd: z.number().min(0).max(1_000_000).nullable().optional(),
+  price: z.number().min(0).max(10_000_000),
+  price_usd: z.number().min(0).max(10_000_000).nullable().optional(),
   is_active: z.boolean().optional(),
   in_stock: z.boolean().optional(),
   show_frame: z.boolean().optional(),
@@ -172,10 +172,10 @@ export const adminUpsertProduct = createServerFn({ method: "POST" })
     const rate = Number((rateRow?.value as { rate?: number } | null)?.rate ?? 0);
     if (!hasEgp && hasUsd) {
       if (!(rate > 0)) throw new Error("حدد سعر الدولار اليدوي أولًا / Set the manual USD rate first");
-      payload.price = Math.round(Number(payload.price_usd) * rate * 100) / 100;
+      payload.price = Math.round(Number(payload.price_usd) * rate * 1_000_000) / 1_000_000;
     }
     if (hasEgp && !hasUsd && rate > 0) {
-      payload.price_usd = Math.round((Number(payload.price) / rate) * 100) / 100;
+      payload.price_usd = Math.round((Number(payload.price) / rate) * 1_000_000) / 1_000_000;
     }
     if (data.id) {
       const { error } = await supabaseAdmin.from("products").update(payload).eq("id", data.id);
@@ -565,7 +565,7 @@ export const adminDeleteDiscount = createServerFn({ method: "POST" })
   });
 
 // -------- Provider auto-fulfillment (admin) --------
-const providerEnum = z.enum(["brand1", "x3", "yassen", "sama", "wisam"]);
+const providerEnum = z.enum(["brand1", "x3", "yassen", "sama", "wisam", "alshaikh"]);
 
 export const adminBrand1TestConnection = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -737,6 +737,40 @@ export const adminWisamListProducts = createServerFn({ method: "GET" })
     }
   });
 
+export const adminAlshaikhTestConnection = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context.userId);
+    const { alshaikhProfile } = await import("./alshaikh.server");
+    try {
+      const profile = await alshaikhProfile();
+      return { ok: true as const, profileJson: JSON.stringify(profile) };
+    } catch (e) {
+      return { ok: false as const, error: e instanceof Error ? e.message : "Unknown error" };
+    }
+  });
+
+export const adminAlshaikhListProducts = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context.userId);
+    const { alshaikhListProducts } = await import("./alshaikh.server");
+    try {
+      const products = await alshaikhListProducts();
+      return {
+        ok: true as const,
+        products: products.map((p) => ({
+          id: String(p.id),
+          name: String(p.name ?? ""),
+          price: p.price != null ? String(p.price) : "",
+          categoryName: p.category_name ? String(p.category_name) : "",
+        })),
+      };
+    } catch (e) {
+      return { ok: false as const, products: [], error: e instanceof Error ? e.message : "Unknown error" };
+    }
+  });
+
 export const adminSetProductProvider = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) =>
@@ -754,7 +788,7 @@ export const adminSetProductProvider = createServerFn({ method: "POST" })
     }
 
     const updates: {
-      provider: "brand1" | "x3" | "yassen" | "sama" | "wisam" | null;
+      provider: "brand1" | "x3" | "yassen" | "sama" | "wisam" | "alshaikh" | null;
       provider_product_id: string | null;
       auto_fulfill_enabled: boolean;
       min_quantity?: number;
@@ -784,6 +818,11 @@ export const adminSetProductProvider = createServerFn({ method: "POST" })
         } else if (data.provider === "wisam") {
           const { wisamGetProduct } = await import("./wisam.server");
           const p = await wisamGetProduct(data.providerProductId);
+          if (p?.qty_min != null) updates.min_quantity = p.qty_min;
+          if (p?.qty_max != null) updates.max_quantity = p.qty_max;
+        } else if (data.provider === "alshaikh") {
+          const { alshaikhGetProduct } = await import("./alshaikh.server");
+          const p = await alshaikhGetProduct(data.providerProductId);
           if (p?.qty_min != null) updates.min_quantity = p.qty_min;
           if (p?.qty_max != null) updates.max_quantity = p.qty_max;
         } else if (data.provider === "yassen") {
