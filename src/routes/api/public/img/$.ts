@@ -19,8 +19,8 @@ export const Route = createFileRoute("/api/public/img/$")({
           return new Response("Not found", { status: 404 });
         }
 
-        const { data, error } = await supabaseAdmin.storage.from(bucket).download(path);
-        if (error || !data) return new Response("Not found", { status: 404 });
+        const slash = decoded.indexOf("/");
+        if (slash <= 0) return new Response(JSON.stringify({ debug: true, splat, decoded, slash }), { status: 404 });
 
         return new Response(await data.arrayBuffer(), {
           headers: {
