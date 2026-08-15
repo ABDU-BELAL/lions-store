@@ -377,6 +377,21 @@ export type Database = {
         }
         Relationships: []
       }
+      request_locks: {
+        Row: {
+          created_at: string
+          key: string
+        }
+        Insert: {
+          created_at?: string
+          key: string
+        }
+        Update: {
+          created_at?: string
+          key?: string
+        }
+        Relationships: []
+      }
       site_settings: {
         Row: {
           key: string
@@ -669,6 +684,10 @@ export type Database = {
           p_usd_spend_threshold?: number
         }
         Returns: undefined
+      }
+      claim_request_lock: {
+        Args: { p_key: string; p_window_seconds: number }
+        Returns: boolean
       }
       credit_wallet: {
         Args: {
