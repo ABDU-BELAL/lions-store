@@ -46,6 +46,13 @@ export const purchaseProduct = createServerFn({ method: "POST" })
     // Rate limit purchases: max 10 per minute per user
     await enforceRateLimit(`purchase:${userId}`, 10, 60, "عدد كبير من المحاولات. حاول بعد قليل.");
 
+    // Idempotency: block an identical purchase submitted twice within 20s
+    // (double-click, duplicated request, client retry).
+    const { claimRequestLock } = await import("@/lib/request-lock.server");
+    const lockKey = `purchase:${userId}:${data.productId}:${data.quantity ?? "-"}:${(data.gameUserId ?? "").trim()}`;
+    await claimRequestLock(lockKey, 20, "تم إرسال هذا الطلب بالفعل، انتظر قليلاً قبل المحاولة مرة أخرى");
+
+
     // Validate the customer-input field per the product's purchase_field_mode
     const { data: modeRow } = await supabaseAdmin
       .from("products")
