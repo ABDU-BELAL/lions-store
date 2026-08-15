@@ -92,8 +92,17 @@ export const createTopupRequest = createServerFn({ method: "POST" })
     // Anti-spam only (no daily cap): max 5 requests per minute
     await enforceRateLimit(`topup:${userId}`, 5, 60, "طلبات كثيرة في وقت قصير، انتظر دقيقة ثم حاول مرة أخرى");
 
-    // Block duplicate reference numbers globally
     const refTrimmed = data.reference.trim();
+
+    // Idempotency: block the same deposit being submitted twice within 60s
+    const { claimRequestLock } = await import("@/lib/request-lock.server");
+    await claimRequestLock(
+      `topup:${userId}:${data.method}:${data.amount}:${refTrimmed.toLowerCase()}`,
+      60,
+      "تم إرسال طلب الشحن بالفعل، انتظر قليلاً قبل المحاولة مرة أخرى",
+    );
+
+    // Block duplicate reference numbers globally
     const { data: existing } = await supabase
       .from("topup_requests")
       .select("id")
@@ -103,6 +112,7 @@ export const createTopupRequest = createServerFn({ method: "POST" })
     if (existing) {
       throw new Error("هذا الرقم المرجعي مستخدم من قبل");
     }
+
 
     const { data: row, error } = await supabase
       .from("topup_requests")
