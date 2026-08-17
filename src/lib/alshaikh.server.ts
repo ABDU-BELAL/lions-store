@@ -117,14 +117,15 @@ export async function alshaikhNewOrder(args: {
   orderUuid: string;
 }): Promise<AlshaikhNewOrderResult> {
   try {
-    const body = (await alshaikhGet(`client/api/newOrder/${encodeURIComponent(args.providerProductId)}/params`, {
-      qty: args.qty,
-      playerId: args.playerId,
-      order_uuid: args.orderUuid,
-    })) as { status?: string; code?: number; message?: string; data?: { order_id?: string; status?: string } };
+    const body = (await alshaikhGet(
+      `client/api/newOrder/${encodeURIComponent(args.providerProductId)}/params`,
+      { qty: args.qty, playerId: args.playerId, order_uuid: args.orderUuid },
+      { allowError: true },
+    )) as { status?: string; code?: number; message?: string; msg?: unknown; data?: { order_id?: string; status?: string } };
     if (body.status !== "OK") {
-      return { ok: false, errorCode: body.code, errorMessage: body.message ?? "Provider error", raw: body };
+      return { ok: false, errorCode: body.code, errorMessage: alshaikhErrorMessage(body), raw: body };
     }
+
     return {
       ok: true,
       orderId: body.data?.order_id,
