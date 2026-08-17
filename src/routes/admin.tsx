@@ -227,6 +227,9 @@ function TopupsTab() {
 function OrdersTab() {
   const list = useServerFn(adminListOrders);
   const decide = useServerFn(decideOrder);
+  const recheck = useServerFn(adminRecheckOrder);
+  const refundFn = useServerFn(adminRefundOrder);
+  const markDone = useServerFn(adminMarkOrderDone);
   const qc = useQueryClient();
   const [filter, setFilter] = useState<"pending" | "completed" | "rejected" | "all">("pending");
   const { data } = useQuery({
