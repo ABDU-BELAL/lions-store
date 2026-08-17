@@ -320,3 +320,31 @@ export async function pollPendingProviderOrders(): Promise<{ checked: number; co
   }
   return { checked: rows.length, completed, refunded, stillPending };
 }
+
+/** Admin-triggered: re-read the provider's current state for one order (no auto refund). */
+export async function recheckOrderWithProvider(orderId: string): Promise<{ providerStatus: string | null; providerOrderId: string | null }> {
+  const { data: order } = await supabaseAdmin
+    .from("orders")
+    .select("id, provider, provider_order_id, provider_uuid")
+    .eq("id", orderId)
+    .maybeSingle();
+  if (!order?.provider) return { providerStatus: null, providerOrderId: null };
+  const provider = order.provider as ProviderName;
+  let res: CheckResult = { raw: {} };
+  if (order.provider_order_id) {
+    try { res = await providerCheck(provider, order.provider_order_id); }
+    catch (e) { res = { raw: { error: e instanceof Error ? e.message : "check failed" } }; }
+  } else if (order.provider_uuid) {
+    res = await providerCheckByUuid(provider, order.provider_uuid);
+  }
+  await supabaseAdmin
+    .from("orders")
+    .update({
+      provider_order_id: res.orderId ?? order.provider_order_id ?? null,
+      provider_status: res.status ?? null,
+      provider_reply: res.raw as never,
+      provider_last_checked_at: new Date().toISOString(),
+    })
+    .eq("id", orderId);
+  return { providerStatus: res.status ?? null, providerOrderId: res.orderId ?? order.provider_order_id ?? null };
+}
