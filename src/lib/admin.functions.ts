@@ -205,7 +205,7 @@ export const adminListOrders = createServerFn({ method: "GET" })
     await assertAdmin(context.userId);
     let q = supabaseAdmin
       .from("orders")
-      .select("id, user_id, product_id, product_title, amount, status, game_user_id, created_at")
+      .select("id, user_id, product_id, product_title, amount, status, game_user_id, created_at, provider, provider_order_id, provider_status, provider_last_checked_at, refunded")
       .order("created_at", { ascending: false })
       .limit(200);
     if (data.status) q = q.eq("status", data.status);
@@ -798,7 +798,15 @@ export const adminSetProductProvider = createServerFn({ method: "POST" })
       provider_product_id: data.providerProductId,
       auto_fulfill_enabled: data.autoFulfillEnabled,
     };
-    if (data.provider && data.providerProductId) {
+    // Only pull qty limits from the provider when the product has none set yet —
+    // never overwrite limits the admin entered manually.
+    const { data: existing } = await supabaseAdmin
+      .from("products")
+      .select("min_quantity, max_quantity")
+      .eq("id", data.productId)
+      .maybeSingle();
+    const hasManualLimits = existing?.min_quantity != null || existing?.max_quantity != null;
+    if (data.provider && data.providerProductId && !hasManualLimits) {
       try {
         if (data.provider === "brand1") {
           const { brand1GetProduct } = await import("./brand1.server");
@@ -871,3 +879,65 @@ export const adminUpdateUsdRate = createServerFn({ method: "POST" })
 
 
 
+
+// -------- Manual order review (provider stuck / unknown state) --------
+export const adminRecheckOrder = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ id: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+    const { recheckOrderWithProvider } = await import("./fulfillment.server");
+    return await recheckOrderWithProvider(data.id);
+  });
+
+/** Force-refund an order even if it was already marked completed. Never double-refunds. */
+export const adminRefundOrder = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ id: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+    const { data: claimed, error } = await supabaseAdmin
+      .from("orders")
+      .update({ status: "rejected", refunded: true, refunded_at: new Date().toISOString(), refund_reason: "Manual admin refund" })
+      .eq("id", data.id)
+      .or("refunded.is.null,refunded.eq.false")
+      .select("id, user_id, amount, product_title")
+      .maybeSingle();
+    if (error) { console.error("[adminRefundOrder]", error); throw new Error("حدث خطأ، حاول مرة أخرى"); }
+    if (!claimed) throw new Error("تم استرداد هذا الطلب بالفعل");
+
+    const { error: e2 } = await supabaseAdmin.rpc("credit_wallet", {
+      p_user_id: claimed.user_id,
+      p_amount: Number(claimed.amount),
+      p_type: "refund",
+      p_description: `استرداد يدوي: ${claimed.product_title}`,
+      p_ref_table: "orders",
+      p_ref_id: claimed.id,
+    });
+    if (e2) {
+      console.error("[adminRefundOrder] credit_wallet", e2);
+      await supabaseAdmin.from("orders").update({ refunded: false, refunded_at: null, refund_reason: null }).eq("id", data.id);
+      throw new Error("تعذر استرداد الرصيد");
+    }
+    notifyTelegram(`❌ استرداد يدوي: ${escapeTelegramHtml(claimed.product_title)} — EG ${escapeTelegramHtml(claimed.amount)}`).catch(() => {});
+    return { ok: true };
+  });
+
+/** Mark an order delivered manually (no wallet change). */
+export const adminMarkOrderDone = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ id: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+    const { data: row, error } = await supabaseAdmin
+      .from("orders")
+      .update({ status: "completed" })
+      .eq("id", data.id)
+      .neq("refunded", true)
+      .select("id, product_title, amount")
+      .maybeSingle();
+    if (error) { console.error("[adminMarkOrderDone]", error); throw new Error("حدث خطأ، حاول مرة أخرى"); }
+    if (!row) throw new Error("لا يمكن تنفيذ طلب تم استرداده");
+    notifyTelegram(`✅ تم تنفيذ الطلب يدوياً: ${escapeTelegramHtml(row.product_title)} (EG ${escapeTelegramHtml(row.amount)})`).catch(() => {});
+    return { ok: true };
+  });

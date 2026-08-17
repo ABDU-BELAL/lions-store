@@ -8,7 +8,7 @@ import {
   getAdminStats, listAllTopups, decideTopup,
   adminListProducts, adminUpsertProduct, adminDeleteProduct,
   listAdmins, grantAdmin, revokeAdmin, claimSuperAdmin,
-  verifyAdminAccess, adminListOrders, decideOrder,
+  verifyAdminAccess, adminListOrders, decideOrder, adminRecheckOrder, adminRefundOrder, adminMarkOrderDone,
   adminListUsers, adminAdjustBalance, adminSetUserBanned,
   adminListDiscounts, adminUpsertDiscount, adminDeleteDiscount,
   adminBrand1TestConnection, adminBrand1ListProducts, adminSetProductProvider, adminX3TestConnection, adminX3ListProducts, adminYassenTestConnection, adminYassenListProducts, adminSamaTestConnection, adminSamaListProducts, adminWisamTestConnection, adminWisamListProducts, adminAlshaikhTestConnection, adminAlshaikhListProducts,
@@ -227,6 +227,9 @@ function TopupsTab() {
 function OrdersTab() {
   const list = useServerFn(adminListOrders);
   const decide = useServerFn(decideOrder);
+  const recheck = useServerFn(adminRecheckOrder);
+  const refundFn = useServerFn(adminRefundOrder);
+  const markDone = useServerFn(adminMarkOrderDone);
   const qc = useQueryClient();
   const [filter, setFilter] = useState<"pending" | "completed" | "rejected" | "all">("pending");
   const { data } = useQuery({
@@ -243,6 +246,23 @@ function OrdersTab() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const mRecheck = useMutation({
+    mutationFn: (id: string) => recheck({ data: { id } }),
+    onSuccess: (r) => { toast.success(`حالة المزود: ${r?.providerStatus ?? "غير معروفة"}`); qc.invalidateQueries(); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const mRefund = useMutation({
+    mutationFn: (id: string) => refundFn({ data: { id } }),
+    onSuccess: () => { toast.success("تم الاسترداد للعميل"); qc.invalidateQueries(); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const mDone = useMutation({
+    mutationFn: (id: string) => markDone({ data: { id } }),
+    onSuccess: () => { toast.success("تم تعليم الطلب كمنفّذ"); qc.invalidateQueries(); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const busy = m.isPending || mRecheck.isPending || mRefund.isPending || mDone.isPending;
+
   return (
     <div>
       <div className="flex gap-2 mb-4 overflow-x-auto">
@@ -254,8 +274,13 @@ function OrdersTab() {
       </div>
       <div className="space-y-3">
         {(data ?? []).length === 0 && <p className="text-center py-8 text-muted-foreground">لا توجد طلبات</p>}
-        {(data ?? []).map((o) => (
-          <div key={o.id} className="rounded-2xl bg-card/70 border border-border p-4">
+        {(data ?? []).map((o) => {
+          const prov = (o as { provider?: string | null }).provider ?? null;
+          const provStatus = (o as { provider_status?: string | null }).provider_status ?? null;
+          const refunded = (o as { refunded?: boolean }).refunded === true;
+          const needsReview = o.status === "pending" && !!prov && provStatus !== "accept" && provStatus !== "reject";
+          return (
+          <div key={o.id} className={`rounded-2xl bg-card/70 border p-4 ${needsReview ? "border-amber-500" : "border-border"}`}>
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0">
                 <p className="font-extrabold">{o.profile?.full_name || "—"} <span className="text-xs text-muted-foreground">({o.profile?.phone || o.profile?.email || "—"})</span></p>
@@ -263,24 +288,51 @@ function OrdersTab() {
                 <p className="mt-1 text-2xl font-black text-gold-gradient">EG {Number(o.amount).toLocaleString()}</p>
                 <p className="text-xs text-muted-foreground">{new Date(o.created_at).toLocaleString("ar-EG")}</p>
                 {o.game_user_id && <p className="text-sm mt-1">🆔 <span className="font-mono">{o.game_user_id}</span></p>}
+                {prov && (
+                  <p className="text-xs mt-1 text-muted-foreground">
+                    المزود: <span className="font-mono">{prov}</span> — الحالة: <span className="font-mono">{provStatus ?? "غير معروفة"}</span>
+                    {refunded && <span className="text-destructive font-bold"> • تم الاسترداد</span>}
+                  </p>
+                )}
+                {needsReview && <p className="text-xs mt-1 font-bold text-amber-400">⚠️ يحتاج مراجعة يدوية — لم يؤكد المزود التنفيذ</p>}
               </div>
-              {o.status === "pending" ? (
-                <div className="flex gap-2">
-                  <button disabled={m.isPending} onClick={() => m.mutate({ id: o.id, decision: "completed" })} className="rounded-lg bg-emerald-600 text-white font-bold px-3 py-2 text-sm flex items-center gap-1 disabled:opacity-50">
-                    <CheckCircle2 className="size-4" /> تم
+              <div className="flex flex-wrap gap-2 items-center">
+                {prov && (
+                  <button disabled={busy} onClick={() => mRecheck.mutate(o.id)} className="rounded-lg bg-secondary font-bold px-3 py-2 text-sm disabled:opacity-50">
+                    تحديث من المزود
                   </button>
-                  <button disabled={m.isPending} onClick={() => { if (confirm("سيتم رفض الطلب وإرجاع المبلغ للعميل. متأكد؟")) m.mutate({ id: o.id, decision: "rejected" }); }} className="rounded-lg bg-destructive text-white font-bold px-3 py-2 text-sm flex items-center gap-1 disabled:opacity-50">
-                    <XCircle className="size-4" /> رفض + استرداد
-                  </button>
-                </div>
-              ) : (
-                <span className={`text-xs font-bold ${o.status === "completed" ? "text-emerald-400" : "text-destructive"}`}>
-                  {o.status === "completed" ? "مكتمل" : o.status === "rejected" ? "مرفوض" : o.status}
-                </span>
-              )}
+                )}
+                {o.status === "pending" ? (
+                  <>
+                    <button disabled={busy} onClick={() => m.mutate({ id: o.id, decision: "completed" })} className="rounded-lg bg-emerald-600 text-white font-bold px-3 py-2 text-sm flex items-center gap-1 disabled:opacity-50">
+                      <CheckCircle2 className="size-4" /> تم
+                    </button>
+                    <button disabled={busy} onClick={() => { if (confirm("سيتم رفض الطلب وإرجاع المبلغ للعميل. متأكد؟")) m.mutate({ id: o.id, decision: "rejected" }); }} className="rounded-lg bg-destructive text-white font-bold px-3 py-2 text-sm flex items-center gap-1 disabled:opacity-50">
+                      <XCircle className="size-4" /> رفض + استرداد
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <span className={`text-xs font-bold ${o.status === "completed" ? "text-emerald-400" : "text-destructive"}`}>
+                      {o.status === "completed" ? "مكتمل" : o.status === "rejected" ? "مرفوض" : o.status}
+                    </span>
+                    {o.status !== "completed" && !refunded && (
+                      <button disabled={busy} onClick={() => mDone.mutate(o.id)} className="rounded-lg bg-emerald-600 text-white font-bold px-3 py-2 text-sm disabled:opacity-50">
+                        <CheckCircle2 className="size-4 inline" /> تم
+                      </button>
+                    )}
+                    {!refunded && (
+                      <button disabled={busy} onClick={() => { if (confirm("سيتم إرجاع المبلغ للعميل. متأكد؟")) mRefund.mutate(o.id); }} className="rounded-lg bg-destructive text-white font-bold px-3 py-2 text-sm disabled:opacity-50">
+                        <XCircle className="size-4 inline" /> استرداد
+                      </button>
+                    )}
+                  </>
+                )}
+              </div>
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
