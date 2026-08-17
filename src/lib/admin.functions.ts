@@ -798,7 +798,15 @@ export const adminSetProductProvider = createServerFn({ method: "POST" })
       provider_product_id: data.providerProductId,
       auto_fulfill_enabled: data.autoFulfillEnabled,
     };
-    if (data.provider && data.providerProductId) {
+    // Only pull qty limits from the provider when the product has none set yet —
+    // never overwrite limits the admin entered manually.
+    const { data: existing } = await supabaseAdmin
+      .from("products")
+      .select("min_quantity, max_quantity")
+      .eq("id", data.productId)
+      .maybeSingle();
+    const hasManualLimits = existing?.min_quantity != null || existing?.max_quantity != null;
+    if (data.provider && data.providerProductId && !hasManualLimits) {
       try {
         if (data.provider === "brand1") {
           const { brand1GetProduct } = await import("./brand1.server");
