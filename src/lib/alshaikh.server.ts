@@ -7,7 +7,11 @@ const TOKEN = process.env.ALSHAIKH_API_TOKEN || "";
 
 type Json = Record<string, unknown>;
 
-async function alshaikhGet(path: string, query?: Record<string, string | number | undefined>) {
+async function alshaikhGet(
+  path: string,
+  query?: Record<string, string | number | undefined>,
+  opts?: { allowError?: boolean },
+) {
   if (!TOKEN) throw new Error("ALSHAIKH_API_TOKEN missing");
   const url = new URL(path.replace(/^\//, ""), BASE.endsWith("/") ? BASE : BASE + "/");
   if (query) {
@@ -25,10 +29,28 @@ async function alshaikhGet(path: string, query?: Record<string, string | number 
   try { body = JSON.parse(text); } catch { body = { raw: text }; }
   if (!res.ok) {
     console.error("[alshaikh]", res.status, body);
+    // Provider returns HTTP 500 with a meaningful JSON error (e.g. code 110 = not_available).
+    // Callers that need that detail ask for it instead of losing it in a thrown error.
+    if (opts?.allowError) return { ...body, __httpStatus: res.status } as Json;
     throw new Error(`Alshaikh HTTP ${res.status}`);
   }
   return body;
 }
+
+/** Turns the provider's error payload into a readable message. */
+function alshaikhErrorMessage(body: { code?: number; msg?: unknown; message?: string }): string {
+  const raw = body.msg ?? body.message;
+  const inner =
+    typeof raw === "string"
+      ? raw
+      : raw && typeof raw === "object"
+      ? String((raw as { status?: unknown; message?: unknown }).status ?? (raw as { message?: unknown }).message ?? JSON.stringify(raw))
+      : "Provider error";
+  const human = inner === "not_available" ? "المنتج غير متاح حالياً لدى المزود (alshaikh)" : inner;
+  return body.code != null ? `${human} [${body.code}]` : human;
+}
+
+
 
 export interface AlshaikhProductSummary {
   id: number | string;
@@ -95,14 +117,15 @@ export async function alshaikhNewOrder(args: {
   orderUuid: string;
 }): Promise<AlshaikhNewOrderResult> {
   try {
-    const body = (await alshaikhGet(`client/api/newOrder/${encodeURIComponent(args.providerProductId)}/params`, {
-      qty: args.qty,
-      playerId: args.playerId,
-      order_uuid: args.orderUuid,
-    })) as { status?: string; code?: number; message?: string; data?: { order_id?: string; status?: string } };
+    const body = (await alshaikhGet(
+      `client/api/newOrder/${encodeURIComponent(args.providerProductId)}/params`,
+      { qty: args.qty, playerId: args.playerId, order_uuid: args.orderUuid },
+      { allowError: true },
+    )) as { status?: string; code?: number; message?: string; msg?: unknown; data?: { order_id?: string; status?: string } };
     if (body.status !== "OK") {
-      return { ok: false, errorCode: body.code, errorMessage: body.message ?? "Provider error", raw: body };
+      return { ok: false, errorCode: body.code, errorMessage: alshaikhErrorMessage(body), raw: body };
     }
+
     return {
       ok: true,
       orderId: body.data?.order_id,
