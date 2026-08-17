@@ -333,7 +333,6 @@ function OrdersTab() {
           </div>
           );
         })}
-        ))}
       </div>
     </div>
   );
