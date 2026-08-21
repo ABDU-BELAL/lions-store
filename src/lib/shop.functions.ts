@@ -46,16 +46,16 @@ export const purchaseProduct = createServerFn({ method: "POST" })
     // Rate limit purchases: max 10 per minute per user
     await enforceRateLimit(`purchase:${userId}`, 10, 60, "عدد كبير من المحاولات. حاول بعد قليل.");
 
-    // Idempotency: block an identical purchase submitted twice within 3 minutes
+    // Idempotency: block an identical purchase double-submitted within 20 seconds
     // (double-click, duplicated request, client retry).
     const { claimRequestLock } = await import("@/lib/request-lock.server");
     const lockKey = `purchase:${userId}:${data.productId}:${data.quantity ?? "-"}:${(data.gameUserId ?? "").trim()}`;
-    await claimRequestLock(lockKey, 180, "تم إرسال هذا الطلب بالفعل، انتظر 3 دقائق قبل تكراره");
+    await claimRequestLock(lockKey, 20, "تم إرسال هذا الطلب بالفعل، انتظر ٢٠ ثانية قبل تكراره");
 
     // Second guard (survives restarts / different instances): reject an identical
-    // order already created for this user in the last 3 minutes.
+    // order already created for this user in the last 20 seconds.
     {
-      const since = new Date(Date.now() - 3 * 60 * 1000).toISOString();
+      const since = new Date(Date.now() - 20 * 1000).toISOString();
       let dupQuery = supabaseAdmin
         .from("orders")
         .select("id")
@@ -68,7 +68,7 @@ export const purchaseProduct = createServerFn({ method: "POST" })
       if (gid) dupQuery = dupQuery.eq("game_user_id", gid);
       const { data: dup } = await dupQuery;
       if (dup && dup.length > 0) {
-        throw new Error("لديك طلب مطابق تم إرساله للتو. انتظر 3 دقائق قبل تكرار نفس الطلب.");
+        throw new Error("لديك طلب مطابق تم إرساله للتو. انتظر ٢٠ ثانية قبل تكرار نفس الطلب.");
       }
     }
 
