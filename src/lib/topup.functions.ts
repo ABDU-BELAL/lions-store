@@ -94,13 +94,12 @@ export const createTopupRequest = createServerFn({ method: "POST" })
 
     const refTrimmed = data.reference.trim();
 
-    // Idempotency: block the same deposit being submitted twice within 5 minutes.
-    // Key ignores the reference so a slightly edited reference (911 vs 9111) still collides.
+    // Idempotency: only block an actual double-submit (same reference) within 15 seconds.
     const { claimRequestLock } = await import("@/lib/request-lock.server");
     await claimRequestLock(
-      `topup:${userId}:${data.method}:${data.amount}`,
-      300,
-      "تم إرسال طلب الشحن بالفعل، انتظر قليلاً قبل المحاولة مرة أخرى",
+      `topup:${userId}:${data.method}:${data.amount}:${refTrimmed}`,
+      15,
+      "تم إرسال طلب الشحن بالفعل، انتظر ١٥ ثانية قبل المحاولة مرة أخرى",
     );
 
     // Block duplicate reference numbers globally
@@ -114,20 +113,18 @@ export const createTopupRequest = createServerFn({ method: "POST" })
       throw new Error("هذا الرقم المرجعي مستخدم من قبل");
     }
 
-    // Second guard: same user + method + amount already pending in the last 10 minutes
+    // Second guard: identical submit (same reference) already created seconds ago
     {
-      const since = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+      const since = new Date(Date.now() - 15 * 1000).toISOString();
       const { data: recent } = await supabase
         .from("topup_requests")
         .select("id")
         .eq("user_id", userId)
-        .eq("method", data.method)
-        .eq("amount", data.amount)
-        .eq("status", "pending")
+        .eq("reference", refTrimmed)
         .gte("created_at", since)
         .limit(1);
       if (recent && recent.length > 0) {
-        throw new Error("لديك طلب شحن بنفس المبلغ قيد المراجعة بالفعل. انتظر مراجعته قبل إرسال طلب جديد.");
+        throw new Error("تم إرسال هذا الطلب بالفعل.");
       }
     }
 
