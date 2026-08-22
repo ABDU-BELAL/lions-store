@@ -7,7 +7,7 @@ import { FramedImage } from "@/components/FramedImage";
 import { BannerSlideshow } from "@/components/BannerSlideshow";
 import { listShopProducts } from "@/lib/shop.functions";
 import { listActiveCollections, getHomeSettings } from "@/lib/collections.functions";
-import logo from "@/assets/logo.jpeg.asset.json";
+import logo from "@/assets/logo.jpeg";
 import { ShoppingBag, LayoutGrid, CreditCard, Tag, Headphones, Zap, ShieldCheck, BadgePercent, Gamepad2 } from "lucide-react";
 import { useLang, pickLocalized } from "@/i18n/LanguageProvider";
 
@@ -109,7 +109,7 @@ function Home() {
           <div className="flex justify-center">
             <div className="relative size-32 sm:size-44 md:size-64">
               <div className="absolute inset-0 rounded-full bg-gold-gradient opacity-25 blur-2xl animate-pulse" />
-              <img src={logo.url} alt="Lion Store" className="relative rounded-full size-full object-cover ring-4 ring-gold/40 shadow-gold" />
+              <img src={logo} alt="Lion Store" className="relative rounded-full size-full object-cover ring-4 ring-gold/40 shadow-gold" />
             </div>
           </div>
         </div>
