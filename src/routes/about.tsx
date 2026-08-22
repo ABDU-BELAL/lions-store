@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AppLayout } from "@/components/AppLayout";
 import { MessageCircle, Mail } from "lucide-react";
-import logo from "@/assets/logo.jpeg.asset.json";
+import logo from "@/assets/logo.jpeg";
 import { useLang } from "@/i18n/LanguageProvider";
 
 export const Route = createFileRoute("/about")({
@@ -23,7 +23,7 @@ function About() {
   return (
     <AppLayout>
       <div className="rounded-3xl bg-dark-gradient border-gold p-8 text-center shadow-card">
-        <img src={logo.url} alt="Lion Store" className="mx-auto size-28 rounded-full ring-4 ring-gold/40 shadow-gold" />
+        <img src={logo} alt="Lion Store" className="mx-auto size-28 rounded-full ring-4 ring-gold/40 shadow-gold" />
         <h1 className="mt-4 text-3xl md:text-5xl font-black text-gold-gradient">{t("من نحن", "About us")}</h1>
         <p className="mt-4 max-w-2xl mx-auto text-muted-foreground">
           {t(
