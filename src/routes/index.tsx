@@ -163,7 +163,7 @@ function Home() {
               const title = pickLocalized(p.title, (p as { title_en?: string | null }).title_en, lang);
               const oos = (p as { in_stock?: boolean }).in_stock === false;
               return (
-                <ProductCard key={p.id} title={title} image={p.image_url || logo.url} to="/shop" search={{ q: title }} outOfStock={oos} />
+                <ProductCard key={o.id} title={title} image={o.image_url || logo.url} to="/shop" search={{ q: title }} outOfStock={oos} />
               );
             })}
           </div>
