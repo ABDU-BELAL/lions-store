@@ -1,9 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
 import { useAuth } from "@/hooks/useAuth";
-import logo from "@/assets/logo.jpeg.asset.json";
+import logo from "@/assets/logo.jpeg";
 import { toast } from "sonner";
 import { useLang } from "@/i18n/LanguageProvider";
 import { useCurrency, type Currency } from "@/i18n/CurrencyProvider";
@@ -53,16 +52,19 @@ function SignupPage() {
     }
   };
 
-  const google = async () => {
-    const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
-    if (result.error) toast.error(result.error.message);
-  };
+const google = async () => {
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: { redirectTo: window.location.origin },
+  });
+  if (error) toast.error(error.message);
+};
 
   return (
     <div dir={dir} className="min-h-screen grid place-items-center px-4 py-10">
       <div className="w-full max-w-md rounded-3xl bg-dark-gradient border-gold shadow-card p-8">
         <div className="text-center mb-6">
-          <img src={logo.url} alt="Lion Store" className="mx-auto size-20 rounded-full ring-2 ring-gold/40" />
+          <img src={logo} alt="Lion Store" className="mx-auto size-20 rounded-full ring-2 ring-gold/40" />
           <h1 className="mt-4 text-2xl font-black text-gold-gradient">{t("إنشاء حساب", "Create account")}</h1>
           <p className="text-sm text-muted-foreground mt-1">{t("انضم لـ Lion Store", "Join Lion Store")}</p>
         </div>
