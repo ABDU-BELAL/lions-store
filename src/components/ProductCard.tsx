@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import proframe from "@/assets/proframe.png.asset.json";
+import proframe from "@/assets/proframe.png";
 import { useLang } from "@/i18n/LanguageProvider";
 
 interface Props {
@@ -30,7 +30,7 @@ export function ProductCard({ title, image, badge, to, search, params, outOfStoc
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_oklch(0.7_0.18_75/_18%),_transparent_65%)]" />
         <div className="relative w-full h-full grid place-items-center">
           <img src={image} alt={title} className={`absolute inset-[18%] w-[64%] h-[64%] object-cover rounded-2xl shadow-card z-10 ${outOfStock ? "grayscale" : ""}`} />
-          <img src={proframe.url} alt="" aria-hidden className="relative w-full h-full object-contain drop-shadow-[0_0_20px_oklch(0.7_0.18_75/_40%)]" />
+          <img src={proframe} alt="" aria-hidden className="relative w-full h-full object-contain drop-shadow-[0_0_20px_oklch(0.7_0.18_75/_40%)]" />
         </div>
       </div>
 
