@@ -1,4 +1,4 @@
-import proframe from "@/assets/proframe.png.asset.json";
+import proframe from "@/assets/proframe.png";
 
 interface Props {
   src?: string | null;
@@ -36,7 +36,7 @@ export function FramedImage({ src, alt, fallbackIcon, className = "", framed = t
           </div>
         )}
         <img
-          src={proframe.url}
+          src={proframe}
           alt=""
           aria-hidden
           className="relative w-full h-full object-contain drop-shadow-[0_0_20px_oklch(0.7_0.18_75/_40%)]"
