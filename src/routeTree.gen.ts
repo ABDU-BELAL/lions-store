@@ -30,6 +30,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProductIdRouteImport } from './routes/product.$id'
 import { Route as CollectionSlugRouteImport } from './routes/collection.$slug'
 import { Route as ApiPartnerProductsRouteImport } from './routes/api/partner/products'
+import { Route as ApiPartnerOrderRouteImport } from './routes/api/partner/order'
 import { Route as ApiPublicTelegramWebhookRouteImport } from './routes/api/public/telegram/webhook'
 import { Route as ApiPublicImgSplatRouteImport } from './routes/api/public/img/$'
 import { Route as ApiPublicHooksFulfillmentPollRouteImport } from './routes/api/public/hooks/fulfillment-poll'
@@ -139,6 +140,11 @@ const ApiPartnerProductsRoute = ApiPartnerProductsRouteImport.update({
   path: '/api/partner/products',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPartnerOrderRoute = ApiPartnerOrderRouteImport.update({
+  id: '/api/partner/order',
+  path: '/api/partner/order',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicTelegramWebhookRoute =
   ApiPublicTelegramWebhookRouteImport.update({
     id: '/api/public/telegram/webhook',
@@ -178,6 +184,7 @@ export interface FileRoutesByFullPath {
   '/transactions': typeof TransactionsRoute
   '/collection/$slug': typeof CollectionSlugRoute
   '/product/$id': typeof ProductIdRoute
+  '/api/partner/order': typeof ApiPartnerOrderRoute
   '/api/partner/products': typeof ApiPartnerProductsRoute
   '/api/public/hooks/fulfillment-poll': typeof ApiPublicHooksFulfillmentPollRoute
   '/api/public/img/$': typeof ApiPublicImgSplatRoute
@@ -204,6 +211,7 @@ export interface FileRoutesByTo {
   '/transactions': typeof TransactionsRoute
   '/collection/$slug': typeof CollectionSlugRoute
   '/product/$id': typeof ProductIdRoute
+  '/api/partner/order': typeof ApiPartnerOrderRoute
   '/api/partner/products': typeof ApiPartnerProductsRoute
   '/api/public/hooks/fulfillment-poll': typeof ApiPublicHooksFulfillmentPollRoute
   '/api/public/img/$': typeof ApiPublicImgSplatRoute
@@ -231,6 +239,7 @@ export interface FileRoutesById {
   '/transactions': typeof TransactionsRoute
   '/collection/$slug': typeof CollectionSlugRoute
   '/product/$id': typeof ProductIdRoute
+  '/api/partner/order': typeof ApiPartnerOrderRoute
   '/api/partner/products': typeof ApiPartnerProductsRoute
   '/api/public/hooks/fulfillment-poll': typeof ApiPublicHooksFulfillmentPollRoute
   '/api/public/img/$': typeof ApiPublicImgSplatRoute
@@ -259,6 +268,7 @@ export interface FileRouteTypes {
     | '/transactions'
     | '/collection/$slug'
     | '/product/$id'
+    | '/api/partner/order'
     | '/api/partner/products'
     | '/api/public/hooks/fulfillment-poll'
     | '/api/public/img/$'
@@ -285,6 +295,7 @@ export interface FileRouteTypes {
     | '/transactions'
     | '/collection/$slug'
     | '/product/$id'
+    | '/api/partner/order'
     | '/api/partner/products'
     | '/api/public/hooks/fulfillment-poll'
     | '/api/public/img/$'
@@ -311,6 +322,7 @@ export interface FileRouteTypes {
     | '/transactions'
     | '/collection/$slug'
     | '/product/$id'
+    | '/api/partner/order'
     | '/api/partner/products'
     | '/api/public/hooks/fulfillment-poll'
     | '/api/public/img/$'
@@ -338,6 +350,7 @@ export interface RootRouteChildren {
   TransactionsRoute: typeof TransactionsRoute
   CollectionSlugRoute: typeof CollectionSlugRoute
   ProductIdRoute: typeof ProductIdRoute
+  ApiPartnerOrderRoute: typeof ApiPartnerOrderRoute
   ApiPartnerProductsRoute: typeof ApiPartnerProductsRoute
   ApiPublicHooksFulfillmentPollRoute: typeof ApiPublicHooksFulfillmentPollRoute
   ApiPublicImgSplatRoute: typeof ApiPublicImgSplatRoute
@@ -493,6 +506,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPartnerProductsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/partner/order': {
+      id: '/api/partner/order'
+      path: '/api/partner/order'
+      fullPath: '/api/partner/order'
+      preLoaderRoute: typeof ApiPartnerOrderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/telegram/webhook': {
       id: '/api/public/telegram/webhook'
       path: '/api/public/telegram/webhook'
@@ -538,6 +558,7 @@ const rootRouteChildren: RootRouteChildren = {
   TransactionsRoute: TransactionsRoute,
   CollectionSlugRoute: CollectionSlugRoute,
   ProductIdRoute: ProductIdRoute,
+  ApiPartnerOrderRoute: ApiPartnerOrderRoute,
   ApiPartnerProductsRoute: ApiPartnerProductsRoute,
   ApiPublicHooksFulfillmentPollRoute: ApiPublicHooksFulfillmentPollRoute,
   ApiPublicImgSplatRoute: ApiPublicImgSplatRoute,
