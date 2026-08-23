@@ -871,3 +871,87 @@ export const adminUpdateUsdRate = createServerFn({ method: "POST" })
 
 
 
+
+// -------- Partner / reseller API keys (super admin only) --------
+
+export const adminListPartnerKeys = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertSuperAdmin(context.userId);
+    const { partnerDb } = await import("@/lib/partner.server");
+    const { data, error } = await partnerDb
+      .from("partner_api_keys")
+      .select("id, user_id, label, active, created_at, last_used_at")
+      .order("created_at", { ascending: false });
+    if (error) { console.error("[adminListPartnerKeys]", error); throw new Error("حدث خطأ"); }
+    const rows = data ?? [];
+    const ids = [...new Set(rows.map((r: { user_id: string }) => r.user_id))];
+    const { data: profiles } = ids.length
+      ? await supabaseAdmin.from("profiles").select("id, full_name, email, custom_id").in("id", ids)
+      : { data: [] as { id: string; full_name: string | null; email: string | null; custom_id: string | null }[] };
+    const { data: wallets } = ids.length
+      ? await supabaseAdmin.from("wallets").select("user_id, balance").in("user_id", ids)
+      : { data: [] as { user_id: string; balance: number }[] };
+    const pMap = new Map((profiles ?? []).map((p) => [p.id, p]));
+    const wMap = new Map((wallets ?? []).map((w) => [w.user_id, Number(w.balance)]));
+    return rows.map((r: { id: string; user_id: string; label: string | null; active: boolean; created_at: string; last_used_at: string | null }) => ({
+      ...r,
+      profile: pMap.get(r.user_id) ?? null,
+      balance: wMap.get(r.user_id) ?? 0,
+    }));
+  });
+
+/** Generates a new API key for a user, grants them the `partner` role, and
+ * returns the plaintext key ONCE (only the hash is stored). */
+export const adminCreatePartnerKey = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z.object({ userId: z.string().uuid(), label: z.string().trim().max(80).optional() }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    await assertSuperAdmin(context.userId);
+
+    const { data: profile } = await supabaseAdmin
+      .from("profiles").select("id").eq("id", data.userId).maybeSingle();
+    if (!profile) throw new Error("المستخدم غير موجود");
+
+    const { generateApiKey, hashApiKey, partnerDb } = await import("@/lib/partner.server");
+    const raw = generateApiKey();
+    const hashed = await hashApiKey(raw);
+
+    const { error } = await partnerDb
+      .from("partner_api_keys")
+      .insert({ user_id: data.userId, api_key: hashed, label: data.label ?? null, active: true });
+    if (error) { console.error("[adminCreatePartnerKey]", error); throw new Error("حدث خطأ"); }
+
+    // Make sure the account also carries the partner role and has a wallet row.
+    await supabaseAdmin.from("user_roles").upsert(
+      { user_id: data.userId, role: "partner" as never },
+      { onConflict: "user_id,role", ignoreDuplicates: true },
+    );
+    await supabaseAdmin.from("wallets").upsert({ user_id: data.userId }, { onConflict: "user_id", ignoreDuplicates: true });
+
+    return { apiKey: raw };
+  });
+
+export const adminSetPartnerKeyActive = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ keyId: z.string().uuid(), active: z.boolean() }).parse(input))
+  .handler(async ({ data, context }) => {
+    await assertSuperAdmin(context.userId);
+    const { partnerDb } = await import("@/lib/partner.server");
+    const { error } = await partnerDb.from("partner_api_keys").update({ active: data.active }).eq("id", data.keyId);
+    if (error) { console.error("[adminSetPartnerKeyActive]", error); throw new Error("حدث خطأ"); }
+    return { ok: true };
+  });
+
+export const adminDeletePartnerKey = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ keyId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    await assertSuperAdmin(context.userId);
+    const { partnerDb } = await import("@/lib/partner.server");
+    const { error } = await partnerDb.from("partner_api_keys").delete().eq("id", data.keyId);
+    if (error) { console.error("[adminDeletePartnerKey]", error); throw new Error("حدث خطأ"); }
+    return { ok: true };
+  });
