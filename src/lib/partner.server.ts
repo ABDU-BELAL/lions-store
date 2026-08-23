@@ -1,5 +1,13 @@
 // Partner / reseller API helpers. Server-only.
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import type { SupabaseClient } from "@supabase/supabase-js";
+
+/**
+ * Loose-typed admin client. `partner_api_keys` / `partner_orders` are created by
+ * the partner-API migration and are not part of the generated Database types.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const partnerDb = supabaseAdmin as unknown as SupabaseClient<any, "public", any>;
 
 export type PartnerErrorCode =
   | "invalid_token"
@@ -26,10 +34,10 @@ const STATUS: Record<PartnerErrorCode, number> = {
   server_error: 500,
 };
 
-export function partnerError(code: PartnerErrorCode, message?: string, status?: number) {
+export function partnerError(code: PartnerErrorCode, message?: string, extra?: Record<string, unknown>) {
   return new Response(
-    JSON.stringify({ status: "error", code, message: message ?? code.replace(/_/g, " ") }),
-    { status: status ?? STATUS[code], headers: { "content-type": "application/json" } },
+    JSON.stringify({ status: "error", code, message: message ?? code.replace(/_/g, " "), ...(extra ?? {}) }),
+    { status: STATUS[code], headers: { "content-type": "application/json" } },
   );
 }
 
@@ -71,7 +79,7 @@ export async function authenticatePartner(request: Request): Promise<PartnerCont
   if (!raw.trim()) return partnerError("invalid_token", "Missing api-token header");
 
   const hashed = await hashApiKey(raw);
-  const { data: key, error } = await supabaseAdmin
+  const { data: key, error } = await partnerDb
     .from("partner_api_keys")
     .select("id, user_id, active")
     .eq("api_key", hashed)
@@ -83,18 +91,18 @@ export async function authenticatePartner(request: Request): Promise<PartnerCont
   if (!key) return partnerError("invalid_token", "Invalid API token");
   if (!key.active) return partnerError("inactive_partner", "API key is disabled");
 
-  const { data: banned } = await supabaseAdmin
+  const { data: banned } = await partnerDb
     .from("profiles")
     .select("is_banned")
     .eq("id", key.user_id)
     .maybeSingle();
   if (banned?.is_banned) return partnerError("inactive_partner", "Partner account is suspended");
 
-  supabaseAdmin
+  partnerDb
     .from("partner_api_keys")
     .update({ last_used_at: new Date().toISOString() })
     .eq("id", key.id)
     .then(() => {}, () => {});
 
-  return { userId: key.user_id, keyId: key.id };
+  return { userId: key.user_id as string, keyId: key.id as string };
 }

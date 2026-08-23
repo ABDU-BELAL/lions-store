@@ -29,9 +29,12 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProductIdRouteImport } from './routes/product.$id'
 import { Route as CollectionSlugRouteImport } from './routes/collection.$slug'
+import { Route as ApiPartnerProductsRouteImport } from './routes/api/partner/products'
+import { Route as ApiPartnerOrderRouteImport } from './routes/api/partner/order'
 import { Route as ApiPublicTelegramWebhookRouteImport } from './routes/api/public/telegram/webhook'
 import { Route as ApiPublicImgSplatRouteImport } from './routes/api/public/img/$'
 import { Route as ApiPublicHooksFulfillmentPollRouteImport } from './routes/api/public/hooks/fulfillment-poll'
+import { Route as ApiPartnerOrderIdRouteImport } from './routes/api/partner/order.$id'
 
 const TransactionsRoute = TransactionsRouteImport.update({
   id: '/transactions',
@@ -133,6 +136,16 @@ const CollectionSlugRoute = CollectionSlugRouteImport.update({
   path: '/collection/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPartnerProductsRoute = ApiPartnerProductsRouteImport.update({
+  id: '/api/partner/products',
+  path: '/api/partner/products',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPartnerOrderRoute = ApiPartnerOrderRouteImport.update({
+  id: '/api/partner/order',
+  path: '/api/partner/order',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicTelegramWebhookRoute =
   ApiPublicTelegramWebhookRouteImport.update({
     id: '/api/public/telegram/webhook',
@@ -150,6 +163,11 @@ const ApiPublicHooksFulfillmentPollRoute =
     path: '/api/public/hooks/fulfillment-poll',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPartnerOrderIdRoute = ApiPartnerOrderIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => ApiPartnerOrderRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -172,6 +190,9 @@ export interface FileRoutesByFullPath {
   '/transactions': typeof TransactionsRoute
   '/collection/$slug': typeof CollectionSlugRoute
   '/product/$id': typeof ProductIdRoute
+  '/api/partner/order': typeof ApiPartnerOrderRouteWithChildren
+  '/api/partner/products': typeof ApiPartnerProductsRoute
+  '/api/partner/order/$id': typeof ApiPartnerOrderIdRoute
   '/api/public/hooks/fulfillment-poll': typeof ApiPublicHooksFulfillmentPollRoute
   '/api/public/img/$': typeof ApiPublicImgSplatRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
@@ -197,6 +218,9 @@ export interface FileRoutesByTo {
   '/transactions': typeof TransactionsRoute
   '/collection/$slug': typeof CollectionSlugRoute
   '/product/$id': typeof ProductIdRoute
+  '/api/partner/order': typeof ApiPartnerOrderRouteWithChildren
+  '/api/partner/products': typeof ApiPartnerProductsRoute
+  '/api/partner/order/$id': typeof ApiPartnerOrderIdRoute
   '/api/public/hooks/fulfillment-poll': typeof ApiPublicHooksFulfillmentPollRoute
   '/api/public/img/$': typeof ApiPublicImgSplatRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
@@ -223,6 +247,9 @@ export interface FileRoutesById {
   '/transactions': typeof TransactionsRoute
   '/collection/$slug': typeof CollectionSlugRoute
   '/product/$id': typeof ProductIdRoute
+  '/api/partner/order': typeof ApiPartnerOrderRouteWithChildren
+  '/api/partner/products': typeof ApiPartnerProductsRoute
+  '/api/partner/order/$id': typeof ApiPartnerOrderIdRoute
   '/api/public/hooks/fulfillment-poll': typeof ApiPublicHooksFulfillmentPollRoute
   '/api/public/img/$': typeof ApiPublicImgSplatRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
@@ -250,6 +277,9 @@ export interface FileRouteTypes {
     | '/transactions'
     | '/collection/$slug'
     | '/product/$id'
+    | '/api/partner/order'
+    | '/api/partner/products'
+    | '/api/partner/order/$id'
     | '/api/public/hooks/fulfillment-poll'
     | '/api/public/img/$'
     | '/api/public/telegram/webhook'
@@ -275,6 +305,9 @@ export interface FileRouteTypes {
     | '/transactions'
     | '/collection/$slug'
     | '/product/$id'
+    | '/api/partner/order'
+    | '/api/partner/products'
+    | '/api/partner/order/$id'
     | '/api/public/hooks/fulfillment-poll'
     | '/api/public/img/$'
     | '/api/public/telegram/webhook'
@@ -300,6 +333,9 @@ export interface FileRouteTypes {
     | '/transactions'
     | '/collection/$slug'
     | '/product/$id'
+    | '/api/partner/order'
+    | '/api/partner/products'
+    | '/api/partner/order/$id'
     | '/api/public/hooks/fulfillment-poll'
     | '/api/public/img/$'
     | '/api/public/telegram/webhook'
@@ -326,6 +362,8 @@ export interface RootRouteChildren {
   TransactionsRoute: typeof TransactionsRoute
   CollectionSlugRoute: typeof CollectionSlugRoute
   ProductIdRoute: typeof ProductIdRoute
+  ApiPartnerOrderRoute: typeof ApiPartnerOrderRouteWithChildren
+  ApiPartnerProductsRoute: typeof ApiPartnerProductsRoute
   ApiPublicHooksFulfillmentPollRoute: typeof ApiPublicHooksFulfillmentPollRoute
   ApiPublicImgSplatRoute: typeof ApiPublicImgSplatRoute
   ApiPublicTelegramWebhookRoute: typeof ApiPublicTelegramWebhookRoute
@@ -473,6 +511,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CollectionSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/partner/products': {
+      id: '/api/partner/products'
+      path: '/api/partner/products'
+      fullPath: '/api/partner/products'
+      preLoaderRoute: typeof ApiPartnerProductsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/partner/order': {
+      id: '/api/partner/order'
+      path: '/api/partner/order'
+      fullPath: '/api/partner/order'
+      preLoaderRoute: typeof ApiPartnerOrderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/telegram/webhook': {
       id: '/api/public/telegram/webhook'
       path: '/api/public/telegram/webhook'
@@ -494,8 +546,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksFulfillmentPollRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/partner/order/$id': {
+      id: '/api/partner/order/$id'
+      path: '/$id'
+      fullPath: '/api/partner/order/$id'
+      preLoaderRoute: typeof ApiPartnerOrderIdRouteImport
+      parentRoute: typeof ApiPartnerOrderRoute
+    }
   }
 }
+
+interface ApiPartnerOrderRouteChildren {
+  ApiPartnerOrderIdRoute: typeof ApiPartnerOrderIdRoute
+}
+
+const ApiPartnerOrderRouteChildren: ApiPartnerOrderRouteChildren = {
+  ApiPartnerOrderIdRoute: ApiPartnerOrderIdRoute,
+}
+
+const ApiPartnerOrderRouteWithChildren = ApiPartnerOrderRoute._addFileChildren(
+  ApiPartnerOrderRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -518,6 +589,8 @@ const rootRouteChildren: RootRouteChildren = {
   TransactionsRoute: TransactionsRoute,
   CollectionSlugRoute: CollectionSlugRoute,
   ProductIdRoute: ProductIdRoute,
+  ApiPartnerOrderRoute: ApiPartnerOrderRouteWithChildren,
+  ApiPartnerProductsRoute: ApiPartnerProductsRoute,
   ApiPublicHooksFulfillmentPollRoute: ApiPublicHooksFulfillmentPollRoute,
   ApiPublicImgSplatRoute: ApiPublicImgSplatRoute,
   ApiPublicTelegramWebhookRoute: ApiPublicTelegramWebhookRoute,
