@@ -88,6 +88,7 @@ function AdminPage() {
           ...(account.data.isSuperAdmin ? [{ id: "users" as Tab, label: "المستخدمين" }] : []),
           ...(account.data.isSuperAdmin ? [{ id: "discounts" as Tab, label: "الخصومات" }] : []),
           ...(account.data.isSuperAdmin ? [{ id: "vip" as Tab, label: "VIP" }] : []),
+          ...(account.data.isSuperAdmin ? [{ id: "partners" as Tab, label: "شركاء API" }] : []),
           { id: "admins", label: "الأدمنز" },
 
 
