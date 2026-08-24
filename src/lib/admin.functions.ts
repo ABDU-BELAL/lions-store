@@ -881,7 +881,7 @@ export const adminListPartnerKeys = createServerFn({ method: "GET" })
     const { partnerDb } = await import("@/lib/partner.server");
     const { data, error } = await partnerDb
       .from("partner_api_keys")
-      .select("id, user_id, note, key_prefix, active, created_at, last_used_at"))
+      .select("id, user_id, note, key_prefix, active, created_at, last_used_at")
       .order("created_at", { ascending: false });
     if (error) { console.error("[adminListPartnerKeys]", error); throw new Error("حدث خطأ"); }
     const rows = data ?? [];
@@ -916,7 +916,8 @@ export const adminCreatePartnerKey = createServerFn({ method: "POST" })
     if (!profile) throw new Error("المستخدم غير موجود");
 
     const { generateApiKey, hashApiKey, partnerDb } = await import("@/lib/partner.server");
-    const raw = generateApiKey();
+const raw = generateApiKey();
+    const hashed = await hashApiKey(raw);
     const prefix = raw.slice(0, 10);
 
     const { error } = await partnerDb
