@@ -79,3 +79,89 @@ Point a cron (Supabase scheduled function, GitHub Action, cron-job.org …) at:
 POST https://<your-domain>/api/public/hooks/fulfillment-poll
 Header: x-cron-secret: <CRON_SECRET>
 ```
+
+## 7. Partner / reseller API
+
+Schema: run `03_partner_api.sql` in the SQL Editor (it is also appended to the
+end of `01_schema.sql`). It adds the `partner` role value plus the
+`partner_api_keys` and `partner_orders` tables (service-role only, RLS on).
+
+### Creating a key
+
+Admin dashboard → tab **شركاء API** (super admin only): search for the user
+account, optionally name the key, press **إنشاء المفتاح**. The plaintext key
+(`pk_…`) is shown **once** — only its SHA-256 hash is stored. Creating a key
+also grants the account the `partner` role and makes sure it has a wallet.
+Keys can be disabled (مفعل/معطل) or deleted at any time.
+
+The partner is a normal account: top up its wallet the usual way, and every
+API order is charged against that wallet.
+
+### Authentication
+
+Send the key on every request:
+
+```
+api-token: pk_xxxxxxxx
+```
+
+(`Authorization: Bearer pk_…` and `x-api-token` also work.)
+
+### Endpoints
+
+`GET /api/partner/products`
+
+```json
+{ "status": "ok", "products": [
+  { "id": "uuid", "name": "...", "name_en": "...", "price": 100,
+    "price_usd": 2, "stock": "available",
+    "quantity_enabled": false, "unit_size": null,
+    "min_quantity": null, "max_quantity": null } ] }
+```
+
+`POST /api/partner/order`
+
+```json
+{ "product_id": "uuid", "quantity": 1, "player_id": "123456", "order_uid": "your-ref-001" }
+```
+
+- `quantity` required only when `quantity_enabled` is true.
+- `player_id` required unless the product's field mode is `none`.
+- `order_uid` is your own reference and must be unique per partner (idempotency).
+
+Response:
+
+```json
+{ "status": "ok", "order_id": "uuid", "order_uid": "your-ref-001",
+  "product": "...", "price": 100, "order_status": "pending" }
+```
+
+The order is charged from the partner wallet and enters the same
+auto-fulfillment pipeline as storefront orders.
+
+`GET /api/partner/order/:id` — `:id` is either the returned `order_id` (UUID)
+or your own `order_uid`.
+
+```json
+{ "status": "ok", "order_id": "uuid", "order_uid": "your-ref-001",
+  "product": "...", "quantity": 1, "player_id": "123456", "price": 100,
+  "order_status": "completed", "provider_status": "accept",
+  "refunded": false, "created_at": "..." }
+```
+
+### Error codes
+
+| code | HTTP | meaning |
+|---|---|---|
+| `invalid_token` | 401 | missing/unknown api-token |
+| `inactive_partner` | 403 | key disabled or account suspended |
+| `invalid_request` | 400 | bad/missing parameters |
+| `product_not_found` | 404 | product missing or inactive |
+| `out_of_stock` | 409 | product marked out of stock |
+| `insufficient_balance` | 402 | partner wallet too low |
+| `duplicate_order` | 409 | `order_uid` already used (returns `order_id`) |
+| `order_not_found` | 404 | unknown order for this partner |
+| `rate_limited` | 429 | more than 120 order calls per minute |
+| `server_error` | 500 | internal error |
+
+Error shape: `{ "status": "error", "code": "...", "message": "..." }`

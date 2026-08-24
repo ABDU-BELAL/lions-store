@@ -13,6 +13,7 @@ import {
   adminListDiscounts, adminUpsertDiscount, adminDeleteDiscount,
   adminBrand1TestConnection, adminBrand1ListProducts, adminSetProductProvider, adminX3TestConnection, adminX3ListProducts, adminYassenTestConnection, adminYassenListProducts, adminSamaTestConnection, adminSamaListProducts, adminWisamTestConnection, adminWisamListProducts, adminAlshaikhTestConnection, adminAlshaikhListProducts,
   getUsdRate, adminUpdateUsdRate,
+  adminListPartnerKeys, adminCreatePartnerKey, adminSetPartnerKeyActive, adminDeletePartnerKey,
 } from "@/lib/admin.functions";
 import { listVipTiers, adminUpdateVipTier, adminAssignVip, adminRevokeVip } from "@/lib/vip.functions";
 import { VipBadge } from "@/components/VipBadge";
@@ -45,7 +46,7 @@ export const Route = createFileRoute("/admin")({
   component: AdminPage,
 });
 
-type Tab = "stats" | "topups" | "orders" | "products" | "collections" | "banners" | "settings" | "payments" | "users" | "discounts" | "vip" | "admins";
+type Tab = "stats" | "topups" | "orders" | "products" | "collections" | "banners" | "settings" | "payments" | "users" | "discounts" | "vip" | "partners" | "admins";
 
 function AdminPage() {
   const { user, loading } = useAuth();
@@ -87,6 +88,7 @@ function AdminPage() {
           ...(account.data.isSuperAdmin ? [{ id: "users" as Tab, label: "المستخدمين" }] : []),
           ...(account.data.isSuperAdmin ? [{ id: "discounts" as Tab, label: "الخصومات" }] : []),
           ...(account.data.isSuperAdmin ? [{ id: "vip" as Tab, label: "VIP" }] : []),
+          ...(account.data.isSuperAdmin ? [{ id: "partners" as Tab, label: "شركاء API" }] : []),
           { id: "admins", label: "الأدمنز" },
 
 
@@ -110,6 +112,7 @@ function AdminPage() {
       {tab === "users" && account.data.isSuperAdmin && <UsersTab />}
       {tab === "discounts" && account.data.isSuperAdmin && <DiscountsTab />}
       {tab === "vip" && account.data.isSuperAdmin && <VipTab />}
+      {tab === "partners" && account.data.isSuperAdmin && <PartnersTab />}
       {tab === "admins" && <AdminsTab isSuper={!!account.data.isSuperAdmin} />}
 
 
@@ -1674,6 +1677,133 @@ function VipTab() {
               </div>
             );
           })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PartnersTab() {
+  const list = useServerFn(adminListPartnerKeys);
+  const create = useServerFn(adminCreatePartnerKey);
+  const setActive = useServerFn(adminSetPartnerKeyActive);
+  const del = useServerFn(adminDeletePartnerKey);
+  const listUsers = useServerFn(adminListUsers);
+  const qc = useQueryClient();
+
+  const [userSearch, setUserSearch] = useState("");
+  const [userId, setUserId] = useState("");
+  const [label, setLabel] = useState("");
+  const [newKey, setNewKey] = useState<string | null>(null);
+
+  const keys = useQuery({ queryKey: ["admin-partner-keys"], queryFn: () => list() });
+  const users = useQuery({
+    queryKey: ["admin-users-pick", userSearch],
+    queryFn: () => listUsers({ data: { search: userSearch || undefined } }),
+  });
+
+  const refresh = () => qc.invalidateQueries({ queryKey: ["admin-partner-keys"] });
+
+  const mCreate = useMutation({
+    mutationFn: () => create({ data: { userId, label: label || undefined } }),
+    onSuccess: (r: { apiKey: string }) => {
+      setNewKey(r.apiKey);
+      setUserId(""); setUserSearch(""); setLabel("");
+      toast.success("تم إنشاء المفتاح");
+      refresh();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const mToggle = useMutation({
+    mutationFn: (v: { keyId: string; active: boolean }) => setActive({ data: v }),
+    onSuccess: () => { toast.success("تم التحديث"); refresh(); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const mDel = useMutation({
+    mutationFn: (keyId: string) => del({ data: { keyId } }),
+    onSuccess: () => { toast.success("تم الحذف"); refresh(); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <div className="space-y-6">
+      <div className="rounded-2xl bg-card/70 border border-border p-4 space-y-3">
+        <h3 className="font-extrabold text-gold-gradient">إنشاء مفتاح API لشريك</h3>
+
+        <div>
+          <label className="text-xs font-bold mb-1 block">ابحث عن المستخدم</label>
+          <input
+            value={userSearch}
+            onChange={(e) => { setUserSearch(e.target.value); setUserId(""); }}
+            placeholder="الاسم / الإيميل / الرقم"
+            className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3"
+          />
+          {userSearch && (users.data ?? []).length > 0 && !userId && (
+            <div className="mt-2 max-h-56 overflow-y-auto rounded-xl border border-border divide-y divide-border">
+              {(users.data ?? []).slice(0, 20).map((u) => (
+                <button key={u.id} type="button"
+                  onClick={() => { setUserId(u.id); setUserSearch(u.full_name || u.email || u.id); }}
+                  className="w-full text-right px-3 py-2 hover:bg-secondary/60 block">
+                  <p className="font-bold text-sm truncate">{u.full_name || "—"}</p>
+                  <p className="text-xs text-muted-foreground truncate">{u.email || "—"}</p>
+                </button>
+              ))}
+            </div>
+          )}
+          {userId && <p className="text-xs text-gold mt-1">تم اختيار المستخدم ✓</p>}
+        </div>
+
+        <div>
+          <label className="text-xs font-bold mb-1 block">اسم المفتاح (اختياري)</label>
+          <input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="مثال: متجر أحمد"
+            className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3" />
+        </div>
+
+        <button disabled={!userId || mCreate.isPending} onClick={() => mCreate.mutate()}
+          className="w-full rounded-xl bg-gold-gradient text-primary-foreground font-extrabold py-2.5 disabled:opacity-50">
+          {mCreate.isPending ? "..." : "إنشاء المفتاح"}
+        </button>
+
+        {newKey && (
+          <div className="rounded-xl border border-gold/50 bg-secondary/60 p-3 space-y-2">
+            <p className="text-xs font-bold text-gold">انسخ المفتاح الآن — لن يظهر مرة أخرى</p>
+            <code className="block break-all text-xs bg-background/70 rounded-lg p-2">{newKey}</code>
+            <button onClick={() => { navigator.clipboard.writeText(newKey); toast.success("تم النسخ"); }}
+              className="rounded-lg border border-border px-3 py-1.5 text-xs font-bold">نسخ</button>
+          </div>
+        )}
+      </div>
+
+      <div>
+        <h3 className="font-extrabold text-gold-gradient mb-2">مفاتيح الشركاء</h3>
+        {keys.isLoading && <p className="text-center py-6 text-muted-foreground">جاري التحميل...</p>}
+        {!keys.isLoading && (keys.data ?? []).length === 0 && (
+          <p className="text-center py-6 text-muted-foreground">لا توجد مفاتيح</p>
+        )}
+        <div className="space-y-2">
+          {(keys.data ?? []).map((k) => (
+            <div key={k.id} className="rounded-2xl bg-card/70 border border-border p-3 flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="font-extrabold truncate text-sm">{k.profile?.full_name || k.profile?.email || k.user_id}</p>
+                <p className="text-xs text-muted-foreground truncate">
+                  {k.label || "—"} • الرصيد: {Number(k.balance).toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                </p>
+                <p className="text-[11px] text-muted-foreground">
+                  آخر استخدام: {k.last_used_at ? new Date(k.last_used_at).toLocaleString() : "—"}
+                </p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <button onClick={() => mToggle.mutate({ keyId: k.id, active: !k.active })} disabled={mToggle.isPending}
+                  className={`rounded-lg px-3 py-1.5 text-xs font-bold border ${k.active ? "bg-gold-gradient text-primary-foreground border-transparent" : "border-border"}`}>
+                  {k.active ? "مفعل" : "معطل"}
+                </button>
+                <button onClick={() => mDel.mutate(k.id)} disabled={mDel.isPending}
+                  className="rounded-lg bg-destructive/20 text-destructive border border-destructive/40 px-2 py-1.5">
+                  <Trash2 className="size-4" />
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>
