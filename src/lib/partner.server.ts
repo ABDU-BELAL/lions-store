@@ -82,7 +82,7 @@ export async function authenticatePartner(request: Request): Promise<PartnerCont
   const { data: key, error } = await partnerDb
     .from("partner_api_keys")
     .select("id, user_id, active")
-    .eq("api_key", hashed)
+    .eq("api_key_hash", hashed)
     .maybeSingle();
   if (error) {
     console.error("[partner-api] key lookup failed", error);
