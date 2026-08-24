@@ -1786,7 +1786,7 @@ function PartnersTab() {
               <div className="min-w-0">
                 <p className="font-extrabold truncate text-sm">{k.profile?.full_name || k.profile?.email || k.user_id}</p>
                 <p className="text-xs text-muted-foreground truncate">
-                  {k.label || "—"} • الرصيد: {Number(k.balance).toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                  {k.note || "—"} • الرصيد: {Number(k.balance).toLocaleString(undefined, { maximumFractionDigits: 2 })}
                 </p>
                 <p className="text-[11px] text-muted-foreground">
                   آخر استخدام: {k.last_used_at ? new Date(k.last_used_at).toLocaleString() : "—"}
