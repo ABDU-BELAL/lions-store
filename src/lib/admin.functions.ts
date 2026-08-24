@@ -881,7 +881,7 @@ export const adminListPartnerKeys = createServerFn({ method: "GET" })
     const { partnerDb } = await import("@/lib/partner.server");
     const { data, error } = await partnerDb
       .from("partner_api_keys")
-      .select("id, user_id, label, active, created_at, last_used_at")
+      .select("id, user_id, note, key_prefix, active, created_at, last_used_at"))
       .order("created_at", { ascending: false });
     if (error) { console.error("[adminListPartnerKeys]", error); throw new Error("حدث خطأ"); }
     const rows = data ?? [];
@@ -894,7 +894,7 @@ export const adminListPartnerKeys = createServerFn({ method: "GET" })
       : { data: [] as { user_id: string; balance: number }[] };
     const pMap = new Map((profiles ?? []).map((p) => [p.id, p]));
     const wMap = new Map((wallets ?? []).map((w) => [w.user_id, Number(w.balance)]));
-    return rows.map((r: { id: string; user_id: string; label: string | null; active: boolean; created_at: string; last_used_at: string | null }) => ({
+    return rows.map((r: { id: string; user_id: string; note: string | null; key_prefix: string | null; active: boolean; created_at: string; last_used_at: string | null }) => ({
       ...r,
       profile: pMap.get(r.user_id) ?? null,
       balance: wMap.get(r.user_id) ?? 0,
@@ -917,11 +917,11 @@ export const adminCreatePartnerKey = createServerFn({ method: "POST" })
 
     const { generateApiKey, hashApiKey, partnerDb } = await import("@/lib/partner.server");
     const raw = generateApiKey();
-    const hashed = await hashApiKey(raw);
+    const prefix = raw.slice(0, 10);
 
     const { error } = await partnerDb
       .from("partner_api_keys")
-      .insert({ user_id: data.userId, api_key: hashed, label: data.label ?? null, active: true });
+      .insert({ user_id: data.userId, api_key_hash: hashed, key_prefix: prefix, note: data.label ?? null, active: true });
     if (error) { console.error("[adminCreatePartnerKey]", error); throw new Error("حدث خطأ"); }
 
     // Make sure the account also carries the partner role and has a wallet row.
