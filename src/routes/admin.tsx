@@ -112,6 +112,7 @@ function AdminPage() {
       {tab === "users" && account.data.isSuperAdmin && <UsersTab />}
       {tab === "discounts" && account.data.isSuperAdmin && <DiscountsTab />}
       {tab === "vip" && account.data.isSuperAdmin && <VipTab />}
+      {tab === "partners" && account.data.isSuperAdmin && <PartnersTab />}
       {tab === "admins" && <AdminsTab isSuper={!!account.data.isSuperAdmin} />}
 
 
