@@ -1,14 +1,13 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { AppLayout } from "@/components/AppLayout";
-import { FramedImage } from "@/components/FramedImage";
-import { CategoryDrawer } from "@/components/CategoryDrawer";
+import { ProductCard } from "@/components/ProductCard";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { listAllActiveCollections } from "@/lib/collections.functions";
 import { getMyAccount } from "@/lib/account.functions";
 import { useAuth } from "@/hooks/useAuth";
 import { Search as SearchIcon, Wallet, ShoppingBag } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { z } from "zod";
 import { useLang, pickLocalized } from "@/i18n/LanguageProvider";
 import { useCurrency } from "@/i18n/CurrencyProvider";
@@ -36,7 +35,6 @@ function ShopPage() {
   const accountFn = useServerFn(getMyAccount);
   const { t, dir, lang } = useLang();
   const { format } = useCurrency();
-  const [drawerSlug, setDrawerSlug] = useState<string | null>(null);
 
   const collections = useQuery({ queryKey: ["all-collections"], queryFn: () => listFn() });
   const account = useQuery({ queryKey: ["account"], queryFn: () => accountFn(), enabled: !!user });
@@ -93,15 +91,16 @@ function ShopPage() {
         {results.map((c) => {
           const title = pickLocalized(c.title, (c as { title_en?: string | null }).title_en, lang);
           return (
-            <button key={c.id} type="button" onClick={() => setDrawerSlug(c.slug)} className="group rounded-2xl overflow-hidden bg-dark-gradient border border-gold/30 hover:border-gold/70 hover:shadow-gold transition text-center">
-              <FramedImage src={c.image_url} alt={title} framed={(c as { show_frame?: boolean }).show_frame !== false} />
-              <p className="font-extrabold text-sm p-3 text-gold-gradient">{title}</p>
-            </button>
+            <ProductCard
+              key={c.id}
+              title={title}
+              image={c.image_url || "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=400&q=80"}
+              to="/collection/$slug"
+              params={{ slug: c.slug }}
+            />
           );
         })}
       </div>
-
-      <CategoryDrawer slug={drawerSlug} onClose={() => setDrawerSlug(null)} />
     </AppLayout>
   );
 }
