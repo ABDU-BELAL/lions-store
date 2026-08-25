@@ -1,11 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { ProductCard } from "@/components/ProductCard";
 import { FramedImage } from "@/components/FramedImage";
-import { CategoryDrawer } from "@/components/CategoryDrawer";
 import { BannerSlideshow } from "@/components/BannerSlideshow";
 import { listShopProducts } from "@/lib/shop.functions";
 import { listActiveCollections, getHomeSettings } from "@/lib/collections.functions";
@@ -66,7 +64,6 @@ function Home() {
   const fetchCollections = useServerFn(listActiveCollections);
   const fetchSettings = useServerFn(getHomeSettings);
   const { t, lang } = useLang();
-  const [drawerSlug, setDrawerSlug] = useState<string | null>(null);
 
   const { data: products = [] } = useQuery({ queryKey: ["home-products"], queryFn: () => fetchProducts() });
   const { data: collections = [] } = useQuery({ queryKey: ["home-collections"], queryFn: () => fetchCollections() });
@@ -143,10 +140,10 @@ function Home() {
             {homeCollections.map((c) => {
               const title = pickLocalized(c.title, (c as { title_en?: string | null }).title_en, lang);
               return (
-                <button key={c.id} type="button" onClick={() => setDrawerSlug(c.slug)} className="group rounded-2xl overflow-hidden bg-dark-gradient border border-gold/30 hover:border-gold/70 hover:shadow-gold transition">
+                <Link key={c.id} to="/collection/$slug" params={{ slug: c.slug }} className="group rounded-2xl overflow-hidden bg-dark-gradient border border-gold/30 hover:border-gold/70 hover:shadow-gold transition">
                   <FramedImage src={c.image_url} alt={title} framed={(c as { show_frame?: boolean }).show_frame !== false} />
                   <p className="font-extrabold text-center p-3 text-gold-gradient">{title}</p>
-                </button>
+                </Link>
               );
             })}
           </div>
