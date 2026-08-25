@@ -64,6 +64,7 @@ function Home() {
   const fetchCollections = useServerFn(listActiveCollections);
   const fetchSettings = useServerFn(getHomeSettings);
   const { t, lang } = useLang();
+  const [drawerSlug, setDrawerSlug] = useState<string | null>(null);
 
   const { data: products = [] } = useQuery({ queryKey: ["home-products"], queryFn: () => fetchProducts() });
   const { data: collections = [] } = useQuery({ queryKey: ["home-collections"], queryFn: () => fetchCollections() });
