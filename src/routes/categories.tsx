@@ -3,8 +3,10 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { AppLayout } from "@/components/AppLayout";
 import { FramedImage } from "@/components/FramedImage";
+import { CategoryDrawer } from "@/components/CategoryDrawer";
 import { listActiveCollections } from "@/lib/collections.functions";
 import { CreditCard, Headphones } from "lucide-react";
+import { useState } from "react";
 import { useLang, pickLocalized } from "@/i18n/LanguageProvider";
 
 export const Route = createFileRoute("/categories")({
@@ -25,6 +27,7 @@ function Categories() {
   const fn = useServerFn(listActiveCollections);
   const { data: collections = [] } = useQuery({ queryKey: ["collections-active"], queryFn: () => fn() });
   const { t, lang } = useLang();
+  const [drawerSlug, setDrawerSlug] = useState<string | null>(null);
 
   const systemLinks = [
     { to: "/payments" as const, label: t("طرق الدفع", "Payment methods"), icon: CreditCard },
@@ -43,10 +46,10 @@ function Categories() {
         {collections.map((c) => {
           const title = pickLocalized(c.title, (c as { title_en?: string | null }).title_en, lang);
           return (
-            <Link key={c.id} to="/collection/$slug" params={{ slug: c.slug }} className="group rounded-2xl overflow-hidden bg-dark-gradient border border-gold/30 hover:border-gold/70 hover:shadow-gold transition text-center">
+            <button key={c.id} type="button" onClick={() => setDrawerSlug(c.slug)} className="group rounded-2xl overflow-hidden bg-dark-gradient border border-gold/30 hover:border-gold/70 hover:shadow-gold transition text-center">
               <FramedImage src={c.image_url} alt={title} framed={(c as { show_frame?: boolean }).show_frame !== false} />
               <p className="font-extrabold text-sm p-3 text-gold-gradient">{title}</p>
-            </Link>
+            </button>
           );
         })}
 
@@ -57,6 +60,8 @@ function Categories() {
           </Link>
         ))}
       </div>
+
+      <CategoryDrawer slug={drawerSlug} onClose={() => setDrawerSlug(null)} />
     </AppLayout>
   );
 }
