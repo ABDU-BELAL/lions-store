@@ -163,9 +163,21 @@ export const listMyTopups = createServerFn({ method: "GET" })
     const { supabase, userId } = context;
     const { data } = await supabase
       .from("topup_requests")
-      .select("id, amount, method, reference, status, created_at, admin_note")
+      .select("id, amount, method, reference, status, created_at, admin_note, screenshot_path")
       .eq("user_id", userId)
       .order("created_at", { ascending: false })
       .limit(50);
-    return data ?? [];
+    // Sign each receipt screenshot (bucket is private) so the user can view their own proof.
+    const rows = data ?? [];
+    return Promise.all(rows.map(async (r) => {
+      let screenshot_url: string | null = null;
+      if (r.screenshot_path) {
+        const { data: signed } = await supabaseAdmin.storage
+          .from("topup-receipts")
+          .createSignedUrl(r.screenshot_path, 60 * 60);
+        screenshot_url = signed?.signedUrl ?? null;
+      }
+      const { screenshot_path: _omit, ...rest } = r;
+      return { ...rest, screenshot_url };
+    }));
   });
