@@ -26,8 +26,14 @@ export const listActiveBanners = createServerFn({ method: "GET" }).handler(async
     .eq("is_active", true)
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: false });
-  if (error) { console.error("[db]", error); throw new Error("حدث خطأ، حاول مرة أخرى"); };
-  return withSignedUrl(data ?? []);
+  // Banners are decorative: never break the homepage if the backend is unreachable.
+  if (error) { console.error("[db]", error); return []; }
+  try {
+    return await withSignedUrl(data ?? []);
+  } catch (e) {
+    console.error("[banners:sign]", e);
+    return data ?? [];
+  }
 });
 
 export const adminListBanners = createServerFn({ method: "GET" })
