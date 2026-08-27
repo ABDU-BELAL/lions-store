@@ -22,8 +22,10 @@ import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PaymentsRouteImport } from './routes/payments'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as KycRouteImport } from './routes/kyc'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as CategoriesRouteImport } from './routes/categories'
+import { Route as ApiAccessRouteImport } from './routes/api-access'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
@@ -101,6 +103,11 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const KycRoute = KycRouteImport.update({
+  id: '/kyc',
+  path: '/kyc',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
   id: '/forgot-password',
   path: '/forgot-password',
@@ -109,6 +116,11 @@ const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
 const CategoriesRoute = CategoriesRouteImport.update({
   id: '/categories',
   path: '/categories',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAccessRoute = ApiAccessRouteImport.update({
+  id: '/api-access',
+  path: '/api-access',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRoute = AdminRouteImport.update({
@@ -173,8 +185,10 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/admin': typeof AdminRoute
+  '/api-access': typeof ApiAccessRoute
   '/categories': typeof CategoriesRoute
   '/forgot-password': typeof ForgotPasswordRoute
+  '/kyc': typeof KycRoute
   '/login': typeof LoginRoute
   '/notifications': typeof NotificationsRoute
   '/payments': typeof PaymentsRoute
@@ -201,8 +215,10 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/admin': typeof AdminRoute
+  '/api-access': typeof ApiAccessRoute
   '/categories': typeof CategoriesRoute
   '/forgot-password': typeof ForgotPasswordRoute
+  '/kyc': typeof KycRoute
   '/login': typeof LoginRoute
   '/notifications': typeof NotificationsRoute
   '/payments': typeof PaymentsRoute
@@ -230,8 +246,10 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/admin': typeof AdminRoute
+  '/api-access': typeof ApiAccessRoute
   '/categories': typeof CategoriesRoute
   '/forgot-password': typeof ForgotPasswordRoute
+  '/kyc': typeof KycRoute
   '/login': typeof LoginRoute
   '/notifications': typeof NotificationsRoute
   '/payments': typeof PaymentsRoute
@@ -260,8 +278,10 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/admin'
+    | '/api-access'
     | '/categories'
     | '/forgot-password'
+    | '/kyc'
     | '/login'
     | '/notifications'
     | '/payments'
@@ -288,8 +308,10 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/admin'
+    | '/api-access'
     | '/categories'
     | '/forgot-password'
+    | '/kyc'
     | '/login'
     | '/notifications'
     | '/payments'
@@ -316,8 +338,10 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/admin'
+    | '/api-access'
     | '/categories'
     | '/forgot-password'
+    | '/kyc'
     | '/login'
     | '/notifications'
     | '/payments'
@@ -345,8 +369,10 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
   AdminRoute: typeof AdminRoute
+  ApiAccessRoute: typeof ApiAccessRoute
   CategoriesRoute: typeof CategoriesRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
+  KycRoute: typeof KycRoute
   LoginRoute: typeof LoginRoute
   NotificationsRoute: typeof NotificationsRoute
   PaymentsRoute: typeof PaymentsRoute
@@ -462,6 +488,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/kyc': {
+      id: '/kyc'
+      path: '/kyc'
+      fullPath: '/kyc'
+      preLoaderRoute: typeof KycRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/forgot-password': {
       id: '/forgot-password'
       path: '/forgot-password'
@@ -474,6 +507,13 @@ declare module '@tanstack/react-router' {
       path: '/categories'
       fullPath: '/categories'
       preLoaderRoute: typeof CategoriesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api-access': {
+      id: '/api-access'
+      path: '/api-access'
+      fullPath: '/api-access'
+      preLoaderRoute: typeof ApiAccessRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin': {
@@ -572,8 +612,10 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
   AdminRoute: AdminRoute,
+  ApiAccessRoute: ApiAccessRoute,
   CategoriesRoute: CategoriesRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
+  KycRoute: KycRoute,
   LoginRoute: LoginRoute,
   NotificationsRoute: NotificationsRoute,
   PaymentsRoute: PaymentsRoute,
