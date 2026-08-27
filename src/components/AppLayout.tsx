@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ParticlesBackground } from "@/components/ParticlesBackground";
 import { useLang } from "@/i18n/LanguageProvider";
 import { useCurrency } from "@/i18n/CurrencyProvider";
+import { SideMenu } from "@/components/SideMenu";
 
 export function AppLayout({ children }: { children: ReactNode }) {
   const path = useRouterState({ select: (s) => s.location.pathname });
@@ -30,6 +31,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
   const balance = Number(account.data?.balance ?? 0);
   const isAdmin = account.data?.isAdmin ?? false;
+  const isPartner = (account.data?.roles ?? []).includes("partner" as never);
 
   const nav = [
     { to: "/", label: t("الرئيسية", "Home"), icon: Home },
