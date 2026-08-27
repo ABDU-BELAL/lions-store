@@ -115,8 +115,8 @@ export function SideMenu({ open, onClose, user, name, customId, balanceLabel, is
 
           <p className="mt-3 px-1 text-xs font-bold text-muted-foreground">{t("تواصل معنا", "Get in touch")}</p>
           <Row href="https://wa.me/201010594146" onClick={onClose} icon={<Headphones className="size-4" />} label={t("دعم واتساب", "WhatsApp support")} />
-          <Row href="https://whatsapp.com/channel/0029Vb6QqbqInlqQmQ0kMz1o" onClick={onClose} icon={<MessageCircle className="size-4" />} label={t("قناة واتساب", "WhatsApp channel")} />
-          <Row href="https://t.me/lionstore_eg" onClick={onClose} icon={<Send className="size-4" />} label={t("قناة تليجرام", "Telegram channel")} />
+          <Row href="https://www.whatsapp.com/channel/0029Vb8E36G60eBdk5kfYi1q" onClick={onClose} icon={<MessageCircle className="size-4" />} label={t("قناة واتساب", "WhatsApp channel")} />
+          <Row href="https://t.me/LIONStor22" onClick={onClose} icon={<Send className="size-4" />} label={t("قناة تليجرام", "Telegram channel")} />
 
           <button
             type="button"
