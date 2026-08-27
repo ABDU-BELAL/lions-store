@@ -58,8 +58,7 @@ function ApiAccess() {
           {q.data.keys.length === 0 && (
             <p className="text-muted-foreground">{t("لا توجد مفاتيح بعد. تواصل مع الدعم.", "No keys yet. Contact support.")}</p>
           )}
-          {q.data.keys.map((k) => {
-            const key = k as { id: string; label?: string | null; active: boolean; created_at: string; last_used_at?: string | null };
+          {q.data.keys.map((key) => {
             return (
               <div key={key.id} className="rounded-2xl border border-border bg-card/70 p-4">
                 <div className="flex items-center gap-2">

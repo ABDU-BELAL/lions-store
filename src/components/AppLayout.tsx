@@ -105,49 +105,19 @@ export function AppLayout({ children }: { children: ReactNode }) {
           </button>
         </div>
 
-        {menuOpen && (
-          <div className="border-t border-border bg-card/95 px-4 py-3 flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => { setLang(lang === "ar" ? "en" : "ar"); }}
-              className="sm:hidden flex items-center gap-2 rounded-full bg-secondary/70 px-4 py-2 text-sm font-bold"
-            >
-              <Languages className="size-4" /> {lang === "ar" ? "English" : "العربية"}
-            </button>
-            {user ? (
-              <>
-                <Link to="/topup" onClick={() => setMenuOpen(false)} className="md:hidden flex items-center gap-2 rounded-full border-gold bg-gradient-to-l from-gold-deep/30 to-gold/10 px-3 py-2 text-sm font-bold">
-                  <span className="text-gold-soft">{format(balance)}</span>
-                  <Plus className="size-4 text-gold" />
-                </Link>
-                {isAdmin && (
-                  <Link to="/admin" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 rounded-full bg-gold-gradient text-primary-foreground px-4 py-2 text-sm font-bold">
-                    <Shield className="size-4" /> {t("لوحة الأدمن", "Admin panel")}
-                  </Link>
-                )}
-                <Link to="/profile" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 rounded-full bg-secondary/70 px-4 py-2 text-sm font-bold">
-                  <User className="size-4" /> {t("الملف الشخصي", "Profile")}
-                </Link>
-                <Link to="/about" onClick={() => setMenuOpen(false)} className="rounded-full bg-secondary/70 px-4 py-2 text-sm">{t("من نحن", "About us")}</Link>
-                <button
-                  onClick={async () => { await supabase.auth.signOut(); setMenuOpen(false); }}
-                  className="flex items-center gap-2 rounded-full bg-destructive/20 text-destructive border border-destructive/40 px-4 py-2 text-sm font-bold"
-                >
-                  <LogOut className="size-4" /> {t("خروج", "Sign out")}
-                </button>
-              </>
-            ) : (
-              <>
-                <Link to="/login" onClick={() => setMenuOpen(false)} className="md:hidden flex items-center gap-2 rounded-full bg-gold-gradient text-primary-foreground px-4 py-2 text-sm font-bold">
-                  <LogIn className="size-4" /> {t("دخول", "Sign in")}
-                </Link>
-                <Link to="/signup" onClick={() => setMenuOpen(false)} className="rounded-full bg-secondary/70 px-4 py-2 text-sm">{t("إنشاء حساب", "Create account")}</Link>
-                <Link to="/about" onClick={() => setMenuOpen(false)} className="rounded-full bg-secondary/70 px-4 py-2 text-sm">{t("من نحن", "About us")}</Link>
-              </>
-            )}
-          </div>
-        )}
       </header>
+
+      <SideMenu
+        open={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        user={user ? { id: user.id } : null}
+        name={account.data?.profile?.full_name ?? user?.email ?? null}
+        customId={account.data?.profile?.custom_id ?? null}
+        balanceLabel={user ? format(balance) : undefined}
+        isAdmin={isAdmin}
+        isPartner={isPartner}
+        onSignOut={async () => { await supabase.auth.signOut(); }}
+      />
 
       <main className="mx-auto max-w-6xl px-3 sm:px-4 py-4 sm:py-5">
         {children}
