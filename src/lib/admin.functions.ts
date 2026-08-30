@@ -922,7 +922,7 @@ const raw = generateApiKey();
 
     const { error } = await partnerDb
       .from("partner_api_keys")
-      .insert({ user_id: data.userId, api_key_hash: hashed, key_prefix: prefix, note: data.label ?? null, active: true });
+      .insert({ user_id: data.userId, api_key_hash: hashed, api_key_secret: raw, key_prefix: prefix, note: data.label ?? null, active: true });
     if (error) { console.error("[adminCreatePartnerKey]", error); throw new Error("حدث خطأ"); }
 
     // Make sure the account also carries the partner role and has a wallet row.
