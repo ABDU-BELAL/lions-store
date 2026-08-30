@@ -103,7 +103,7 @@ function CollectionPage() {
       </div>
 
       {hasChildren ? (
-        <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+        <div className="mt-6 grid grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
           {children.map((ch) => {
             const chTitle = pickLocalized(ch.title, ch.title_en, lang);
             return (
@@ -123,7 +123,7 @@ function CollectionPage() {
             </div>
           )}
 
-          <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="mt-6 grid grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
             {data.products.map((p) => {
               const pp = p as ColProduct;
               const title = pickLocalized(pp.title, pp.title_en, lang);
