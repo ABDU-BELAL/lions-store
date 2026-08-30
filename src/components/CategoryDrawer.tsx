@@ -136,7 +136,7 @@ export function CategoryDrawer({ slug, onClose }: { slug: string | null; onClose
                   </div>
                 )
               ) : (
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-3 gap-3">
                   {products.map((p) => {
                     const pTitle = pickLocalized(p.title, p.title_en, lang);
                     const oos = p.in_stock === false;
