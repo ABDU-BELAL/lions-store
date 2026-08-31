@@ -13,8 +13,14 @@ export const listShopProducts = createServerFn({ method: "GET" }).handler(async 
     .eq("is_active", true)
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: false });
-  if (error) { console.error("[db]", error); throw new Error("حدث خطأ، حاول مرة أخرى"); };
-  return signMany("products", data ?? []);
+  // Never blank-screen the shop if the backend is unreachable.
+  if (error) { console.error("[db]", error); return []; }
+  try {
+    return await signMany("products", data ?? []);
+  } catch (e) {
+    console.error("[products:sign]", e);
+    return data ?? [];
+  }
 });
 
 // Returns the signed-in user's EFFECTIVE discount for a given product
