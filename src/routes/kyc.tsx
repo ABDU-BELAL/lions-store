@@ -143,13 +143,7 @@ function Kyc() {
         </div>
       )}
 
-            {user && status !== "pending" && status !== "approved" && isMobile === false && (
-        <div className="mt-6 rounded-2xl border border-gold/40 bg-card/70 p-6 text-center">
-          <p className="font-extrabold text-gold">
-            {t("لإتمام عملية التوثيق، يرجى فتح هذه الصفحة من هاتفك المحمول لالتقاط الصور مباشرة بالكاميرا.", "To complete verification, please open this page on your mobile phone to take photos directly with the camera.")}
-          </p>
-        </div>
-      )}
+        {user && status !== "pending" && status !== "approved" && (
         <div className="mt-6 rounded-2xl border border-border bg-card/70 p-5 space-y-4">
           <div>
             <label className="text-xs font-bold">{t("نوع المستند", "Document type")}</label>
