@@ -28,6 +28,39 @@ const DOC_TYPES: { id: KycDocType; ar: string; en: string }[] = [
   { id: "residence_permit", ar: "تصريح إقامة", en: "Residence permit" },
 ];
 
+// Compress phone photos (often 3-8MB) down to ~<500KB before upload to avoid
+// FUNCTION_PAYLOAD_TOO_LARGE. Resizes to max 1280px and re-encodes as JPEG.
+async function compressImage(file: File, maxDim = 1280, quality = 0.75): Promise<File> {
+  if (!file.type.startsWith("image/")) return file;
+  const bitmap = await createImageBitmap(file).catch(() => null);
+  if (!bitmap) return file;
+  let { width, height } = bitmap;
+  if (width <= maxDim && height <= maxDim && file.size <= 500 * 1024) {
+    bitmap.close();
+    return file;
+  }
+  const scale = Math.min(1, maxDim / Math.max(width, height));
+  width = Math.round(width * scale);
+  height = Math.round(height * scale);
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) { bitmap.close(); return file; }
+  ctx.drawImage(bitmap, 0, 0, width, height);
+  bitmap.close();
+  let q = quality;
+  let blob: Blob | null = null;
+  // Reduce quality until under 500KB (min 0.5)
+  while (q >= 0.5) {
+    blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, "image/jpeg", q));
+    if (blob && blob.size <= 500 * 1024) break;
+    q -= 0.1;
+  }
+  if (!blob) return file;
+  return new File([blob], file.name.replace(/\.\w+$/, "") + ".jpg", { type: "image/jpeg" });
+}
+
 function Kyc() {
   const { t } = useLang();
   const { user, loading } = useAuth();
@@ -138,9 +171,15 @@ function Kyc() {
                   type="file"
                   accept="image/*"
                   className="hidden"
-                  onChange={(e) => {
+                  onChange={async (e) => {
                     const f = e.target.files?.[0] ?? null;
-                    setFiles((prev) => { const n = [...prev]; n[i] = f; return n; });
+                    if (!f) { setFiles((prev) => { const n = [...prev]; n[i] = null; return n; }); return; }
+                    try {
+                      const compressed = await compressImage(f);
+                      setFiles((prev) => { const n = [...prev]; n[i] = compressed; return n; });
+                    } catch {
+                      setFiles((prev) => { const n = [...prev]; n[i] = f; return n; });
+                    }
                   }}
                 />
                 {files[i] ? (
