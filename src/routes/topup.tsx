@@ -188,6 +188,16 @@ function TopupPage() {
         })}
       </div>
 
+      {kycBlocked && activeEnabled && (
+        <div className="mt-4 rounded-2xl border border-gold/50 bg-gold/10 p-4 text-center">
+          <p className="font-extrabold text-gold">🪪 {t("هذه الوسيلة تتطلب توثيق الحساب (KYC)", "This method requires KYC verification")}</p>
+          <p className="text-xs text-muted-foreground mt-1">{t("وثّق حسابك أولاً لتتمكن من الشحن بهذه الطريقة.", "Verify your account first to deposit with this method.")}</p>
+          <Link to="/kyc" className="mt-3 inline-block rounded-xl bg-gold-gradient text-primary-foreground px-5 py-2 font-extrabold">
+            {t("توثيق الحساب الآن", "Verify now")}
+          </Link>
+        </div>
+      )}
+
       {!activeEnabled ? (
         <div className="mt-4 rounded-2xl border border-destructive/50 bg-destructive/10 p-4 text-center">
           <p className="font-extrabold text-destructive">⚠️ {active.label} {t("تحت الصيانة حاليًا", "is under maintenance")}</p>
