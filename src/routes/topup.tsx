@@ -6,6 +6,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { getMyAccount } from "@/lib/account.functions";
 import { createTopupRequest, listMyTopups, getPaymentMethods } from "@/lib/topup.functions";
 import { uploadTopupReceipt } from "@/lib/topup-upload.functions";
+import { getMyKyc } from "@/lib/kyc.functions";
 import { useEffect, useState } from "react";
 import { Wallet, Phone, Building2, Bitcoin, Clock, CheckCircle2, XCircle, Copy, ExternalLink, Upload } from "lucide-react";
 import { toast } from "sonner";
@@ -43,6 +44,7 @@ function TopupPage() {
   const uploadReceipt = useServerFn(uploadTopupReceipt);
   const myTopups = useServerFn(listMyTopups);
   const fetchPaymentMethods = useServerFn(getPaymentMethods);
+  const fetchKyc = useServerFn(getMyKyc);
   const { t, lang } = useLang();
   const { format, rate } = useCurrency();
 
@@ -51,6 +53,7 @@ function TopupPage() {
   const account = useQuery({ queryKey: ["account", user?.id], queryFn: () => getAccount(), enabled: !!user });
   const topups = useQuery({ queryKey: ["my-topups"], queryFn: () => myTopups(), enabled: !!user });
   const paymentMethods = useQuery({ queryKey: ["payment-methods"], queryFn: () => fetchPaymentMethods() });
+  const kyc = useQuery({ queryKey: ["my-kyc"], queryFn: () => fetchKyc(), enabled: !!user });
 
   const methodMeta = [
     { id: "vodafone_cash" as const, label: t("فودافون كاش", "Vodafone Cash"), icon: Phone, color: "bg-red-600" },
@@ -130,6 +133,14 @@ function TopupPage() {
     if (id === "instapay") return pm.instapay_enabled;
     return pm.binance_enabled;
   };
+  const kycRequiredFor = (id: typeof method): boolean => {
+    if (!pm) return false;
+    if (id === "vodafone_cash") return !!pm.vodafone_cash_kyc;
+    if (id === "instapay") return !!pm.instapay_kyc;
+    return !!pm.binance_kyc;
+  };
+  const kycApproved = kyc.data?.status === "approved";
+  const kycBlocked = kycRequiredFor(method) && !kycApproved;
   const active = methodMeta.find((m) => m.id === method)!;
   const activeAccount = accountFor(method);
   const activeLink = method === "instapay" ? pm?.instapay_link : "";

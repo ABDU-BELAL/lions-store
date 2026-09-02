@@ -131,3 +131,77 @@ async function sendPhotoWithMigration(token: string, chatId: string, blob: Blob,
     console.error("Telegram photo notify failed", chatId, e);
   }
 }
+
+// ---------------- Second (KYC) bot ----------------
+// Secrets: KYC_TELEGRAM_BOT_TOKEN, KYC_TELEGRAM_CHAT_ID (comma separated allowed)
+function kycChatIds(): string[] {
+  return (process.env.KYC_TELEGRAM_CHAT_ID ?? "")
+    .split(/[\s,;]+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+/** Send a text message through the dedicated KYC bot. */
+export async function notifyKycTelegram(message: string): Promise<void> {
+  const token = process.env.KYC_TELEGRAM_BOT_TOKEN;
+  if (!token) return;
+  const ids = kycChatIds();
+  if (ids.length === 0) return;
+  await Promise.all(
+    ids.map(async (chatId) => {
+      try {
+        const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ chat_id: chatId, text: message, parse_mode: "HTML" }),
+        });
+        if (!res.ok) console.error("KYC telegram error", chatId, res.status, await res.text());
+      } catch (e) {
+        console.error("KYC telegram failed", chatId, e);
+      }
+    }),
+  );
+}
+
+/** Send a caption plus one or more photos (downloaded from URLs) through the KYC bot. */
+export async function notifyKycTelegramPhotos(photoUrls: string[], caption: string): Promise<void> {
+  const token = process.env.KYC_TELEGRAM_BOT_TOKEN;
+  if (!token) return;
+  const ids = kycChatIds();
+  if (ids.length === 0) return;
+
+  const blobs: Blob[] = [];
+  for (const url of photoUrls) {
+    try {
+      const r = await fetch(url);
+      if (r.ok) blobs.push(await r.blob());
+    } catch (e) {
+      console.error("KYC photo fetch failed", e);
+    }
+  }
+
+  if (blobs.length === 0) {
+    await notifyKycTelegram(caption);
+    return;
+  }
+
+  await Promise.all(
+    ids.map(async (chatId) => {
+      try {
+        for (let i = 0; i < blobs.length; i++) {
+          const form = new FormData();
+          form.append("chat_id", chatId);
+          if (i === 0) {
+            form.append("caption", caption);
+            form.append("parse_mode", "HTML");
+          }
+          form.append("photo", blobs[i]!, `kyc-${i + 1}.jpg`);
+          const res = await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, { method: "POST", body: form });
+          if (!res.ok) console.error("KYC photo error", chatId, res.status, await res.text());
+        }
+      } catch (e) {
+        console.error("KYC photo send failed", chatId, e);
+      }
+    }),
+  );
+}
