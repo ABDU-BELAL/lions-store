@@ -1,242 +1,138 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { AppLayout } from "@/components/AppLayout";
-import { KeyRound, Lock, Copy, Check, Eye, EyeOff, RefreshCw, Ban } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
-import { getMyApiKeys, revealMyApiKey, generateMyApiKey, revokeMyApiKey } from "@/lib/partner.functions";
 import { useAuth } from "@/hooks/useAuth";
-import { useLang } from "@/i18n/LanguageProvider";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { getMyPartnerKey, regenerateMyPartnerKey } from "@/lib/partner-account.functions";
 import { useState } from "react";
 import { toast } from "sonner";
+import { KeyRound, RefreshCw } from "lucide-react";
 
 export const Route = createFileRoute("/api-access")({
-  head: () => ({
-    meta: [
-      { title: "My API Access — Lion Store" },
-      { name: "description", content: "Partner API access for Lion Store resellers: keys, token and endpoints." },
-      { property: "og:title", content: "My API Access — Lion Store" },
-      { property: "og:description", content: "Partner API access for Lion Store resellers." },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-    ],
-  }),
-  component: ApiAccess,
+  component: ApiAccessPage,
 });
 
-function SecretField({ label, value, masked }: { label: string; value: string | null; masked?: boolean }) {
-  const [shown, setShown] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const { t } = useLang();
+function ApiAccessPage() {
+  const { user, loading } = useAuth();
+  const getKey = useServerFn(getMyPartnerKey);
+  const regenerate = useServerFn(regenerateMyPartnerKey);
+  const qc = useQueryClient();
+  const [newKey, setNewKey] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState(false);
 
-  const copy = async () => {
-    if (!value) return;
-    try {
-      await navigator.clipboard.writeText(value);
-      setCopied(true);
-      toast.success(t("تم النسخ", "Copied"));
-      setTimeout(() => setCopied(false), 1500);
-    } catch {
-      toast.error(t("تعذّر النسخ", "Copy failed"));
-    }
-  };
+  if (!loading && !user) throw redirect({ to: "/login" });
 
-  const display = !value
-    ? "—"
-    : shown
-      ? value
-      : masked === false
-        ? value
-        : "•".repeat(Math.min(40, Math.max(12, value.length)));
-
-  return (
-    <div className="mt-3">
-      <p className="text-xs font-bold text-muted-foreground">{label}</p>
-      <div className="mt-1 flex items-center gap-2 rounded-xl border border-border bg-background/60 px-3 py-2">
-        <code dir="ltr" className="flex-1 overflow-x-auto whitespace-nowrap text-xs">{display}</code>
-        <button
-          type="button"
-          onClick={() => setShown((s) => !s)}
-          aria-label={shown ? t("إخفاء", "Hide") : t("إظهار", "Reveal")}
-          className="rounded-lg p-1.5 hover:bg-muted"
-          disabled={!value}
-        >
-          {shown ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-        </button>
-        <button
-          type="button"
-          onClick={copy}
-          aria-label={t("نسخ", "Copy")}
-          className="rounded-lg p-1.5 hover:bg-muted"
-          disabled={!value}
-        >
-          {copied ? <Check className="size-4 text-emerald-400" /> : <Copy className="size-4" />}
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function ApiAccess() {
-  const { t } = useLang();
-  const { user } = useAuth();
-  const fetchKeys = useServerFn(getMyApiKeys);
-  const reveal = useServerFn(revealMyApiKey);
-  const generate = useServerFn(generateMyApiKey);
-  const revoke = useServerFn(revokeMyApiKey);
-
-  const [tokens, setTokens] = useState<Record<string, string>>({});
-  const [busy, setBusy] = useState<string | null>(null);
-
-  const q = useQuery({
-    queryKey: ["my-api-keys", user?.id],
-    queryFn: () => fetchKeys(),
+  const keyInfo = useQuery({
+    queryKey: ["my-partner-key"],
+    queryFn: () => getKey(),
     enabled: !!user,
   });
 
-  const onReveal = async (keyId: string) => {
-    setBusy(keyId);
-    try {
-      const res = await reveal({ data: { keyId } });
-      setTokens((prev) => ({ ...prev, [keyId]: res.token }));
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : t("حدث خطأ", "Something went wrong"));
-    } finally {
-      setBusy(null);
-    }
-  };
+  const mRegenerate = useMutation({
+    mutationFn: () => regenerate(),
+    onSuccess: (r: { apiKey: string }) => {
+      setNewKey(r.apiKey);
+      setConfirming(false);
+      toast.success("تم إنشاء مفتاح جديد");
+      qc.invalidateQueries({ queryKey: ["my-partner-key"] });
+    },
+    onError: (e: Error) => { toast.error(e.message); setConfirming(false); },
+  });
 
-  const onGenerate = async () => {
-    setBusy("new");
-    try {
-      const res = await generate({ data: {} });
-      setTokens((prev) => ({ ...prev, [res.keyId]: res.token }));
-      toast.success(t("تم إنشاء مفتاح جديد", "New key generated"));
-      await q.refetch();
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : t("حدث خطأ", "Something went wrong"));
-    } finally {
-      setBusy(null);
-    }
-  };
+  if (loading || keyInfo.isLoading) {
+    return <AppLayout><p className="text-center py-12 text-muted-foreground">جاري التحميل...</p></AppLayout>;
+  }
 
-  const onRevoke = async (keyId: string) => {
-    setBusy(keyId);
-    try {
-      await revoke({ data: { keyId } });
-      toast.success(t("تم إيقاف المفتاح", "Key disabled"));
-      await q.refetch();
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : t("حدث خطأ", "Something went wrong"));
-    } finally {
-      setBusy(null);
-    }
-  };
+  if (keyInfo.isError) {
+    return (
+      <AppLayout>
+        <div className="rounded-3xl bg-dark-gradient border-gold p-8 text-center max-w-lg mx-auto">
+          <p className="text-muted-foreground">ليس لديك صلاحية الوصول لهذه الصفحة.</p>
+        </div>
+      </AppLayout>
+    );
+  }
 
-  const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
+  const info = keyInfo.data;
 
   return (
     <AppLayout>
-      <h1 className="text-2xl font-black text-gold-gradient">{t("واجهة الـ API الخاصة بي", "My API access")}</h1>
-
-      {!user && (
-        <p className="mt-4 text-muted-foreground">
-          {t("سجّل الدخول أولًا.", "Please sign in first.")}{" "}
-          <Link to="/login" className="text-gold font-bold">{t("دخول", "Sign in")}</Link>
-        </p>
-      )}
-
-      {user && q.isLoading && <p className="mt-4 text-muted-foreground">{t("جارٍ التحميل…", "Loading…")}</p>}
-
-      {user && q.data && !q.data.isPartner && (
-        <div className="mt-4 rounded-2xl border border-border bg-card/70 p-6 text-center">
-          <Lock className="mx-auto size-8 text-muted-foreground" />
-          <p className="mt-3 font-bold">{t("هذه الصفحة لشركاء الـ API فقط.", "This page is for API partners only.")}</p>
-          <a href="https://wa.me/201010594146?text=API" target="_blank" rel="noopener noreferrer"
-            className="mt-4 inline-flex rounded-xl bg-gold-gradient text-primary-foreground px-4 py-2 font-bold">
-            {t("اطلب الانضمام كشريك", "Request partner access")}
-          </a>
+      <div className="max-w-lg mx-auto">
+        <div className="flex items-center gap-3 mb-5">
+          <div className="grid place-items-center size-12 rounded-2xl bg-gold-gradient text-primary-foreground"><KeyRound className="size-6" /></div>
+          <div>
+            <h1 className="text-2xl font-black text-gold-gradient">مفتاح API الخاص بي</h1>
+            <p className="text-xs text-muted-foreground">إدارة مفتاح الوصول البرمجي لحسابك</p>
+          </div>
         </div>
-      )}
 
-      {user && q.data?.isPartner && (
-        <div className="mt-4 grid gap-3">
-          <div className="flex items-center gap-2">
+        {info ? (
+          <div className="rounded-2xl bg-card/70 border border-border p-5 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">بادئة المفتاح</span>
+              <code className="text-sm font-mono">{info.key_prefix}...</code>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">الحالة</span>
+              <span className={`text-xs font-bold rounded-full px-3 py-1 ${info.active ? "bg-emerald-500/15 text-emerald-400" : "bg-destructive/15 text-destructive"}`}>
+                {info.active ? "مفعل" : "معطل"}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">تاريخ الإنشاء</span>
+              <span className="text-sm">{new Date(info.created_at).toLocaleString()}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">آخر استخدام</span>
+              <span className="text-sm">{info.last_used_at ? new Date(info.last_used_at).toLocaleString() : "—"}</span>
+            </div>
+          </div>
+        ) : (
+          <div className="rounded-2xl bg-card/70 border border-border p-5 text-center text-muted-foreground">
+            لا يوجد مفتاح بعد. تواصل مع الدعم لإنشاء مفتاح API.
+          </div>
+        )}
+
+        <div className="mt-5">
+          {!confirming ? (
             <button
-              type="button"
-              onClick={onGenerate}
-              disabled={busy === "new"}
-              className="rounded-xl bg-gold-gradient text-primary-foreground px-4 py-2 text-sm font-bold disabled:opacity-60"
+              onClick={() => setConfirming(true)}
+              className="w-full rounded-xl bg-secondary border border-border font-bold py-3 flex items-center justify-center gap-2"
             >
-              <RefreshCw className="me-1 inline size-4" />
-              {busy === "new" ? t("جارٍ الإنشاء…", "Generating…") : t("إنشاء مفتاح جديد", "Generate new key")}
+              <RefreshCw className="size-4" /> إنشاء مفتاح جديد
+            </button>
+          ) : (
+            <div className="rounded-xl border border-destructive/50 bg-destructive/10 p-4 space-y-3">
+              <p className="text-sm font-bold text-destructive">
+                سيتم إبطال المفتاح الحالي فورًا — أي تكامل يستخدمه سيتوقف عن العمل. هل تريد المتابعة؟
+              </p>
+              <div className="flex gap-2">
+                <button onClick={() => setConfirming(false)} className="flex-1 rounded-lg bg-secondary py-2 font-bold text-sm">إلغاء</button>
+                <button
+                  disabled={mRegenerate.isPending}
+                  onClick={() => mRegenerate.mutate()}
+                  className="flex-1 rounded-lg bg-destructive text-white py-2 font-bold text-sm disabled:opacity-50"
+                >
+                  {mRegenerate.isPending ? "..." : "تأكيد الإنشاء"}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {newKey && (
+          <div className="mt-5 rounded-xl border border-gold/50 bg-secondary/60 p-4 space-y-2">
+            <p className="text-xs font-bold text-gold">انسخ المفتاح الآن — لن يظهر مرة أخرى</p>
+            <code className="block break-all text-xs bg-background/70 rounded-lg p-2">{newKey}</code>
+            <button
+              onClick={() => { navigator.clipboard.writeText(newKey); toast.success("تم النسخ"); }}
+              className="rounded-lg border border-border px-3 py-1.5 text-xs font-bold"
+            >
+              نسخ
             </button>
           </div>
-
-          {q.data.keys.length === 0 && (
-            <p className="text-muted-foreground">
-              {t("لا توجد مفاتيح بعد. اضغط إنشاء مفتاح جديد.", "No keys yet. Click generate to create one.")}
-            </p>
-          )}
-
-          {q.data.keys.map((key) => (
-            <div key={key.id} className="rounded-2xl border border-border bg-card/70 p-4">
-              <div className="flex items-center gap-2">
-                <KeyRound className="size-4 text-gold" />
-                <p className="font-extrabold">{key.label || t("مفتاح API", "API key")}</p>
-                <span className={`ms-auto rounded-full px-2 py-0.5 text-xs font-bold ${key.active ? "bg-emerald-500/15 text-emerald-400" : "bg-destructive/15 text-destructive"}`}>
-                  {key.active ? t("مُفعّل", "Active") : t("موقوف", "Disabled")}
-                </span>
-              </div>
-
-              <SecretField label={t("معرّف الـ API", "API ID")} value={key.id} />
-              <SecretField label={t("توكن الـ API", "API token")} value={tokens[key.id] ?? null} />
-
-              {!tokens[key.id] && (
-                <button
-                  type="button"
-                  onClick={() => onReveal(key.id)}
-                  disabled={busy === key.id || !key.has_secret}
-                  className="mt-2 rounded-xl border border-gold/40 px-3 py-1.5 text-xs font-bold text-gold disabled:opacity-50"
-                >
-                  {busy === key.id ? t("جارٍ…", "Loading…") : t("إظهار التوكن", "Load token")}
-                </button>
-              )}
-              {!key.has_secret && (
-                <p className="mt-2 text-xs text-destructive">
-                  {t("هذا المفتاح قديم ولا يمكن إظهاره — أنشئ مفتاحًا جديدًا.",
-                    "This key is legacy and can't be revealed — generate a new one.")}
-                </p>
-              )}
-
-              <p className="mt-3 text-xs text-muted-foreground" dir="ltr">
-                Prefix: {key.key_prefix ?? "—"} • Created: {new Date(key.created_at).toLocaleString()}
-                {key.last_used_at ? ` • Last used: ${new Date(key.last_used_at).toLocaleString()}` : ""}
-              </p>
-
-              {key.active && (
-                <button
-                  type="button"
-                  onClick={() => onRevoke(key.id)}
-                  disabled={busy === key.id}
-                  className="mt-3 inline-flex items-center gap-1 rounded-xl border border-destructive/40 px-3 py-1.5 text-xs font-bold text-destructive disabled:opacity-50"
-                >
-                  <Ban className="size-3.5" /> {t("إيقاف المفتاح", "Disable key")}
-                </button>
-              )}
-            </div>
-          ))}
-
-          <div className="rounded-2xl border border-border bg-card/70 p-4 text-sm">
-            <p className="font-extrabold">{t("نقاط النهاية", "Endpoints")}</p>
-            <pre dir="ltr" className="mt-2 overflow-x-auto text-xs text-muted-foreground">{`GET  ${baseUrl}/api/partner/products
-POST ${baseUrl}/api/partner/order
-GET  ${baseUrl}/api/partner/order/{id}
-
-Header: api-token: <your-api-token>
-   (or Authorization: Bearer <your-api-token>)`}</pre>
-          </div>
-        </div>
-      )}
+        )}
+      </div>
     </AppLayout>
   );
 }
