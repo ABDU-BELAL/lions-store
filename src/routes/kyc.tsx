@@ -5,7 +5,7 @@ import { useLang } from "@/i18n/LanguageProvider";
 import { useAuth } from "@/hooks/useAuth";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { getMyKyc, submitKyc, KYC_SLOTS, type KycDocType } from "@/lib/kyc.functions";
 
@@ -64,6 +64,11 @@ async function compressImage(file: File, maxDim = 1280, quality = 0.75): Promise
 function Kyc() {
   const { t } = useLang();
   const { user, loading } = useAuth();
+  const [isMobile, setIsMobile] = useState<boolean | null>(null);
+    useEffect(() => {
+    const ua = navigator.userAgent || "";
+    setIsMobile(/Android|iPhone|iPad|iPod/i.test(ua));
+  }, []);
   const qc = useQueryClient();
   const fetchKyc = useServerFn(getMyKyc);
   const submitFn = useServerFn(submitKyc);
@@ -138,7 +143,13 @@ function Kyc() {
         </div>
       )}
 
-      {user && status !== "pending" && status !== "approved" && (
+            {user && status !== "pending" && status !== "approved" && isMobile === false && (
+        <div className="mt-6 rounded-2xl border border-gold/40 bg-card/70 p-6 text-center">
+          <p className="font-extrabold text-gold">
+            {t("لإتمام عملية التوثيق، يرجى فتح هذه الصفحة من هاتفك المحمول لالتقاط الصور مباشرة بالكاميرا.", "To complete verification, please open this page on your mobile phone to take photos directly with the camera.")}
+          </p>
+        </div>
+      )}
         <div className="mt-6 rounded-2xl border border-border bg-card/70 p-5 space-y-4">
           <div>
             <label className="text-xs font-bold">{t("نوع المستند", "Document type")}</label>
