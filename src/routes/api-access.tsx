@@ -3,10 +3,10 @@ import { AppLayout } from "@/components/AppLayout";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { getMyPartnerKey, regenerateMyPartnerKey } from "@/lib/partner-account.functions";
+import { getMyPartnerKey, createMyPartnerKey } from "@/lib/partner-account.functions";
 import { useState } from "react";
 import { toast } from "sonner";
-import { KeyRound, RefreshCw } from "lucide-react";
+import { KeyRound } from "lucide-react";
 
 export const Route = createFileRoute("/api-access")({
   component: ApiAccessPage,
@@ -15,10 +15,9 @@ export const Route = createFileRoute("/api-access")({
 function ApiAccessPage() {
   const { user, loading } = useAuth();
   const getKey = useServerFn(getMyPartnerKey);
-  const regenerate = useServerFn(regenerateMyPartnerKey);
+  const create = useServerFn(createMyPartnerKey);
   const qc = useQueryClient();
   const [newKey, setNewKey] = useState<string | null>(null);
-  const [confirming, setConfirming] = useState(false);
 
   if (!loading && !user) throw redirect({ to: "/login" });
 
@@ -28,15 +27,14 @@ function ApiAccessPage() {
     enabled: !!user,
   });
 
-  const mRegenerate = useMutation({
-    mutationFn: () => regenerate(),
+  const mCreate = useMutation({
+    mutationFn: () => create(),
     onSuccess: (r: { apiKey: string }) => {
       setNewKey(r.apiKey);
-      setConfirming(false);
-      toast.success("تم إنشاء مفتاح جديد");
+      toast.success("تم إنشاء المفتاح");
       qc.invalidateQueries({ queryKey: ["my-partner-key"] });
     },
-    onError: (e: Error) => { toast.error(e.message); setConfirming(false); },
+    onError: (e: Error) => toast.error(e.message),
   });
 
   if (loading || keyInfo.isLoading) {
@@ -86,39 +84,24 @@ function ApiAccessPage() {
               <span className="text-sm text-muted-foreground">آخر استخدام</span>
               <span className="text-sm">{info.last_used_at ? new Date(info.last_used_at).toLocaleString() : "—"}</span>
             </div>
+            <p className="text-xs text-muted-foreground pt-2 border-t border-border">
+              لحذف هذا المفتاح أو إنشاء مفتاح جديد، تواصل مع الدعم.
+            </p>
           </div>
         ) : (
-          <div className="rounded-2xl bg-card/70 border border-border p-5 text-center text-muted-foreground">
-            لا يوجد مفتاح بعد. تواصل مع الدعم لإنشاء مفتاح API.
+          <div className="space-y-4">
+            <div className="rounded-2xl bg-card/70 border border-border p-5 text-center text-muted-foreground">
+              لا يوجد مفتاح بعد. يمكنك إنشاء مفتاح واحد فقط — احتفظ به جيدًا.
+            </div>
+            <button
+              disabled={mCreate.isPending}
+              onClick={() => mCreate.mutate()}
+              className="w-full rounded-xl bg-gold-gradient text-primary-foreground font-extrabold py-3 disabled:opacity-50"
+            >
+              {mCreate.isPending ? "..." : "إنشاء مفتاح API"}
+            </button>
           </div>
         )}
-
-        <div className="mt-5">
-          {!confirming ? (
-            <button
-              onClick={() => setConfirming(true)}
-              className="w-full rounded-xl bg-secondary border border-border font-bold py-3 flex items-center justify-center gap-2"
-            >
-              <RefreshCw className="size-4" /> إنشاء مفتاح جديد
-            </button>
-          ) : (
-            <div className="rounded-xl border border-destructive/50 bg-destructive/10 p-4 space-y-3">
-              <p className="text-sm font-bold text-destructive">
-                سيتم إبطال المفتاح الحالي فورًا — أي تكامل يستخدمه سيتوقف عن العمل. هل تريد المتابعة؟
-              </p>
-              <div className="flex gap-2">
-                <button onClick={() => setConfirming(false)} className="flex-1 rounded-lg bg-secondary py-2 font-bold text-sm">إلغاء</button>
-                <button
-                  disabled={mRegenerate.isPending}
-                  onClick={() => mRegenerate.mutate()}
-                  className="flex-1 rounded-lg bg-destructive text-white py-2 font-bold text-sm disabled:opacity-50"
-                >
-                  {mRegenerate.isPending ? "..." : "تأكيد الإنشاء"}
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
 
         {newKey && (
           <div className="mt-5 rounded-xl border border-gold/50 bg-secondary/60 p-4 space-y-2">
