@@ -8,7 +8,7 @@ import { getMyVip, listVipTiers } from "@/lib/vip.functions";
 import { VipBadge } from "@/components/VipBadge";
 import { useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { User, Mail, Phone, Wallet, Shield, Copy, ArrowRight, ArrowLeft, Crown } from "lucide-react";
+import { User, Mail, Phone, Wallet, Shield, Copy, ArrowRight, ArrowLeft, Crown, ShieldCheck, Clock, CheckCircle2, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { useLang } from "@/i18n/LanguageProvider";
 import { useCurrency, type Currency } from "@/i18n/CurrencyProvider";
@@ -109,6 +109,7 @@ function ProfilePage() {
           <div className="space-y-4">
             <InfoRow icon={Mail} label={t("البريد الإلكتروني", "Email")} value={profile?.email || user?.email || "—"} />
             <InfoRow icon={Phone} label={t("رقم الهاتف", "Phone number")} value={profile?.phone || "—"} />
+            <KycStatusRow status={(profile?.kyc_status ?? "none") as "none" | "pending" | "approved" | "rejected"} t={t} />
           </div>
 
           <div className="mt-6 pt-6 border-t border-border">
@@ -297,5 +298,29 @@ function InfoRow({ icon: Icon, label, value }: { icon: React.ElementType; label:
         <p className="text-sm font-semibold break-words">{value}</p>
       </div>
     </div>
+  );
+}
+
+function KycStatusRow({ status: raw, t }: { status: string; t: (a: string, b: string) => string }) {
+  const status = (["none", "pending", "approved", "rejected"] as const).includes(raw as any) ? (raw as "none" | "pending" | "approved" | "rejected") : "none";
+  const meta = {
+    none: { icon: ShieldCheck, color: "text-muted-foreground", bg: "bg-muted/30", border: "border-border", label: t("غير موثّق", "Not verified") },
+    pending: { icon: Clock, color: "text-gold", bg: "bg-gold/10", border: "border-gold/40", label: t("قيد المراجعة", "Under review") },
+    approved: { icon: CheckCircle2, color: "text-emerald-400", bg: "bg-emerald-500/10", border: "border-emerald-500/30", label: t("موثّق ✅", "Verified") },
+    rejected: { icon: XCircle, color: "text-destructive", bg: "bg-destructive/10", border: "border-destructive/30", label: t("مرفوض", "Rejected") },
+  }[status];
+  const Icon = meta.icon;
+  return (
+    <Link to="/kyc" className="flex items-start gap-3 group">
+      <div className="size-9 rounded-lg bg-secondary/70 grid place-items-center shrink-0 group-hover:bg-secondary transition-colors">
+        <ShieldCheck className="size-4 text-gold" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-xs text-muted-foreground">{t("حالة التوثيق", "Verification status")}</p>
+        <span className={`mt-1 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-bold ${meta.bg} ${meta.border} ${meta.color}`}>
+          <Icon className="size-3.5" /> {meta.label}
+        </span>
+      </div>
+    </Link>
   );
 }
