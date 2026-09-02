@@ -14,7 +14,7 @@ export const getMyAccount = createServerFn({ method: "GET" })
     ]);
 
     const profile = profileRes.data as
-      | { id: string; full_name?: string | null; email?: string | null; phone?: string | null; custom_id?: string | null; is_banned?: boolean | null; notified_at?: string | null }
+      | { id: string; full_name?: string | null; email?: string | null; phone?: string | null; custom_id?: string | null; is_banned?: boolean | null; notified_at?: string | null; kyc_status?: string | null }
       | null;
 
     if (profile?.is_banned) {

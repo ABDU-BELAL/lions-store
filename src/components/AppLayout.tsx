@@ -116,6 +116,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
         name={account.data?.profile?.full_name ?? user?.email ?? null}
         customId={account.data?.profile?.custom_id ?? null}
         balanceLabel={user ? format(balance) : undefined}
+        kycStatus={account.data?.profile?.kyc_status ?? "none"}
         isAdmin={isAdmin}
         isPartner={isPartner}
         onSignOut={async () => { await supabase.auth.signOut(); }}

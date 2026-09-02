@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import {
   X, LogIn, LogOut, User, Info, Shield, ShieldCheck, KeyRound, Languages,
-  MessageCircle, Send, Headphones, Wallet, UserPlus,
+  MessageCircle, Send, Headphones, Wallet, UserPlus, Clock, CheckCircle2, XCircle,
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { useEffect } from "react";
@@ -15,14 +15,16 @@ type Props = {
   name?: string | null;
   customId?: string | null;
   balanceLabel?: string;
+  kycStatus?: string;
   isAdmin?: boolean;
   isPartner?: boolean;
   onSignOut: () => void;
 };
 
-function Row({ to, href, icon, label, onClick, tone = "default" }: {
+function Row({ to, href, icon, label, onClick, tone = "default", trailing }: {
   to?: string; href?: string; icon: ReactNode; label: string; onClick?: () => void;
   tone?: "default" | "gold" | "danger";
+  trailing?: ReactNode;
 }) {
   const cls =
     tone === "gold"
@@ -34,6 +36,7 @@ function Row({ to, href, icon, label, onClick, tone = "default" }: {
     <>
       <span className="grid place-items-center size-9 rounded-xl bg-background/60 border border-border/60">{icon}</span>
       <span className="font-bold text-sm">{label}</span>
+      {trailing && <span className="ms-auto">{trailing}</span>}
     </>
   );
   const base = `flex items-center gap-3 rounded-2xl border px-3 py-2.5 transition-colors ${cls}`;
@@ -42,10 +45,20 @@ function Row({ to, href, icon, label, onClick, tone = "default" }: {
   return <button type="button" onClick={onClick} className={`${base} w-full text-start`}>{inner}</button>;
 }
 
-export function SideMenu({ open, onClose, user, name, customId, balanceLabel, isAdmin, isPartner, onSignOut }: Props) {
+export function SideMenu({ open, onClose, user, name, customId, balanceLabel, kycStatus = "none", isAdmin, isPartner, onSignOut }: Props) {
   const { t, dir, lang, setLang } = useLang();
   const side = dir === "rtl" ? "right-0" : "left-0";
   const hidden = dir === "rtl" ? "translate-x-full" : "-translate-x-full";
+
+  const raw = kycStatus || "none";
+  const status = (["none", "pending", "approved", "rejected"] as const).includes(raw as any) ? (raw as "none" | "pending" | "approved" | "rejected") : "none";
+  const statusMeta = {
+    none: { icon: ShieldCheck, color: "text-muted-foreground", bg: "bg-muted/30", border: "border-border", label: t("غير موثّق", "Not verified") },
+    pending: { icon: Clock, color: "text-gold", bg: "bg-gold/10", border: "border-gold/40", label: t("قيد المراجعة", "Under review") },
+    approved: { icon: CheckCircle2, color: "text-emerald-400", bg: "bg-emerald-500/10", border: "border-emerald-500/30", label: t("موثّق", "Verified") },
+    rejected: { icon: XCircle, color: "text-destructive", bg: "bg-destructive/10", border: "border-destructive/30", label: t("مرفوض", "Rejected") },
+  }[status];
+  const StatusIcon = statusMeta.icon;
 
   useEffect(() => {
     if (!open) return;
@@ -84,6 +97,9 @@ export function SideMenu({ open, onClose, user, name, customId, balanceLabel, is
           <div className="m-4 rounded-2xl border-gold bg-gradient-to-l from-gold-deep/20 to-transparent p-4">
             <p className="text-base font-extrabold">{name || t("مستخدم", "User")}</p>
             <p className="mt-1 text-xs text-muted-foreground" dir="ltr">ID: {customId ?? "—"}</p>
+            <p className={`mt-2 inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold ${statusMeta.bg} ${statusMeta.border} ${statusMeta.color}`}>
+              <StatusIcon className="size-3.5" /> {statusMeta.label}
+            </p>
             {balanceLabel && (
               <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-background/60 border border-border px-3 py-1 text-sm font-bold text-gold-soft">
                 <Wallet className="size-4" /> {balanceLabel}
@@ -101,7 +117,11 @@ export function SideMenu({ open, onClose, user, name, customId, balanceLabel, is
           {user && (
             <>
               <Row to="/profile" onClick={onClose} icon={<User className="size-4" />} label={t("الملف الشخصي", "Personal profile")} />
-              <Row to="/kyc" onClick={onClose} icon={<ShieldCheck className="size-4" />} label={t("توثيق الحساب (KYC)", "KYC verification")} />
+              <Row to="/kyc" onClick={onClose} icon={<ShieldCheck className="size-4" />} label={t("توثيق الحساب (KYC)", "KYC verification")} trailing={
+                <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold ${statusMeta.bg} ${statusMeta.border} ${statusMeta.color}`}>
+                  <StatusIcon className="size-3" /> {statusMeta.label}
+                </span>
+              } />
               {isPartner && (
                 <Row to="/api-access" onClick={onClose} tone="gold" icon={<KeyRound className="size-4" />} label={t("واجهة الـ API الخاصة بي", "My API access")} />
               )}
