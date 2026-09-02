@@ -65,7 +65,7 @@ function Kyc() {
   const { t } = useLang();
   const { user, loading } = useAuth();
   const [isMobile, setIsMobile] = useState<boolean | null>(null);
-    useEffect(() => {
+  useEffect(() => {
     const ua = navigator.userAgent || "";
     setIsMobile(/Android|iPhone|iPad|iPod/i.test(ua));
   }, []);
@@ -143,7 +143,7 @@ function Kyc() {
         </div>
       )}
 
-        {user && status !== "pending" && status !== "approved" && (
+      {user && status !== "pending" && status !== "approved" && isMobile === true && (
         <div className="mt-6 rounded-2xl border border-border bg-card/70 p-5 space-y-4">
           <div>
             <label className="text-xs font-bold">{t("نوع المستند", "Document type")}</label>
@@ -205,6 +205,14 @@ function Kyc() {
           >
             {submit.isPending ? t("جاري الإرسال...", "Submitting...") : t("إرسال طلب التوثيق", "Submit verification")}
           </button>
+        </div>
+      )}
+
+      {user && status !== "pending" && status !== "approved" && isMobile === false && (
+        <div className="mt-6 rounded-2xl border border-gold/40 bg-card/70 p-6 text-center">
+          <p className="font-extrabold text-gold">
+            {t("لإتمام عملية التوثيق، يرجى فتح هذه الصفحة من هاتفك المحمول لالتقاط الصور مباشرة بالكاميرا.", "To complete verification, please open this page on your mobile phone to take photos directly with the camera.")}
+          </p>
         </div>
       )}
 
