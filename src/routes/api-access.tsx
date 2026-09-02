@@ -85,7 +85,7 @@ function ApiAccessPage() {
               <span className="text-sm">{info.last_used_at ? new Date(info.last_used_at).toLocaleString() : "—"}</span>
             </div>
             <p className="text-xs text-muted-foreground pt-2 border-t border-border">
-              لحذف هذا المفتاح أو إنشاء مفتاح جديد، تواصل مع الدعم.
+              لا يمكن استرجاع المفتاح إذا فقدته — احتفظ بنسخة آمنة منه. لحذف هذا المفتاح أو إنشاء مفتاح جديد بدلاً منه، تواصل مع الدعم.
             </p>
           </div>
         ) : (
