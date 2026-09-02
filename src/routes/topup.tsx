@@ -6,6 +6,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { getMyAccount } from "@/lib/account.functions";
 import { createTopupRequest, listMyTopups, getPaymentMethods } from "@/lib/topup.functions";
 import { uploadTopupReceipt } from "@/lib/topup-upload.functions";
+import { getMyKyc } from "@/lib/kyc.functions";
 import { useEffect, useState } from "react";
 import { Wallet, Phone, Building2, Bitcoin, Clock, CheckCircle2, XCircle, Copy, ExternalLink, Upload } from "lucide-react";
 import { toast } from "sonner";
@@ -43,6 +44,7 @@ function TopupPage() {
   const uploadReceipt = useServerFn(uploadTopupReceipt);
   const myTopups = useServerFn(listMyTopups);
   const fetchPaymentMethods = useServerFn(getPaymentMethods);
+  const fetchKyc = useServerFn(getMyKyc);
   const { t, lang } = useLang();
   const { format, rate } = useCurrency();
 
@@ -51,6 +53,7 @@ function TopupPage() {
   const account = useQuery({ queryKey: ["account", user?.id], queryFn: () => getAccount(), enabled: !!user });
   const topups = useQuery({ queryKey: ["my-topups"], queryFn: () => myTopups(), enabled: !!user });
   const paymentMethods = useQuery({ queryKey: ["payment-methods"], queryFn: () => fetchPaymentMethods() });
+  const kyc = useQuery({ queryKey: ["my-kyc"], queryFn: () => fetchKyc(), enabled: !!user });
 
   const methodMeta = [
     { id: "vodafone_cash" as const, label: t("فودافون كاش", "Vodafone Cash"), icon: Phone, color: "bg-red-600" },
@@ -130,6 +133,14 @@ function TopupPage() {
     if (id === "instapay") return pm.instapay_enabled;
     return pm.binance_enabled;
   };
+  const kycRequiredFor = (id: typeof method): boolean => {
+    if (!pm) return false;
+    if (id === "vodafone_cash") return !!pm.vodafone_cash_kyc;
+    if (id === "instapay") return !!pm.instapay_kyc;
+    return !!pm.binance_kyc;
+  };
+  const kycApproved = kyc.data?.status === "approved";
+  const kycBlocked = kycRequiredFor(method) && !kycApproved;
   const active = methodMeta.find((m) => m.id === method)!;
   const activeAccount = accountFor(method);
   const activeLink = method === "instapay" ? pm?.instapay_link : "";
@@ -176,6 +187,16 @@ function TopupPage() {
           );
         })}
       </div>
+
+      {kycBlocked && activeEnabled && (
+        <div className="mt-4 rounded-2xl border border-gold/50 bg-gold/10 p-4 text-center">
+          <p className="font-extrabold text-gold">🪪 {t("هذه الوسيلة تتطلب توثيق الحساب (KYC)", "This method requires KYC verification")}</p>
+          <p className="text-xs text-muted-foreground mt-1">{t("وثّق حسابك أولاً لتتمكن من الشحن بهذه الطريقة.", "Verify your account first to deposit with this method.")}</p>
+          <Link to="/kyc" className="mt-3 inline-block rounded-xl bg-gold-gradient text-primary-foreground px-5 py-2 font-extrabold">
+            {t("توثيق الحساب الآن", "Verify now")}
+          </Link>
+        </div>
+      )}
 
       {!activeEnabled ? (
         <div className="mt-4 rounded-2xl border border-destructive/50 bg-destructive/10 p-4 text-center">
@@ -258,9 +279,10 @@ function TopupPage() {
           <label className="text-xs font-bold mb-1 block">{t("ملاحظات (اختياري)", "Notes (optional)")}</label>
           <textarea maxLength={500} value={note} onChange={(e) => setNote(e.target.value)} rows={2} className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-gold/50 resize-none" />
         </div>
-        <button disabled={mutation.isPending || uploading || !activeEnabled || !minOk} className="w-full rounded-xl bg-gold-gradient text-primary-foreground font-extrabold py-3 shadow-gold disabled:opacity-50">
-          {!activeEnabled ? t("تحت الصيانة", "Under maintenance") : uploading ? t("جاري رفع الصورة...", "Uploading image...") : mutation.isPending ? t("جاري الإرسال...", "Sending...") : t("إرسال طلب الشحن", "Send top-up request")}
+        <button disabled={mutation.isPending || uploading || !activeEnabled || !minOk || kycBlocked} className="w-full rounded-xl bg-gold-gradient text-primary-foreground font-extrabold py-3 shadow-gold disabled:opacity-50">
+          {!activeEnabled ? t("تحت الصيانة", "Under maintenance") : kycBlocked ? t("مطلوب توثيق الحساب (KYC)", "KYC verification required") : uploading ? t("جاري رفع الصورة...", "Uploading image...") : mutation.isPending ? t("جاري الإرسال...", "Sending...") : t("إرسال طلب الشحن", "Send top-up request")}
         </button>
+
       </form>
 
       <h2 className="mt-8 text-xl font-extrabold text-gold-gradient">{t("سجل طلبات الشحن", "Top-up history")}</h2>

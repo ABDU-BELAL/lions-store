@@ -14,6 +14,9 @@ export type PaymentMethods = {
   vodafone_cash_enabled: boolean;
   instapay_enabled: boolean;
   binance_enabled: boolean;
+  vodafone_cash_kyc: boolean;
+  instapay_kyc: boolean;
+  binance_kyc: boolean;
 };
 
 const DEFAULT_PAYMENT_METHODS: PaymentMethods = {
@@ -24,6 +27,9 @@ const DEFAULT_PAYMENT_METHODS: PaymentMethods = {
   vodafone_cash_enabled: true,
   instapay_enabled: true,
   binance_enabled: true,
+  vodafone_cash_kyc: false,
+  instapay_kyc: false,
+  binance_kyc: false,
 };
 
 export const getPaymentMethods = createServerFn({ method: "GET" }).handler(async () => {
@@ -39,7 +45,11 @@ const paymentMethodsSchema = z.object({
   vodafone_cash_enabled: z.boolean(),
   instapay_enabled: z.boolean(),
   binance_enabled: z.boolean(),
+  vodafone_cash_kyc: z.boolean(),
+  instapay_kyc: z.boolean(),
+  binance_kyc: z.boolean(),
 });
+
 
 export const adminUpdatePaymentMethods = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -83,6 +93,20 @@ export const createTopupRequest = createServerFn({ method: "POST" })
     if (enabledKey && !pm[enabledKey]) {
       throw new Error("وسيلة الدفع هذه تحت الصيانة حاليًا، اختر طريقة أخرى");
     }
+
+    // Enforce KYC verification when this payment method requires it
+    const kycKey = data.method === "vodafone_cash" ? "vodafone_cash_kyc"
+      : data.method === "instapay" ? "instapay_kyc"
+      : data.method === "binance" ? "binance_kyc" : null;
+    if (kycKey && pm[kycKey]) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: prof } = await (supabaseAdmin as unknown as { from: (t: string) => any })
+        .from("profiles").select("kyc_status").eq("id", userId).maybeSingle();
+      if ((prof?.kyc_status ?? "none") !== "approved") {
+        throw new Error("هذه الوسيلة تتطلب توثيق الحساب (KYC) أولاً");
+      }
+    }
+
 
     // Enforce that the receipt path belongs to the caller (prevents IDOR on other users' uploads)
     if (data.screenshot_path && !data.screenshot_path.startsWith(`${userId}/`)) {

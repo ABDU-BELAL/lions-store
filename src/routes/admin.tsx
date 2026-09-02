@@ -1,4 +1,5 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
+import { adminListKyc, adminReviewKyc } from "@/lib/kyc.functions";
 import { AppLayout } from "@/components/AppLayout";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -46,7 +47,7 @@ export const Route = createFileRoute("/admin")({
   component: AdminPage,
 });
 
-type Tab = "stats" | "topups" | "orders" | "products" | "collections" | "banners" | "settings" | "payments" | "users" | "discounts" | "vip" | "partners" | "admins";
+type Tab = "stats" | "topups" | "orders" | "products" | "collections" | "banners" | "settings" | "payments" | "users" | "discounts" | "vip" | "partners" | "kyc" | "admins";
 
 function AdminPage() {
   const { user, loading } = useAuth();
@@ -89,6 +90,7 @@ function AdminPage() {
           ...(account.data.isSuperAdmin ? [{ id: "discounts" as Tab, label: "الخصومات" }] : []),
           ...(account.data.isSuperAdmin ? [{ id: "vip" as Tab, label: "VIP" }] : []),
           ...(account.data.isSuperAdmin ? [{ id: "partners" as Tab, label: "شركاء API" }] : []),
+          { id: "kyc", label: "طلبات التوثيق" },
           { id: "admins", label: "الأدمنز" },
 
 
@@ -113,6 +115,7 @@ function AdminPage() {
       {tab === "discounts" && account.data.isSuperAdmin && <DiscountsTab />}
       {tab === "vip" && account.data.isSuperAdmin && <VipTab />}
       {tab === "partners" && account.data.isSuperAdmin && <PartnersTab />}
+      {tab === "kyc" && <KycTab />}
       {tab === "admins" && <AdminsTab isSuper={!!account.data.isSuperAdmin} />}
 
 
@@ -1179,14 +1182,62 @@ function AdminsTab({ isSuper }: { isSuper: boolean }) {
   );
 }
 
+function KycTab() {
+  const listFn = useServerFn(adminListKyc);
+  const reviewFn = useServerFn(adminReviewKyc);
+  const qc = useQueryClient();
+  const { data, isLoading } = useQuery({ queryKey: ["admin-kyc"], queryFn: () => listFn() });
+  const [note, setNote] = useState("");
+  const review = useMutation({
+    mutationFn: (v: { id: string; action: "approve" | "reject" }) => reviewFn({ data: { ...v, note: note || undefined } }),
+    onSuccess: () => { toast.success("تم تحديث الطلب"); setNote(""); qc.invalidateQueries({ queryKey: ["admin-kyc"] }); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const docLabel: Record<string, string> = { passport: "جواز سفر", id_card: "بطاقة شخصية", residence_permit: "إقامة" };
+
+  if (isLoading) return <p className="text-muted-foreground">جاري التحميل...</p>;
+  if (!data || data.length === 0) return <p className="text-muted-foreground">لا توجد طلبات توثيق.</p>;
+
+  return (
+    <div className="space-y-4">
+      {data.map((r) => (
+        <div key={r.id} className="rounded-2xl bg-card/70 border border-border p-4">
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <div>
+              <p className="font-extrabold">{r.profile?.full_name || "بدون اسم"} <span dir="ltr" className="text-gold text-xs">#{r.profile?.custom_id ?? "—"}</span></p>
+              <p className="text-xs text-muted-foreground">{docLabel[r.doc_type] ?? r.doc_type} • {r.document_number || "—"} • {new Date(r.created_at).toLocaleString("ar-EG")}</p>
+            </div>
+            <span className={`text-[11px] font-extrabold rounded-full px-3 py-1 border ${r.status === "approved" ? "text-emerald-400 border-emerald-500/50" : r.status === "rejected" ? "text-destructive border-destructive/50" : "text-gold border-gold/50"}`}>{r.status}</span>
+          </div>
+          <div className="mt-3 flex gap-2 overflow-x-auto">
+            {r.urls.map((u: string, i: number) => (
+              <a key={i} href={u} target="_blank" rel="noreferrer" className="shrink-0">
+                <img src={u} alt={`kyc-${i}`} className="h-28 w-auto rounded-xl border border-border object-cover" />
+              </a>
+            ))}
+          </div>
+          {r.status === "pending" && (
+            <div className="mt-3 flex gap-2 flex-wrap">
+              <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="ملاحظة (اختياري)" className="flex-1 min-w-[160px] rounded-xl bg-secondary/60 border border-border px-3 py-2 text-sm" />
+              <button disabled={review.isPending} onClick={() => review.mutate({ id: r.id, action: "approve" })} className="rounded-xl bg-emerald-600 text-white font-extrabold px-4 py-2 text-sm disabled:opacity-50">قبول</button>
+              <button disabled={review.isPending} onClick={() => review.mutate({ id: r.id, action: "reject" })} className="rounded-xl bg-destructive text-destructive-foreground font-extrabold px-4 py-2 text-sm disabled:opacity-50">رفض</button>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function PaymentMethodsTab() {
   const getFn = useServerFn(getPaymentMethods);
   const updateFn = useServerFn(adminUpdatePaymentMethods);
   const qc = useQueryClient();
   const { data } = useQuery({ queryKey: ["payment-methods-admin"], queryFn: () => getFn() });
-  type PMState = { vodafone_cash: string; instapay_account: string; instapay_link: string; binance: string; vodafone_cash_enabled: boolean; instapay_enabled: boolean; binance_enabled: boolean };
+  type PMState = { vodafone_cash: string; instapay_account: string; instapay_link: string; binance: string; vodafone_cash_enabled: boolean; instapay_enabled: boolean; binance_enabled: boolean; vodafone_cash_kyc: boolean; instapay_kyc: boolean; binance_kyc: boolean };
   const [local, setLocal] = useState<PMState | null>(null);
-  const state: PMState = local ?? data ?? { vodafone_cash: "", instapay_account: "", instapay_link: "", binance: "", vodafone_cash_enabled: true, instapay_enabled: true, binance_enabled: true };
+  const state: PMState = local ?? data ?? { vodafone_cash: "", instapay_account: "", instapay_link: "", binance: "", vodafone_cash_enabled: true, instapay_enabled: true, binance_enabled: true, vodafone_cash_kyc: false, instapay_kyc: false, binance_kyc: false };
   const save = useMutation({
     mutationFn: () => updateFn({ data: state }),
     onSuccess: () => {
@@ -1208,36 +1259,56 @@ function PaymentMethodsTab() {
     </button>
   );
 
+  const KycToggle = ({ required, onToggle }: { required: boolean; onToggle: () => void }) => (
+    <button
+      type="button"
+      onClick={onToggle}
+      className={`text-[11px] font-extrabold rounded-full px-3 py-1 border ${required ? "bg-gold/15 border-gold/50 text-gold" : "bg-secondary/60 border-border text-muted-foreground"}`}
+    >
+      {required ? "🪪 KYC مطلوب" : "KYC غير مطلوب"}
+    </button>
+  );
+
   return (
     <div className="max-w-lg">
       <div className="rounded-2xl bg-card/70 border border-border p-5 space-y-4">
         <h3 className="text-lg font-extrabold text-gold-gradient flex items-center gap-2"><Wallet className="size-5" /> وسائل الدفع وأرقام الشحن</h3>
-        <p className="text-xs text-muted-foreground">هذه البيانات تظهر للمستخدمين في صفحة شحن الرصيد. اضغط على الزر بجانب كل طريقة لإيقافها مؤقتًا للصيانة. (السوبر أدمن فقط)</p>
+        <p className="text-xs text-muted-foreground">هذه البيانات تظهر للمستخدمين في صفحة شحن الرصيد. اضغط على الزر بجانب كل طريقة لإيقافها مؤقتًا للصيانة، أو لجعل التوثيق (KYC) إجباريًا لاستخدامها. (السوبر أدمن فقط)</p>
 
         <div>
-          <div className="flex items-center justify-between mb-1">
+          <div className="flex items-center justify-between mb-1 gap-2 flex-wrap">
             <label className="text-xs font-bold">رقم فودافون كاش</label>
-            <MaintenanceToggle enabled={state.vodafone_cash_enabled} onToggle={() => set("vodafone_cash_enabled", !state.vodafone_cash_enabled)} />
+            <div className="flex items-center gap-2">
+              <KycToggle required={state.vodafone_cash_kyc} onToggle={() => set("vodafone_cash_kyc", !state.vodafone_cash_kyc)} />
+              <MaintenanceToggle enabled={state.vodafone_cash_enabled} onToggle={() => set("vodafone_cash_enabled", !state.vodafone_cash_enabled)} />
+            </div>
           </div>
           <input dir="ltr" value={state.vodafone_cash} onChange={(e) => set("vodafone_cash", e.target.value)} placeholder="01xxxxxxxxx" className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3 text-right" />
         </div>
 
         <div>
-          <div className="flex items-center justify-between mb-1">
+          <div className="flex items-center justify-between mb-1 gap-2 flex-wrap">
             <label className="text-xs font-bold">إنستا باي</label>
-            <MaintenanceToggle enabled={state.instapay_enabled} onToggle={() => set("instapay_enabled", !state.instapay_enabled)} />
+            <div className="flex items-center gap-2">
+              <KycToggle required={state.instapay_kyc} onToggle={() => set("instapay_kyc", !state.instapay_kyc)} />
+              <MaintenanceToggle enabled={state.instapay_enabled} onToggle={() => set("instapay_enabled", !state.instapay_enabled)} />
+            </div>
           </div>
           <input dir="ltr" value={state.instapay_account} onChange={(e) => set("instapay_account", e.target.value)} placeholder="name@instapay" className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3 text-right mb-2" />
           <input dir="ltr" value={state.instapay_link} onChange={(e) => set("instapay_link", e.target.value)} placeholder="رابط إنستا باي (اختياري) https://ipn.eg/..." className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3 text-right" />
         </div>
 
         <div>
-          <div className="flex items-center justify-between mb-1">
+          <div className="flex items-center justify-between mb-1 gap-2 flex-wrap">
             <label className="text-xs font-bold">عنوان Binance / USDT (TRC20)</label>
-            <MaintenanceToggle enabled={state.binance_enabled} onToggle={() => set("binance_enabled", !state.binance_enabled)} />
+            <div className="flex items-center gap-2">
+              <KycToggle required={state.binance_kyc} onToggle={() => set("binance_kyc", !state.binance_kyc)} />
+              <MaintenanceToggle enabled={state.binance_enabled} onToggle={() => set("binance_enabled", !state.binance_enabled)} />
+            </div>
           </div>
           <input dir="ltr" value={state.binance} onChange={(e) => set("binance", e.target.value)} placeholder="Txxxxxxxxxxxxxxxxxxxxx" className="w-full rounded-xl bg-secondary/60 border border-border px-4 py-3 text-right" />
         </div>
+
 
         <button disabled={save.isPending} onClick={() => save.mutate()} className="w-full rounded-xl bg-gold-gradient text-primary-foreground font-extrabold py-2 disabled:opacity-50">
           {save.isPending ? "..." : "حفظ"}
