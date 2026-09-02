@@ -31,7 +31,7 @@ export const getMyPartnerKey = createServerFn({ method: "GET" })
 
 /** Regenerates the current partner's API key. Invalidates the old one immediately.
  * Returns the new plaintext key ONCE (only the hash is stored). */
-export const regenerateMyPartnerKey = createServerFn({ method: "POST" })
+export const createMyPartnerKey = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertPartner(context.userId);
@@ -41,26 +41,20 @@ export const regenerateMyPartnerKey = createServerFn({ method: "POST" })
       .from("partner_api_keys")
       .select("id")
       .eq("user_id", context.userId)
-      .order("created_at", { ascending: false })
-      .limit(1)
       .maybeSingle();
+
+    if (existing) {
+      throw new Error("لديك مفتاح بالفعل. تواصل مع الدعم لحذفه إن أردت مفتاحًا جديدًا.");
+    }
 
     const raw = generateApiKey();
     const hashed = await hashApiKey(raw);
     const prefix = raw.slice(0, 10);
 
-    if (existing) {
-      const { error } = await partnerDb
-        .from("partner_api_keys")
-        .update({ api_key_hash: hashed, key_prefix: prefix, active: true })
-        .eq("id", existing.id);
-      if (error) { console.error("[regenerateMyPartnerKey]", error); throw new Error("حدث خطأ"); }
-    } else {
-      const { error } = await partnerDb
-        .from("partner_api_keys")
-        .insert({ user_id: context.userId, api_key_hash: hashed, key_prefix: prefix, active: true });
-      if (error) { console.error("[regenerateMyPartnerKey]", error); throw new Error("حدث خطأ"); }
-    }
+    const { error } = await partnerDb
+      .from("partner_api_keys")
+      .insert({ user_id: context.userId, api_key_hash: hashed, key_prefix: prefix, active: true });
+    if (error) { console.error("[createMyPartnerKey]", error); throw new Error("حدث خطأ"); }
 
     return { apiKey: raw };
   });
