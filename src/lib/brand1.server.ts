@@ -38,6 +38,7 @@ export interface Brand1ProductSummary {
   qty_min?: number;
   qty_max?: number;
   product_type?: string;
+  available?: boolean;
 }
 
 export async function brand1Profile() {
