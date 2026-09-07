@@ -294,11 +294,42 @@ function OrdersTab() {
 
 
 
+async function compressProductImage(file: File, maxDim = 900, quality = 0.75): Promise<File> {
+  if (!file.type.startsWith("image/")) return file;
+  const bitmap = await createImageBitmap(file).catch(() => null);
+  if (!bitmap) return file;
+  let { width, height } = bitmap;
+  if (width <= maxDim && height <= maxDim && file.size <= 250 * 1024) {
+    bitmap.close();
+    return file;
+  }
+  const scale = Math.min(1, maxDim / Math.max(width, height));
+  width = Math.round(width * scale);
+  height = Math.round(height * scale);
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) { bitmap.close(); return file; }
+  ctx.drawImage(bitmap, 0, 0, width, height);
+  bitmap.close();
+  let q = quality;
+  let blob: Blob | null = null;
+  while (q >= 0.5) {
+    blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, "image/jpeg", q));
+    if (blob && blob.size <= 250 * 1024) break;
+    q -= 0.1;
+  }
+  if (!blob) return file;
+  return new File([blob], file.name.replace(/\.\w+$/, "") + ".jpg", { type: "image/jpeg" });
+}
+
 async function fileToBase64(file: File): Promise<{ base64: string; contentType: string; filename: string }> {
-  const buf = await file.arrayBuffer();
+  const compressed = await compressProductImage(file);
+  const buf = await compressed.arrayBuffer();
   let bin = ""; const bytes = new Uint8Array(buf);
   for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
-  return { base64: btoa(bin), contentType: file.type || "image/jpeg", filename: file.name };
+  return { base64: btoa(bin), contentType: compressed.type || "image/jpeg", filename: compressed.name };
 }
 
 function ImageUploadField({ value, previewUrl, onChange, label = "اختر صورة (حتى 5MB)" }: { value: string; previewUrl?: string; onChange: (path: string) => void; label?: string }) {
