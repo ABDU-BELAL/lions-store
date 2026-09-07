@@ -6,6 +6,12 @@ import { yassenNewOrder, yassenCheckOrder, yassenCheckByUuid } from "./yassen.se
 import { samaNewOrder, samaCheckOrder, samaCheckByUuid } from "./sama.server";
 import { wisamNewOrder, wisamCheckOrder, wisamCheckByUuid } from "./wisam.server";
 import { alshaikhNewOrder, alshaikhCheckOrder, alshaikhCheckByUuid } from "./alshaikh.server";
+import { brand1ListProducts } from "./brand1.server";
+import { x3ListProducts } from "./x3.server";
+import { yassenListProducts } from "./yassen.server";
+import { samaListProducts } from "./sama.server";
+import { wisamListProducts } from "./wisam.server";
+import { alshaikhListProducts } from "./alshaikh.server";
 import { notifyTelegram, escapeTelegramHtml } from "./telegram.server";
 
 const MAX_WAIT_MINUTES = 20;
@@ -319,4 +325,53 @@ export async function pollPendingProviderOrders(): Promise<{ checked: number; co
     }
   }
   return { checked: rows.length, completed, refunded, stillPending };
+}
+
+/** Checks auto-fulfillment products against their provider's live stock, updating in_stock accordingly. */
+export async function syncProviderStock(): Promise<{ checked: number; updated: number }> {
+  const { data: products } = await supabaseAdmin
+    .from("products")
+    .select("id, provider, provider_product_id, in_stock")
+    .eq("auto_fulfill_enabled", true)
+    .not("provider", "is", null)
+    .not("provider_product_id", "is", null);
+
+  if (!products || products.length === 0) return { checked: 0, updated: 0 };
+
+  const listByProvider: Record<ProviderName, () => Promise<{ id: number | string; available?: boolean }[]>> = {
+    brand1: brand1ListProducts,
+    x3: x3ListProducts,
+    yassen: yassenListProducts,
+    sama: samaListProducts,
+    wisam: wisamListProducts,
+    alshaikh: alshaikhListProducts,
+  };
+
+  const cache = new Map<ProviderName, { id: number | string; available?: boolean }[]>();
+  let updated = 0;
+
+  for (const product of products) {
+    const provider = product.provider as ProviderName;
+    if (!listByProvider[provider]) continue;
+
+    try {
+      if (!cache.has(provider)) {
+        cache.set(provider, await listByProvider[provider]());
+      }
+      const list = cache.get(provider)!;
+      const match = list.find((p) => String(p.id) === String(product.provider_product_id));
+
+      if (match && match.available === false && product.in_stock !== false) {
+        await supabaseAdmin.from("products").update({ in_stock: false }).eq("id", product.id);
+        updated++;
+      } else if (match && match.available === true && product.in_stock === false) {
+        await supabaseAdmin.from("products").update({ in_stock: true }).eq("id", product.id);
+        updated++;
+      }
+    } catch (e) {
+      console.error(`[syncProviderStock] provider ${provider} check failed`, e);
+    }
+  }
+
+  return { checked: products.length, updated };
 }
