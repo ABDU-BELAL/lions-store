@@ -75,9 +75,8 @@ export async function brand1ListProducts(): Promise<Brand1ProductSummary[]> {
       qty_min: toNum(qv.min),
       qty_max: toNum(qv.max),
       product_type: o.product_type as string | undefined,
+      available: o.available === true,
     };
-  }).filter((p) => p.id !== "");
-}
 
 export async function brand1GetProduct(providerProductId: string): Promise<Brand1ProductSummary | null> {
   const all = await brand1ListProducts();
