@@ -39,6 +39,7 @@ export interface X3ProductSummary {
   qty_min?: number;
   qty_max?: number;
   product_type?: string;
+  available?: boolean;
 }
 
 export async function x3Profile() {
@@ -69,6 +70,7 @@ export async function x3ListProducts(): Promise<X3ProductSummary[]> {
       qty_min: toNum(qv?.min),
       qty_max: toNum(qv?.max),
       product_type: o.product_type as string | undefined,
+      available: o.available === true,
     };
   }).filter((p) => p.id !== "");
 }
