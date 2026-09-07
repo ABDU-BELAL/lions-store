@@ -39,6 +39,7 @@ export interface SamaProductSummary {
   qty_min?: number;
   qty_max?: number;
   product_type?: string;
+  available?: boolean;
 }
 
 export async function samaProfile() {
@@ -70,6 +71,7 @@ export async function samaListProducts(): Promise<SamaProductSummary[]> {
       qty_min: toNum(qv?.min),
       qty_max: toNum(qv?.max),
       product_type: o.product_type as string | undefined,
+      available: o.available === true,
     };
   }).filter((p) => p.id !== "");
 }
