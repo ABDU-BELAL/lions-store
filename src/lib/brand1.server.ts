@@ -77,7 +77,8 @@ export async function brand1ListProducts(): Promise<Brand1ProductSummary[]> {
       product_type: o.product_type as string | undefined,
       available: o.available === true,
     };
-
+  }).filter((p) => p.id !== "");
+}
 export async function brand1GetProduct(providerProductId: string): Promise<Brand1ProductSummary | null> {
   const all = await brand1ListProducts();
   return all.find((p) => String(p.id) === String(providerProductId)) ?? null;
