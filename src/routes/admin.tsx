@@ -14,7 +14,7 @@ import {
   adminListDiscounts, adminUpsertDiscount, adminDeleteDiscount,
   adminBrand1TestConnection, adminBrand1ListProducts, adminSetProductProvider, adminX3TestConnection, adminX3ListProducts, adminYassenTestConnection, adminYassenListProducts, adminSamaTestConnection, adminSamaListProducts, adminWisamTestConnection, adminWisamListProducts, adminAlshaikhTestConnection, adminAlshaikhListProducts,
   getUsdRate, adminUpdateUsdRate,
-  adminListPartnerKeys, adminCreatePartnerKey, adminSetPartnerKeyActive, adminDeletePartnerKey,
+  adminListPartnerKeys, adminCreatePartnerKey, adminSetPartnerKeyActive, adminDeletePartnerKey, adminSetPartnerVisibleKey,
 } from "@/lib/admin.functions";
 import { listVipTiers, adminUpdateVipTier, adminAssignVip, adminRevokeVip } from "@/lib/vip.functions";
 import { VipBadge } from "@/components/VipBadge";
@@ -28,7 +28,7 @@ import {
 import { getPaymentMethods, adminUpdatePaymentMethods } from "@/lib/topup.functions";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { Users, Wallet, ShoppingBag, Package, CheckCircle2, XCircle, Trash2, Plus, Crown, Shield, Image as ImageIcon, Upload, Settings as SettingsIcon, Layers } from "lucide-react";
+import { Users, Wallet, ShoppingBag, Package, CheckCircle2, XCircle, Trash2, Plus, Crown, Shield, Image as ImageIcon, Upload, Settings as SettingsIcon, Layers, Pencil, Copy } from "lucide-react";
 import { useCurrency } from "@/i18n/CurrencyProvider";
 
 export const Route = createFileRoute("/admin")({
@@ -1790,6 +1790,7 @@ function PartnersTab() {
   const create = useServerFn(adminCreatePartnerKey);
   const setActive = useServerFn(adminSetPartnerKeyActive);
   const del = useServerFn(adminDeletePartnerKey);
+  const setVisibleKey = useServerFn(adminSetPartnerVisibleKey);
   const listUsers = useServerFn(adminListUsers);
   const qc = useQueryClient();
 
@@ -1797,6 +1798,8 @@ function PartnersTab() {
   const [userId, setUserId] = useState("");
   const [label, setLabel] = useState("");
   const [newKey, setNewKey] = useState<string | null>(null);
+  const [editingKeyId, setEditingKeyId] = useState<string | null>(null);
+  const [visibleKeyInput, setVisibleKeyInput] = useState("");
 
   const keys = useQuery({ queryKey: ["admin-partner-keys"], queryFn: () => list() });
   const users = useQuery({
@@ -1824,6 +1827,11 @@ function PartnersTab() {
   const mDel = useMutation({
     mutationFn: (keyId: string) => del({ data: { keyId } }),
     onSuccess: () => { toast.success("تم الحذف"); refresh(); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const mSetVisible = useMutation({
+    mutationFn: (v: { keyId: string; visibleKey: string }) => setVisibleKey({ data: v }),
+    onSuccess: () => { toast.success("تم الحفظ"); setEditingKeyId(null); setVisibleKeyInput(""); refresh(); },
     onError: (e: Error) => toast.error(e.message),
   });
 
@@ -1883,29 +1891,72 @@ function PartnersTab() {
           <p className="text-center py-6 text-muted-foreground">لا توجد مفاتيح</p>
         )}
         <div className="space-y-2">
-          {(keys.data ?? []).map((k) => (
-            <div key={k.id} className="rounded-2xl bg-card/70 border border-border p-3 flex items-center justify-between gap-3">
-              <div className="min-w-0">
-                <p className="font-extrabold truncate text-sm">{k.profile?.full_name || k.profile?.email || k.user_id}</p>
-                <p className="text-xs text-muted-foreground truncate">
-                  {k.note || "—"} • الرصيد: {Number(k.balance).toLocaleString(undefined, { maximumFractionDigits: 2 })}
-                </p>
-                <p className="text-[11px] text-muted-foreground">
-                  آخر استخدام: {k.last_used_at ? new Date(k.last_used_at).toLocaleString() : "—"}
-                </p>
+          {(keys.data ?? []).map((k) => {
+            const kk = k as typeof k & { visible_key?: string | null };
+            return (
+              <div key={k.id} className="rounded-2xl bg-card/70 border border-border p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="font-extrabold truncate text-sm">{k.profile?.full_name || k.profile?.email || k.user_id}</p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {k.note || "—"} • الرصيد: {Number(k.balance).toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                    </p>
+                    <p className="text-[11px] text-muted-foreground">
+                      آخر استخدام: {k.last_used_at ? new Date(k.last_used_at).toLocaleString() : "—"}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      onClick={() => { setEditingKeyId(k.id); setVisibleKeyInput(kk.visible_key ?? ""); }}
+                      className="rounded-lg px-2 py-1.5 text-xs font-bold border border-border"
+                      title="تعيين المفتاح الظاهر للشريك"
+                    >
+                      <Pencil className="size-4" />
+                    </button>
+                    <button onClick={() => mToggle.mutate({ keyId: k.id, active: !k.active })} disabled={mToggle.isPending}
+                      className={`rounded-lg px-3 py-1.5 text-xs font-bold border ${k.active ? "bg-gold-gradient text-primary-foreground border-transparent" : "border-border"}`}>
+                      {k.active ? "مفعل" : "معطل"}
+                    </button>
+                    <button onClick={() => mDel.mutate(k.id)} disabled={mDel.isPending}
+                      className="rounded-lg bg-destructive/20 text-destructive border border-destructive/40 px-2 py-1.5">
+                      <Trash2 className="size-4" />
+                    </button>
+                  </div>
+                </div>
+
+                {kk.visible_key && editingKeyId !== k.id && (
+                  <div className="mt-2 flex items-center gap-2 rounded-lg bg-background/60 border border-border px-2 py-1.5">
+                    <code className="flex-1 text-xs break-all">{kk.visible_key}</code>
+                    <button onClick={() => { navigator.clipboard.writeText(kk.visible_key!); toast.success("تم النسخ"); }} className="shrink-0">
+                      <Copy className="size-4 text-gold" />
+                    </button>
+                  </div>
+                )}
+
+                {editingKeyId === k.id && (
+                  <div className="mt-2 flex items-center gap-2">
+                    <input
+                      value={visibleKeyInput}
+                      onChange={(e) => setVisibleKeyInput(e.target.value)}
+                      placeholder="الصق المفتاح هنا"
+                      dir="ltr"
+                      className="flex-1 rounded-lg bg-secondary/60 border border-border px-3 py-1.5 text-xs"
+                    />
+                    <button
+                      disabled={mSetVisible.isPending}
+                      onClick={() => mSetVisible.mutate({ keyId: k.id, visibleKey: visibleKeyInput })}
+                      className="rounded-lg bg-gold-gradient text-primary-foreground px-3 py-1.5 text-xs font-bold disabled:opacity-50"
+                    >
+                      حفظ
+                    </button>
+                    <button onClick={() => { setEditingKeyId(null); setVisibleKeyInput(""); }} className="rounded-lg border border-border px-3 py-1.5 text-xs font-bold">
+                      إلغاء
+                    </button>
+                  </div>
+                )}
               </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <button onClick={() => mToggle.mutate({ keyId: k.id, active: !k.active })} disabled={mToggle.isPending}
-                  className={`rounded-lg px-3 py-1.5 text-xs font-bold border ${k.active ? "bg-gold-gradient text-primary-foreground border-transparent" : "border-border"}`}>
-                  {k.active ? "مفعل" : "معطل"}
-                </button>
-                <button onClick={() => mDel.mutate(k.id)} disabled={mDel.isPending}
-                  className="rounded-lg bg-destructive/20 text-destructive border border-destructive/40 px-2 py-1.5">
-                  <Trash2 className="size-4" />
-                </button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>
