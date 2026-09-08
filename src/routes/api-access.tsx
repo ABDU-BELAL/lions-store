@@ -1,12 +1,11 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { AppLayout } from "@/components/AppLayout";
 import { useAuth } from "@/hooks/useAuth";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { getMyPartnerKey, createMyPartnerKey } from "@/lib/partner-account.functions";
-import { useState } from "react";
+import { getMyPartnerKey } from "@/lib/partner-account.functions";
+import { KeyRound, Copy } from "lucide-react";
 import { toast } from "sonner";
-import { KeyRound } from "lucide-react";
 
 export const Route = createFileRoute("/api-access")({
   component: ApiAccessPage,
@@ -15,9 +14,6 @@ export const Route = createFileRoute("/api-access")({
 function ApiAccessPage() {
   const { user, loading } = useAuth();
   const getKey = useServerFn(getMyPartnerKey);
-  const create = useServerFn(createMyPartnerKey);
-  const qc = useQueryClient();
-  const [newKey, setNewKey] = useState<string | null>(null);
 
   if (!loading && !user) throw redirect({ to: "/login" });
 
@@ -25,16 +21,6 @@ function ApiAccessPage() {
     queryKey: ["my-partner-key"],
     queryFn: () => getKey(),
     enabled: !!user,
-  });
-
-  const mCreate = useMutation({
-    mutationFn: () => create(),
-    onSuccess: (r: { apiKey: string }) => {
-      setNewKey(r.apiKey);
-      toast.success("تم إنشاء المفتاح");
-      qc.invalidateQueries({ queryKey: ["my-partner-key"] });
-    },
-    onError: (e: Error) => toast.error(e.message),
   });
 
   if (loading || keyInfo.isLoading) {
@@ -51,7 +37,7 @@ function ApiAccessPage() {
     );
   }
 
-  const info = keyInfo.data;
+  const info = keyInfo.data as (typeof keyInfo.data & { visible_key?: string | null }) | null;
 
   return (
     <AppLayout>
@@ -66,6 +52,20 @@ function ApiAccessPage() {
 
         {info ? (
           <div className="rounded-2xl bg-card/70 border border-border p-5 space-y-3">
+            {info.visible_key && (
+              <div>
+                <span className="text-sm text-muted-foreground block mb-1">المفتاح</span>
+                <div className="flex items-center gap-2 rounded-lg bg-background/60 border border-border px-3 py-2">
+                  <code className="flex-1 text-xs break-all" dir="ltr">{info.visible_key}</code>
+                  <button
+                    onClick={() => { navigator.clipboard.writeText(info.visible_key!); toast.success("تم النسخ"); }}
+                    className="shrink-0"
+                  >
+                    <Copy className="size-4 text-gold" />
+                  </button>
+                </div>
+              </div>
+            )}
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">بادئة المفتاح</span>
               <code className="text-sm font-mono">{info.key_prefix}...</code>
@@ -85,34 +85,12 @@ function ApiAccessPage() {
               <span className="text-sm">{info.last_used_at ? new Date(info.last_used_at).toLocaleString() : "—"}</span>
             </div>
             <p className="text-xs text-muted-foreground pt-2 border-t border-border">
-              لا يمكن استرجاع المفتاح إذا فقدته — احتفظ بنسخة آمنة منه. لحذف هذا المفتاح أو إنشاء مفتاح جديد بدلاً منه، تواصل مع الدعم.
+              لأي استفسار حول مفتاحك، تواصل مع الدعم.
             </p>
           </div>
         ) : (
-          <div className="space-y-4">
-            <div className="rounded-2xl bg-card/70 border border-border p-5 text-center text-muted-foreground">
-              لا يوجد مفتاح بعد. يمكنك إنشاء مفتاح واحد فقط — احتفظ به جيدًا.
-            </div>
-            <button
-              disabled={mCreate.isPending}
-              onClick={() => mCreate.mutate()}
-              className="w-full rounded-xl bg-gold-gradient text-primary-foreground font-extrabold py-3 disabled:opacity-50"
-            >
-              {mCreate.isPending ? "..." : "إنشاء مفتاح API"}
-            </button>
-          </div>
-        )}
-
-        {newKey && (
-          <div className="mt-5 rounded-xl border border-gold/50 bg-secondary/60 p-4 space-y-2">
-            <p className="text-xs font-bold text-gold">انسخ المفتاح الآن — لن يظهر مرة أخرى</p>
-            <code className="block break-all text-xs bg-background/70 rounded-lg p-2">{newKey}</code>
-            <button
-              onClick={() => { navigator.clipboard.writeText(newKey); toast.success("تم النسخ"); }}
-              className="rounded-lg border border-border px-3 py-1.5 text-xs font-bold"
-            >
-              نسخ
-            </button>
+          <div className="rounded-2xl bg-card/70 border border-border p-5 text-center text-muted-foreground">
+            لا يوجد مفتاح API لحسابك بعد. تواصل مع الدعم لإنشاء مفتاح.
           </div>
         )}
       </div>
