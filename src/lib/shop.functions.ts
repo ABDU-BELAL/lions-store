@@ -146,7 +146,7 @@ export const listMyOrders = createServerFn({ method: "GET" })
     const { supabase, userId } = context;
     const { data, error } = await supabase
       .from("orders")
-      .select("id, product_title, amount, status, game_user_id, created_at")
+      .select("id, product_title, amount, status, game_user_id, quantity, created_at")
       .eq("user_id", userId)
       .order("created_at", { ascending: false })
       .limit(100);
