@@ -7,7 +7,9 @@ async function assertPartner(userId: string): Promise<void> {
     .from("user_roles")
     .select("role")
     .eq("user_id", userId)
-    .eq("role", "partner")
+    // 'partner' is added to app_role via self-host/03_partner_api.sql on the user's own DB;
+    // generated types don't include it, so cast here.
+    .eq("role", "partner" as "user")
     .maybeSingle();
   if (!data) throw new Error("Forbidden: partner only");
 }
