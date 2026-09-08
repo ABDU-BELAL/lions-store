@@ -949,6 +949,17 @@ export const adminCreatePartnerKey = createServerFn({ method: "POST" })
     return { apiKey: raw };
   });
 
+export const adminSetPartnerKeyActive = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ keyId: z.string().uuid(), active: z.boolean() }).parse(input))
+  .handler(async ({ data, context }) => {
+    await assertSuperAdmin(context.userId);
+    const { partnerDb } = await import("@/lib/partner.server");
+    const { error } = await partnerDb.from("partner_api_keys").update({ active: data.active }).eq("id", data.keyId);
+    if (error) { console.error("[adminSetPartnerKeyActive]", error); throw new Error("حدث خطأ"); }
+    return { ok: true };
+  });
+
 export const adminSetPartnerVisibleKey = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ keyId: z.string().uuid(), visibleKey: z.string().trim().max(200) }).parse(input))
