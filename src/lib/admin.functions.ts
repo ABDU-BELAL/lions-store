@@ -916,14 +916,28 @@ export const adminCreatePartnerKey = createServerFn({ method: "POST" })
     if (!profile) throw new Error("المستخدم غير موجود");
 
     const { generateApiKey, hashApiKey, partnerDb } = await import("@/lib/partner.server");
-const raw = generateApiKey();
+    const raw = generateApiKey();
     const hashed = await hashApiKey(raw);
     const prefix = raw.slice(0, 10);
 
-    const { error } = await partnerDb
+    const { data: existingKey } = await partnerDb
       .from("partner_api_keys")
-      .insert({ user_id: data.userId, api_key_hash: hashed, api_key_secret: raw, key_prefix: prefix, note: data.label ?? null, active: true });
-    if (error) { console.error("[adminCreatePartnerKey]", error); throw new Error("حدث خطأ"); }
+      .select("id")
+      .eq("user_id", data.userId)
+      .maybeSingle();
+
+    if (existingKey) {
+      const { error } = await partnerDb
+        .from("partner_api_keys")
+        .update({ api_key_hash: hashed, key_prefix: prefix, note: data.label ?? null, active: true })
+        .eq("id", existingKey.id);
+      if (error) { console.error("[adminCreatePartnerKey]", error); throw new Error("حدث خطأ"); }
+    } else {
+      const { error } = await partnerDb
+        .from("partner_api_keys")
+        .insert({ user_id: data.userId, api_key_hash: hashed, key_prefix: prefix, note: data.label ?? null, active: true });
+      if (error) { console.error("[adminCreatePartnerKey]", error); throw new Error("حدث خطأ"); }
+    }
 
     // Make sure the account also carries the partner role and has a wallet row.
     await supabaseAdmin.from("user_roles").upsert(
