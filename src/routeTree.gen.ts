@@ -33,6 +33,8 @@ import { Route as ProductIdRouteImport } from './routes/product.$id'
 import { Route as CollectionSlugRouteImport } from './routes/collection.$slug'
 import { Route as ApiPartnerProductsRouteImport } from './routes/api/partner/products'
 import { Route as ApiPartnerOrderRouteImport } from './routes/api/partner/order'
+import { Route as ApiCronCheckStockRouteImport } from './routes/api/cron/check-stock'
+import { Route as ApiCronCheckOrdersRouteImport } from './routes/api/cron/check-orders'
 import { Route as ApiPublicTelegramWebhookRouteImport } from './routes/api/public/telegram/webhook'
 import { Route as ApiPublicImgSplatRouteImport } from './routes/api/public/img/$'
 import { Route as ApiPublicHooksFulfillmentPollRouteImport } from './routes/api/public/hooks/fulfillment-poll'
@@ -158,6 +160,16 @@ const ApiPartnerOrderRoute = ApiPartnerOrderRouteImport.update({
   path: '/api/partner/order',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiCronCheckStockRoute = ApiCronCheckStockRouteImport.update({
+  id: '/api/cron/check-stock',
+  path: '/api/cron/check-stock',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiCronCheckOrdersRoute = ApiCronCheckOrdersRouteImport.update({
+  id: '/api/cron/check-orders',
+  path: '/api/cron/check-orders',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicTelegramWebhookRoute =
   ApiPublicTelegramWebhookRouteImport.update({
     id: '/api/public/telegram/webhook',
@@ -204,6 +216,8 @@ export interface FileRoutesByFullPath {
   '/transactions': typeof TransactionsRoute
   '/collection/$slug': typeof CollectionSlugRoute
   '/product/$id': typeof ProductIdRoute
+  '/api/cron/check-orders': typeof ApiCronCheckOrdersRoute
+  '/api/cron/check-stock': typeof ApiCronCheckStockRoute
   '/api/partner/order': typeof ApiPartnerOrderRouteWithChildren
   '/api/partner/products': typeof ApiPartnerProductsRoute
   '/api/partner/order/$id': typeof ApiPartnerOrderIdRoute
@@ -234,6 +248,8 @@ export interface FileRoutesByTo {
   '/transactions': typeof TransactionsRoute
   '/collection/$slug': typeof CollectionSlugRoute
   '/product/$id': typeof ProductIdRoute
+  '/api/cron/check-orders': typeof ApiCronCheckOrdersRoute
+  '/api/cron/check-stock': typeof ApiCronCheckStockRoute
   '/api/partner/order': typeof ApiPartnerOrderRouteWithChildren
   '/api/partner/products': typeof ApiPartnerProductsRoute
   '/api/partner/order/$id': typeof ApiPartnerOrderIdRoute
@@ -265,6 +281,8 @@ export interface FileRoutesById {
   '/transactions': typeof TransactionsRoute
   '/collection/$slug': typeof CollectionSlugRoute
   '/product/$id': typeof ProductIdRoute
+  '/api/cron/check-orders': typeof ApiCronCheckOrdersRoute
+  '/api/cron/check-stock': typeof ApiCronCheckStockRoute
   '/api/partner/order': typeof ApiPartnerOrderRouteWithChildren
   '/api/partner/products': typeof ApiPartnerProductsRoute
   '/api/partner/order/$id': typeof ApiPartnerOrderIdRoute
@@ -297,6 +315,8 @@ export interface FileRouteTypes {
     | '/transactions'
     | '/collection/$slug'
     | '/product/$id'
+    | '/api/cron/check-orders'
+    | '/api/cron/check-stock'
     | '/api/partner/order'
     | '/api/partner/products'
     | '/api/partner/order/$id'
@@ -327,6 +347,8 @@ export interface FileRouteTypes {
     | '/transactions'
     | '/collection/$slug'
     | '/product/$id'
+    | '/api/cron/check-orders'
+    | '/api/cron/check-stock'
     | '/api/partner/order'
     | '/api/partner/products'
     | '/api/partner/order/$id'
@@ -357,6 +379,8 @@ export interface FileRouteTypes {
     | '/transactions'
     | '/collection/$slug'
     | '/product/$id'
+    | '/api/cron/check-orders'
+    | '/api/cron/check-stock'
     | '/api/partner/order'
     | '/api/partner/products'
     | '/api/partner/order/$id'
@@ -388,6 +412,8 @@ export interface RootRouteChildren {
   TransactionsRoute: typeof TransactionsRoute
   CollectionSlugRoute: typeof CollectionSlugRoute
   ProductIdRoute: typeof ProductIdRoute
+  ApiCronCheckOrdersRoute: typeof ApiCronCheckOrdersRoute
+  ApiCronCheckStockRoute: typeof ApiCronCheckStockRoute
   ApiPartnerOrderRoute: typeof ApiPartnerOrderRouteWithChildren
   ApiPartnerProductsRoute: typeof ApiPartnerProductsRoute
   ApiPublicHooksFulfillmentPollRoute: typeof ApiPublicHooksFulfillmentPollRoute
@@ -565,6 +591,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPartnerOrderRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/cron/check-stock': {
+      id: '/api/cron/check-stock'
+      path: '/api/cron/check-stock'
+      fullPath: '/api/cron/check-stock'
+      preLoaderRoute: typeof ApiCronCheckStockRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/cron/check-orders': {
+      id: '/api/cron/check-orders'
+      path: '/api/cron/check-orders'
+      fullPath: '/api/cron/check-orders'
+      preLoaderRoute: typeof ApiCronCheckOrdersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/telegram/webhook': {
       id: '/api/public/telegram/webhook'
       path: '/api/public/telegram/webhook'
@@ -631,6 +671,8 @@ const rootRouteChildren: RootRouteChildren = {
   TransactionsRoute: TransactionsRoute,
   CollectionSlugRoute: CollectionSlugRoute,
   ProductIdRoute: ProductIdRoute,
+  ApiCronCheckOrdersRoute: ApiCronCheckOrdersRoute,
+  ApiCronCheckStockRoute: ApiCronCheckStockRoute,
   ApiPartnerOrderRoute: ApiPartnerOrderRouteWithChildren,
   ApiPartnerProductsRoute: ApiPartnerProductsRoute,
   ApiPublicHooksFulfillmentPollRoute: ApiPublicHooksFulfillmentPollRoute,
